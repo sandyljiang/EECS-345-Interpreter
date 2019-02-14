@@ -46,7 +46,7 @@
   (lambda (name state)
     (cond
       ((invalid-state? state)          (error 'invalidstate))
-      ((null-state? state)             #f) ; TODO change this
+      ((null-state? state)             'notfound)
       ((eq? (current-name state) name) (current-value state))
       (else                            (find name (next-state state))))))
 
