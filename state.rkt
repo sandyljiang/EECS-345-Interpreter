@@ -68,7 +68,7 @@
     )
 )
 
-(define exists
+(define exists?
     (lambda (name state)
         #t
     )
@@ -76,6 +76,6 @@
 
 (define change_value
     (lambda (name newvalue state)
-
+        (add name newvalue (remove name state))
     )
 )
