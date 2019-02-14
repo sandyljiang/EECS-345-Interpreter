@@ -47,11 +47,20 @@
 (define if-body caddar)
 (define else-body
   (lambda (ptree)
-    (car (cdddar ptree))))
+    (car (cdddar ptree)))) ; cadddar
 
 ;; while condition and budy statement
 (define while-cond cadar)
 (define while-body caddar)
+
+;; define the length of each statement
+(define return-len 2)
+(define declare-len 2)
+(define declare-assign-len 3)
+(define assign-len 3)
+(define if-len 3)
+(define if-else-len 4)
+(define while-len 3)
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -74,19 +83,23 @@
   (lambda (lis)
     (len-acc lis 0)))
 
+;; Function:    (operator? ptree op statement-len)
+;; Parameters:  ptree         parse tree in the format ((statement-op args...) ...)
+;;              op            an atom that the statement-op should be checked against
+;;              statement-len the expected length of the statement that op corresponds to
+;; Description: checks if the current statement in the parse tree matches the specified
+;;              operation and the expected length of the statement for that operation
+(define operator?
+  (lambda (ptree op statement-len)
+    (and (eq? (statement-op ptree) op)
+         (eq? (len (current-statement ptree)) statement-len))))
+
 ;;;; *********************************************************************************************************
 ;;;; return operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (return-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the return operator in the statment-op
-(define return-op?
-  (lambda (ptree)
-    (eq? (statement-op ptree) return-var)))
-
 ;; Function:    (return-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((return return-expr) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: adds a variable with the name in return-var to the state with the value of the
 ;;              return expression
@@ -102,15 +115,8 @@
 ;;;; declaration operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (declare-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the declare operator in the statment-op
-(define declare-op?
-  (lambda (ptree)
-    (and (eq? (statement-op ptree) 'var) (eq? (len (current-statement ptree)) 2))))
-
 ;; Function:    (declare-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((var var-name) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: adds a new undefined variable variable to the state
 (define declare-op
@@ -121,15 +127,8 @@
 ;;;; declaration/assignment operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (declare-assign-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the declare-assign operator in the statment-op
-(define declare-assign-op?
-  (lambda (ptree)
-    (and (eq? (statement-op ptree) 'var) (eq? (len (current-statement ptree)) 3))))
-
 ;; Function:    (declare-assign-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((var var-name var-value) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: adds a new variable to the state and assigns it the specified value from the parse tree
 (define declare-assign-op
@@ -143,15 +142,8 @@
 ;;;; assignment operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (assign-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the assignment operator in the statment-op
-(define assign-op?
-  (lambda (ptree)
-    (eq? (statement-op ptree) '=)))
-
 ;; Function:    (assign-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((= var-name var-value) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: changes the value of the specifed variable in the parse tree to the new value
 (define assign-op
@@ -170,15 +162,8 @@
 ;;;; if operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (if-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the if operator in the statment-op
-(define if-op?
-  (lambda (ptree)
-    (and (eq? (statement-op ptree) 'if) (eq? (len (current-statement ptree)) 3))))
-
 ;; Function:    (if-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((sif if_cond if_body) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: calculate the new state after evaluating the if statement at the beginning of the parse tree
 ;; Note:        that this function is used when the else-body is NOT included
@@ -195,13 +180,6 @@
 ;;;; *********************************************************************************************************
 ;;;; if/else operator
 ;;;; *********************************************************************************************************
-
-;; Function:    (if-else-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the if/else operator in the statment-op
-(define if-else-op?
-  (lambda (ptree)
-    (and (eq? (statement-op ptree) 'if) (eq? (len (current-statement ptree)) 4))))
 
 ;; Function:    (if-else-op ptree state)
 ;; Parameters:  ptree parse tree in the format ((if if_cond if_body else_body) ...)
@@ -223,15 +201,8 @@
 ;;;; while operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (while-op? ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;; Description: checks the parse tree for the while operator in the statment-op
-(define while-op?
-  (lambda (ptree)
-    (eq? (statement-op ptree) 'while)))
-
 ;; Function:    (while-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((while while-cond while-body) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: calculate the new state after evaluating the while
 ;;              statement at the beginning of the parse tree
@@ -255,14 +226,14 @@
 (define operator_switch
   (lambda (ptree)
     (cond
-      ((return-op? ptree)         return-op) ; ptree == (((return value) ...)
-      ((while-op? ptree)          while-op) ; ptree == ((while cond body) ...)
-      ((assign-op? ptree)         assign-op) ; ptree == ((= name newvalue) ...)
-      ((declare-op? ptree)        declare-op) ; ptree == ((var name) ...)
-      ((declare-assign-op? ptree) declare-assign-op) ; ptree == ((var name value) ...)
-      ((if-op? ptree)             if-op) ; ptree == ((if cond body) ...)
-      ((if-else-op? ptree)        if-else-op) ; ptree == ((if cond body else-body) ...)
-      (else                       (error 'undefinedoperation)))))
+      ((operator? ptree 'return return-len)      return-op) ; ptree == (((return value) ...)
+      ((operator? ptree 'while while-len)        while-op) ; ptree == ((while cond body) ...)
+      ((operator? ptree '= assign-len)           assign-op) ; ptree == ((= name newvalue) ...)
+      ((operator? ptree 'var declare-len)        declare-op) ; ptree == ((var name) ...)
+      ((operator? ptree 'var declare-assign-len) declare-assign-op) ; ptree == ((var name value) ...)
+      ((operator? ptree 'if if-len)              if-op) ; ptree == ((if cond body) ...)
+      ((operator? ptree 'if if-else-len)         if-else-op) ; ptree == ((if cond body else-body) ...)
+      (else                                      (error 'undefinedoperation)))))
 
 ;; Function:    (mstate ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
