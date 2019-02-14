@@ -1,0 +1,1 @@
+("7.1" ("0eb5fa91202ca1657a420c5a59498e00792fe0ed" . "0f707c9fc1de96e595cc704f8351873a9706271a") #"C:\\Users\\Jared\\Documents\\plc\\EECS-345-Interpreter\\simpleParser.rkt" #"C:\\Users\\Jared\\Documents\\plc\\EECS-345-Interpreter\\state.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

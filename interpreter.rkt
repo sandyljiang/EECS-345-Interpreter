@@ -2,6 +2,7 @@
 (provide (all-defined-out))
 (require "simpleParser.rkt")
 (require "state.rkt")
+(require "mvalue.rkt")
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
@@ -41,7 +42,9 @@
 ;; if condition, body statement, and else body statement
 (define if-cond cadar)
 (define if-body caddar)
-(define else-body cadddar)
+(define else-body
+  (lambda (ptree)
+    (car (cdddar ptree))))
 
 ;; while condition and budy statement
 (define while-cond cadar)
@@ -66,7 +69,7 @@
 ;; Description: calculate the length of a list
 (define len
   (lambda (lis)
-    (len-add lis 0)))
+    (len-acc lis 0)))
 
 ;;;; *********************************************************************************************************
 ;;;; return operator
@@ -126,7 +129,7 @@
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: adds a new variable to the state and assigns it the specified value from the parse tree
-(define declare-assign
+(define declare-assign-op
   (lambda (ptree state)
     ;; extract the name and value from the ptree and add the to the state
     (add (var-name ptree)
@@ -148,7 +151,7 @@
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: changes the value of the specifed variable in the parse tree to the new value
-(define assign
+(define assign-op
   (lambda (ptree state)
     ;; extract the name of the variable name and pass it into the following function
     ((lambda (name)
@@ -198,7 +201,7 @@
     (and (eq? (statement-op ptree) 'if) (eq? (len ptree) 4))))
 
 ;; Function:    (if-else-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((if if_cond if_body else_body) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: Calculate the new state after evaluating the
 ;;              if/else statement at the beginning of the parse tree
