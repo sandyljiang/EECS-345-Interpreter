@@ -187,7 +187,7 @@
     ;; evaluate the if statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (if-body ptree) state))
+        ((eq? condition #t) (mstate (list (if-body ptree)) state))
         ((eq? condition #f) state) ; condition was false, so don't change the state
         (else       (error 'invalidcondition))))
      (mvalue (if-cond ptree) state))))
@@ -214,8 +214,8 @@
     ;; evaluate the if/else statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (if-body ptree) state)) ; cond true, so evaluate the if-body
-        ((eq? condition #f) (mstate (else-body ptree) state)) ; cond false, so evaluate the else body
+        ((eq? condition #t) (mstate (list (if-body ptree)) state)) ; cond true, so evaluate the if-body
+        ((eq? condition #f) (mstate (list (else-body ptree)) state)) ; cond false, so evaluate the else body
         (else               (error 'invalidcondition))))
      (mvalue (if-cond ptree) state))))
 
@@ -240,7 +240,7 @@
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (b)
       (cond
-        ((eq? b #t) (while-op ptree (mstate (while-body ptree) state))) ; evaluate the body again
+        ((eq? b #t) (while-op ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
         ((eq? b #f) state) ; done evaluating the while loop
         (else       (error 'invalidcondition))))
      (mvalue (while-cond ptree) state))))
