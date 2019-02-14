@@ -46,13 +46,13 @@
   (lambda (name state)
     (cond ;; TODO: fix formatting
       ((invalid-state? state)
-        (error 'invalidstate))
+        (error "Error: Invalid state given" state))
 
       ((null-state? state)
-        (error 'variablenotdefined))
+        (error "Error: Variable not defined" name))
 
       ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
-        (error 'usebeforeassign))
+        (error "Error: Using variable " name " before definition"))
 
       ((eq? (current-name state) name)
         (current-value state))
@@ -69,7 +69,7 @@
 (define add
   (lambda (name value state)
     (if (exists? name state)
-      (error 'undefined "name already in state")
+      (error "Error: Double declaration of variable " name)
       (cons (cons name (names state))
             (list (cons value (values state)))))))
 
