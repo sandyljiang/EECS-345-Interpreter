@@ -27,6 +27,9 @@
 ;; operator for any type of statement
 (define statement-op caar)
 
+;; the statement currently being evaluated
+(define current-statement car)
+
 ;; the rest of the statements int eh parse tree after the currently selected one
 (define next-statement cdr)
 
@@ -104,7 +107,7 @@
 ;; Description: checks the parse tree for the declare operator in the statment-op
 (define declare-op?
   (lambda (ptree)
-    (and (eq? (statement-op ptree) 'var) (eq? (len ptree) 2))))
+    (and (eq? (statement-op ptree) 'var) (eq? (len (current-statement ptree)) 2))))
 
 ;; Function:    (declare-op ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
@@ -123,7 +126,7 @@
 ;; Description: checks the parse tree for the declare-assign operator in the statment-op
 (define declare-assign-op?
   (lambda (ptree)
-    (and (eq? (statement-op ptree) 'var) (eq? (len ptree) 3))))
+    (and (eq? (statement-op ptree) 'var) (eq? (len (current-statement ptree)) 3))))
 
 ;; Function:    (declare-assign-op ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
@@ -172,7 +175,7 @@
 ;; Description: checks the parse tree for the if operator in the statment-op
 (define if-op?
   (lambda (ptree)
-    (and (eq? (statement-op ptree) 'if) (eq? (len ptree) 3))))
+    (and (eq? (statement-op ptree) 'if) (eq? (len (current-statement ptree)) 3))))
 
 ;; Function:    (if-op ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
@@ -198,7 +201,7 @@
 ;; Description: checks the parse tree for the if/else operator in the statment-op
 (define if-else-op?
   (lambda (ptree)
-    (and (eq? (statement-op ptree) 'if) (eq? (len ptree) 4))))
+    (and (eq? (statement-op ptree) 'if) (eq? (len (current-statement ptree)) 4))))
 
 ;; Function:    (if-else-op ptree state)
 ;; Parameters:  ptree parse tree in the format ((if if_cond if_body else_body) ...)
