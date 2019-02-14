@@ -46,7 +46,7 @@
   (lambda (name state)
     (cond
       ((invalid-state? state)          (error 'invalidstate))
-      ((null-state? state)             'notfound)
+      ((null-state? state)             (error 'variablenotdefined))
       ((eq? (current-name state) name) (current-value state))
       (else                            (find name (next-state state))))))
 
