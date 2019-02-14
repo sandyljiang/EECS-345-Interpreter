@@ -1,6 +1,6 @@
 #lang racket
-(require "interpreter.rkt")
-(require "simpleParser.rkt")
+(require "interpreter/interpreter.rkt")
+(require "interpreter/simpleParser.rkt")
 
 (define run_tests
     (lambda ()
