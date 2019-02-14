@@ -283,5 +283,5 @@
 (define interpret
   (lambda (filename)
     (find return-var
-          (mstate (parser "simple.txt")
+          (mstate (parser filename)
                   '(() ())))))

@@ -44,11 +44,21 @@
 ;; Description: Searches the state for the name and returns the associated value
 (define find
   (lambda (name state)
-    (cond
-      ((invalid-state? state)          (error 'invalidstate))
-      ((null-state? state)             (error 'variablenotdefined))
-      ((eq? (current-name state) name) (current-value state))
-      (else                            (find name (next-state state))))))
+    (cond ;; TODO: fix formatting
+      ((invalid-state? state)
+        (error 'invalidstate))
+
+      ((null-state? state)
+        (error 'variablenotdefined))
+
+      ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
+        (error 'usebeforeassign))
+
+      ((eq? (current-name state) name)
+        (current-value state))
+
+      (else
+        (find name (next-state state))))))
 
 ;; Function:    (add name value state)
 ;; Parameters:  name  the name of the variable to add to the state

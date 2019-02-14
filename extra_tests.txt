@@ -1,0 +1,52 @@
+Additional Tests for Students Looking for an Extra Challenge
+Test 21: This code should return 30.
+
+var x;
+var y;
+var z = x = y = 10;
+return x + y + z;
+Test 22: This code should return 11.
+
+var x;
+var y;
+x = y = 10;
+if ((x = x + 1) > y)
+  return x;
+else
+  return y;
+Test 23: This code should return 1106.
+
+var x;
+var y = (x = 5) + (x = 6);
+return y * 100 + x;
+Test 24: This code should return 12.
+
+var x = 10;
+x = (x = 6) + x;
+return x;
+Test 25: This code should return 16.
+
+var x = 10;
+x = x + (x = 6);
+return x;
+Test 26: This code should return 72.
+
+var x;
+var y;
+var z;
+var w = (x = 6) + (y = z = 20);
+return w + x + y + z;
+Test 27: This code should return 21.
+
+var x = 0;
+while ((x = x + 1) < 21)
+  x = x;
+return x;
+Test 28: This code should return 164.
+
+var a = 31160;
+var b = 1476;
+var r = a % b;
+while (r != 0)
+  r = (a = b) % (b = r);
+return b;
