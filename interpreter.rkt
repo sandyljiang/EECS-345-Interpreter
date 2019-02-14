@@ -93,7 +93,7 @@
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
       (error 'multiplereturns)
-      (add return-var (mvalue return-expr state) state)))) ; return a new state with the return value
+      (add return-var (mvalue (return-expr ptree) state) state)))) ; return a new state with the return value
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
@@ -112,7 +112,7 @@
 ;; Description: adds a new undefined variable variable to the state
 (define declare-op
   (lambda (ptree state)
-    (add (var-name ptree) undefined-var)))
+    (add (var-name ptree) undefined-var state)))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration/assignment operator
@@ -133,8 +133,8 @@
   (lambda (ptree state)
     ;; extract the name and value from the ptree and add the to the state
     (add (var-name ptree)
-       (mvalue (var-value ptree) state)
-       state)))
+         (mvalue (var-value ptree) state)
+         state)))
 
 ;;;; *********************************************************************************************************
 ;;;; assignment operator
