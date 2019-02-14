@@ -1,4 +1,5 @@
 #lang racket
+(provide mvalue)
 (require "simpleParser.rkt")
 (require "state.rkt")
 
