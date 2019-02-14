@@ -2,6 +2,7 @@
 (provide (all-defined-out))
 (require "simpleParser.rkt")
 (require "state.rkt")
+(require "mvalue.rkt")
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
@@ -41,7 +42,9 @@
 ;; if condition, body statement, and else body statement
 (define if-cond cadar)
 (define if-body caddar)
-(define else-body cadddar)
+(define else-body
+  (lambda (ptree)
+    (car (cdddar ptree))))
 
 ;; while condition and budy statement
 (define while-cond cadar)
@@ -198,7 +201,7 @@
     (and (eq? (statement-op ptree) 'if) (eq? (len ptree) 4))))
 
 ;; Function:    (if-else-op ptree state)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree parse tree in the format ((if if_cond if_body else_body) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: Calculate the new state after evaluating the
 ;;              if/else statement at the beginning of the parse tree
