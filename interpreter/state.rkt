@@ -1,9 +1,21 @@
 #lang racket
 (provide (all-defined-out))
 
-;; TODO: define the binding list format
-;; state should be in the form ((name1 name2 ...) (value1 value2 ...))
-;; valid values are numbers and t/f and 'dne
+;;;; *********************************************************************************************************
+;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
+;;;; EECS 345 Spring 2019
+;;;; Interpreter Part 1
+;;;; *********************************************************************************************************
+
+;;;; *********************************************************************************************************
+;;;; State format
+;;;;
+;;;; The state will be stored in a binding list with the following format:
+;;;; ((name1 name2 ...) (value1 value2 ...))
+;;;;
+;;;; The (name1 name2 ...) sublist is the names list
+;;;; the (value1 value2 ...) sublist is the values list
+;;;; *********************************************************************************************************
 
 (define names car)
 (define values cadr)
