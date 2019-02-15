@@ -25,9 +25,8 @@
 ;; Description: the state is invalid if either names or values are null and the other is not
 (define invalid-state?
   (lambda (state)
-    (or
-      (and (null? (names state)) (not (null? (values state))))
-      (and (not (null? (names state))) (null? (values state))))))
+    (or (and (null? (names state)) (not (null? (values state))))
+        (and (not (null? (names state))) (null? (values state))))))
 
 ;; Function:    (next-state state)
 ;; Parameters:  state the binding list to find the next state from
