@@ -46,13 +46,13 @@
   (lambda (name state)
     (cond ;; TODO: fix formatting
       ((invalid-state? state)
-        (error "Error: Invalid state given" state))
+        (error "Error: Invalid state given " state))
 
       ((null-state? state)
-        (error "Error: Variable not defined" name))
+        (error "Error: Variable not defined " name))
 
       ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
-        (error "Error: Using variable " name " before definition"))
+        (error "Error: Using variable '" name "' before definition"))
 
       ((eq? (current-name state) name)
         (current-value state))
@@ -69,7 +69,7 @@
 (define add
   (lambda (name value state)
     (if (exists? name state)
-      (error "Error: Double declaration of variable " name)
+      (error "Error: Double declaration of variable.\nVariable: " name)
       (cons (cons name (names state))
             (list (cons value (values state)))))))
 
@@ -83,7 +83,7 @@
   (lambda (name front state)
     (cond
       ((invalid-state? state)
-       (error "Error in Remove: Name and value binding mismatch")) ; Raise Error
+       (error "Error in Remove: Name and value binding mismatch\nState: " state)) ; Raise Error
 
       ((null-state? state) ; Both name and value lists null
        front)
@@ -115,7 +115,7 @@
 (define exists?
   (lambda (name state)
     (cond
-      ((null-state? state)                   #f)
+      ((null-state? state)             #f)
       ((eq? name (current-name state)) #t)
       (else                            (exists? name (next-state state))))))
 
