@@ -159,8 +159,8 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state))
         ((eq? condition #f) state) ; condition was false, so don't change the state
-        (else       (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                           condition))))
+        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
+                            condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -200,8 +200,8 @@
       (cond
         ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
-        (else       (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                           condition))))
+        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
+                            condition))))
      (mvalue (while-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
