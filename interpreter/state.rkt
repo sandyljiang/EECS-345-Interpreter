@@ -5,6 +5,7 @@
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
 ;;;; Interpreter Part 1
+;;;; State handling functions
 ;;;; *********************************************************************************************************
 
 ;;;; *********************************************************************************************************
@@ -63,7 +64,7 @@
         (error "Error: Variable not defined " name))
 
       ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
-        (error "Error: Using variable '" name "' before definition"))
+        (error "Error: Using variable before definition: " name))
 
       ((eq? (current-name state) name)
         (current-value state))
