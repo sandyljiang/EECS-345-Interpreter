@@ -1,0 +1,4 @@
+var x = 1;
+if (5)
+    x = 2;
+return 1;

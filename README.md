@@ -5,3 +5,5 @@
 <br />30 points: Excellent functional style
 <br />10 points: Correctly returns integers or true and false
 <br />5 points: Nicely readible code: good indentation, well organized functions, well named functions and parameters, clear comments.
+
+
