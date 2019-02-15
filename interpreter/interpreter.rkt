@@ -11,7 +11,7 @@
 ;;;; *********************************************************************************************************
 
 ;;;; *********************************************************************************************************
-;;;; string constants
+;;;; constants
 ;;;; *********************************************************************************************************
 
 ;; define the name of the return variable that the interpreter will look for at the end of the program
@@ -19,6 +19,15 @@
 
 ;; define the value for an undeclared variable
 (define undefined-var 'undefined)
+
+;; define the length of each statement
+(define return-len 2)
+(define declare-len 2)
+(define declare-assign-len 3)
+(define assign-len 3)
+(define if-len 3)
+(define if-else-len 4)
+(define while-len 3)
 
 ;;;; *********************************************************************************************************
 ;;;; expression/operator location definitions
@@ -52,15 +61,6 @@
 ;; while condition and budy statement
 (define while-cond cadar)
 (define while-body caddar)
-
-;; define the length of each statement
-(define return-len 2)
-(define declare-len 2)
-(define declare-assign-len 3)
-(define assign-len 3)
-(define if-len 3)
-(define if-else-len 4)
-(define while-len 3)
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -253,11 +253,13 @@
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename)
+    ;; convert boolean values from the return value to the correct format
     ((lambda (v)
       (cond
         ((eq? v #t) 'true)
         ((eq? v #f) 'false)
         (else       v)))
+     ;; interpret the code and get the return value
      (find return-var
            (mstate (parser filename)
                    '(() ()))))))

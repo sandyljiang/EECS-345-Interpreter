@@ -126,7 +126,5 @@
 ;; Description: Changes a variable in the state to a have a new value.
 ;; Note:        This function does not change the state if name is not in the state
 (define change-value
-    (lambda (name new-value state)
-        (add name new-value (remove name state))
-    )
-)
+  (lambda (name new-value state)
+    (add name new-value (remove name state))))
