@@ -1,9 +1,22 @@
 #lang racket
 (provide (all-defined-out))
 
-;; TODO: define the binding list format
-;; state should be in the form ((name1 name2 ...) (value1 value2 ...))
-;; valid values are numbers and t/f and 'dne
+;;;; *********************************************************************************************************
+;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
+;;;; EECS 345 Spring 2019
+;;;; Interpreter Part 1
+;;;; State handling functions
+;;;; *********************************************************************************************************
+
+;;;; *********************************************************************************************************
+;;;; State format
+;;;;
+;;;; The state will be stored in a binding list with the following format:
+;;;; ((name1 name2 ...) (value1 value2 ...))
+;;;;
+;;;; The (name1 name2 ...) sublist is the names list
+;;;; the (value1 value2 ...) sublist is the values list
+;;;; *********************************************************************************************************
 
 (define names car)
 (define values cadr)
@@ -25,9 +38,8 @@
 ;; Description: the state is invalid if either names or values are null and the other is not
 (define invalid-state?
   (lambda (state)
-    (or
-      (and (null? (names state)) (not (null? (values state))))
-      (and (not (null? (names state))) (null? (values state))))))
+    (or (and (null? (names state)) (not (null? (values state))))
+        (and (not (null? (names state))) (null? (values state))))))
 
 ;; Function:    (next-state state)
 ;; Parameters:  state the binding list to find the next state from
@@ -45,10 +57,20 @@
 (define find
   (lambda (name state)
     (cond
-      ((invalid-state? state)          (error 'invalidstate))
-      ((null-state? state)             (error 'variablenotdefined))
-      ((eq? (current-name state) name) (current-value state))
-      (else                            (find name (next-state state))))))
+      ((invalid-state? state)
+        (error "Error: Invalid state given " state))
+
+      ((null-state? state)
+        (error "Error: Variable not defined " name))
+
+      ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
+        (error "Error: Using variable before definition: " name))
+
+      ((eq? (current-name state) name)
+        (current-value state))
+
+      (else
+        (find name (next-state state))))))
 
 ;; Function:    (add name value state)
 ;; Parameters:  name  the name of the variable to add to the state
@@ -59,7 +81,7 @@
 (define add
   (lambda (name value state)
     (if (exists? name state)
-      (error 'undefined "name already in state")
+      (error "Error: Double declaration of variable.\nVariable: " name)
       (cons (cons name (names state))
             (list (cons value (values state)))))))
 
@@ -73,7 +95,7 @@
   (lambda (name front state)
     (cond
       ((invalid-state? state)
-       (error "Error in Remove: Name and value binding mismatch")) ; Raise Error
+       (error "Error in Remove: Name and value binding mismatch\nState: " state)) ; Raise Error
 
       ((null-state? state) ; Both name and value lists null
        front)
@@ -105,7 +127,7 @@
 (define exists?
   (lambda (name state)
     (cond
-      ((null-state? state)                   #f)
+      ((null-state? state)             #f)
       ((eq? name (current-name state)) #t)
       (else                            (exists? name (next-state state))))))
 
@@ -116,7 +138,5 @@
 ;; Description: Changes a variable in the state to a have a new value.
 ;; Note:        This function does not change the state if name is not in the state
 (define change-value
-    (lambda (name new-value state)
-        (add name new-value (remove name state))
-    )
-)
+  (lambda (name new-value state)
+    (add name new-value (remove name state))))

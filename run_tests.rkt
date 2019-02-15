@@ -1,0 +1,49 @@
+#lang racket
+(require "interpreter/interpreter.rkt")
+(require "interpreter/simpleParser.rkt")
+
+(define run_tests
+    (lambda ()
+        (display (interpret "test_cases/test1")) (display " = 150") (newline)
+        (display (interpret "test_cases/test2")) (display " = -4") (newline)
+        (display (interpret "test_cases/test3")) (display " = 10") (newline)
+        (display (interpret "test_cases/test4")) (display " = 16") (newline)
+        (display (interpret "test_cases/test5")) (display " = 220") (newline)
+        (display (interpret "test_cases/test6")) (display " = 5") (newline)
+        (display (interpret "test_cases/test7")) (display " = 6") (newline)
+        (display (interpret "test_cases/test8")) (display " = 10") (newline)
+        (display (interpret "test_cases/test9")) (display " = 5") (newline)
+        (display (interpret "test_cases/test10")) (display " = -39") (newline)
+
+        (display (interpret "test_cases/test15")) (display " = true") (newline)
+        (display (interpret "test_cases/test16")) (display " = 100") (newline)
+        (display (interpret "test_cases/test17")) (display " = false") (newline)
+        (display (interpret "test_cases/test18")) (display " = true") (newline)
+        (display (interpret "test_cases/test19")) (display " = 128") (newline)
+        (display (interpret "test_cases/test20")) (display " = 12") (newline)
+    )
+)
+
+(define test11
+    (lambda ()
+        (display (interpret "test_cases/test11")) (display " = ") (newline)
+    )
+)
+
+(define test12
+    (lambda ()
+        (display (interpret "test_cases/test12")) (display " = ") (newline)
+    )
+)
+
+(define test13
+    (lambda ()
+        (display (interpret "test_cases/test13")) (display " = ") (newline)
+    )
+)
+
+(define test14
+    (lambda ()
+        (display (interpret "test_cases/test14")) (display " = ") (newline)
+    )
+)
