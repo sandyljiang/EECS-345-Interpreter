@@ -108,7 +108,7 @@
     ;; make sure the return variable doesn't exist
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
-      (error 'multiplereturns)
+      (error "Error: Multiple returns")
       (add return-var (mvalue (return-expr ptree) state) state)))) ; return a new state with the return value
 
 ;;;; *********************************************************************************************************
@@ -155,7 +155,7 @@
         (change-value name
                 (mvalue (var-value ptree) state)
                 state)
-        (error 'undeclared-var "Attempting to use variable before declaring it")))
+        (error "Error: assigning value before declaration\nVariable: " name)))
      (var-name ptree))))
 
 ;;;; *********************************************************************************************************
@@ -174,7 +174,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state))
         ((eq? condition #f) state) ; condition was false, so don't change the state
-        (else       (error 'invalidcondition))))
+        (else       (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: " condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -194,7 +194,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state)) ; cond true, so evaluate the if-body
         ((eq? condition #f) (mstate (list (else-body ptree)) state)) ; cond false, so evaluate the else body
-        (else               (error 'invalidcondition))))
+        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: " condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -213,7 +213,7 @@
       (cond
         ((eq? b #t) (while-op ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
         ((eq? b #f) state) ; done evaluating the while loop
-        (else       (error 'invalidcondition))))
+        (else       (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: " condition))))
      (mvalue (while-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -233,7 +233,7 @@
       ((operator? ptree 'var declare-assign-len) declare-assign-op) ; ptree == ((var name value) ...)
       ((operator? ptree 'if if-len)              if-op) ; ptree == ((if cond body) ...)
       ((operator? ptree 'if if-else-len)         if-else-op) ; ptree == ((if cond body else-body) ...)
-      (else                                      (error 'undefinedoperation)))))
+      (else                       (error "Error: Undefined operation.\nParse tree: " ptree)))))
 
 ;; Function:    (mstate ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
