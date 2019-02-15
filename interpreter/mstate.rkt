@@ -1,5 +1,6 @@
 #lang racket
 (provide mstate)
+(provide return-var)
 (require "state.rkt")
 (require "mvalue.rkt")
 (require "helper.rkt")
