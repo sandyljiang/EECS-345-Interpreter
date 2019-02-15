@@ -44,15 +44,15 @@
 ;; Description: Searches the state for the name and returns the associated value
 (define find
   (lambda (name state)
-    (cond ;; TODO: fix formatting
+    (cond
       ((invalid-state? state)
         (error 'invalidstate))
 
       ((null-state? state)
-        (error 'variablenotdefined))
+        (error 'undeclared-var "Attempting to use variable before declaring it"))
 
       ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
-        (error 'usebeforeassign))
+        (error 'undefined-var "Attempting to use variable before assigning it"))
 
       ((eq? (current-name state) name)
         (current-value state))
@@ -69,7 +69,7 @@
 (define add
   (lambda (name value state)
     (if (exists? name state)
-      (error 'undefined "name already in state")
+      (error 'redefining "Attempting to declare a variable multiple times")
       (cons (cons name (names state))
             (list (cons value (values state)))))))
 
@@ -115,7 +115,7 @@
 (define exists?
   (lambda (name state)
     (cond
-      ((null-state? state)                   #f)
+      ((null-state? state)             #f)
       ((eq? name (current-name state)) #t)
       (else                            (exists? name (next-state state))))))
 

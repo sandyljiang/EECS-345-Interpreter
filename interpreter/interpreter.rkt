@@ -155,7 +155,7 @@
         (change-value name
                 (mvalue (var-value ptree) state)
                 state)
-        (error 'assignbeforeuse)))
+        (error 'undeclared-var "Attempting to use variable before declaring it")))
      (var-name ptree))))
 
 ;;;; *********************************************************************************************************
@@ -253,6 +253,11 @@
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename)
-    (find return-var
-          (mstate (parser filename)
-                  '(() ())))))
+    ((lambda (v)
+      (cond
+        ((eq? v #t) 'true)
+        ((eq? v #f) 'false)
+        (else       v)))
+     (find return-var
+           (mstate (parser filename)
+                   '(() ()))))))
