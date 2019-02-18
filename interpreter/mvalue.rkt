@@ -41,6 +41,7 @@
       ((operator? lis '* 2-operand) *)
       ((operator? lis '/ 2-operand) quotient)
       ((operator? lis '% 2-operand) remainder)
+      ((operator? lis '- 1-operand) (lambda (op1) (* -1 op1)))
 
       ; Cases with comparison operators
       ((operator? lis '== 2-operand) eq?)
@@ -51,6 +52,7 @@
       ((operator? lis '>= 2-operand) >=)
       ((operator? lis '&& 2-operand) (lambda (op1 op2) (and op1 op2)))
       ((operator? lis '|| 2-operand) (lambda (op1 op2) (or op1 op2)))
+      ((operator? lis '!  1-operand) (lambda (op1) (not op1)))
 
       ; Operator not recognized
       (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
@@ -83,21 +85,61 @@
 
 
 (define cps_tail_recur_helper
-  (lambda (cps_func recur1 recur2 operator state return)
-    (cps_func recur1
+  (lambda (cps_func op1 op2 operator state return)
+    (cps_func op1
               state
-              (lambda (v1) (cps_func recur2
+              (lambda (v1) (cps_func op2
                                      state
                                      (lambda (v2) (return (operator v1 v2))))))))
+
+;(define cps_tail_recur_helper2
+;  (lambda (cps_func recur operator state return v_prev)
+;    (if (null? (cdr recur))
+;        (cps_func (car recur)
+;                  state
+;                  (lambda (v) (return (operator v_prev v))))
+;        (cps_func (car recur)
+;                  state
+;                  (lambda (v) (cps_tail_recur_helper2 cps_func (cdr recur) operator state return v))))))
 
 (define mvalue*
   (lambda (lis s)
     (mvalue-cps lis s (lambda (v) v))))
 
+;(define mvalue-cps
+;  (lambda (lis s return)
+;    (cond
+;      ((null? lis) (error error "Error: Evaluating null statement"))
+;
+;      ; Base Cases
+;     ((number? lis) (return lis))
+;     ((eq? lis 'true) (return #t))
+;     ((eq? lis 'false)  (return #f))
+;     ((not (list? lis)) (return (find lis s)))
+;
+;     ; Cases with mathematical operators
+;     ((operator? lis '+ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) +         s return))
+;     ((operator? lis '* 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) *         s return))
+;     ((operator? lis '/ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) quotient  s return))
+;     ((operator? lis '% 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) remainder s return))
+;     ((operator? lis '- 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) -         s return))
+;     ((operator? lis '- 1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (* v -1)))))
+;
+;     ; Cases with comparison operators
+;     ((operator? lis '== 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) eq? s return))
+;     ((operator? lis '!= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (not (eq? op1 op2))) s return))
+;     ((operator? lis '<  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) < s return))
+;     ((operator? lis '>  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) > s return))
+;     ((operator? lis '<= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) <= s return))
+;     ((operator? lis '>= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) >= s return))
+;     ((operator? lis '&& 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (and op1 op2) s return)))
+;     ((operator? lis '|| 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (or op1 op2) s return)))
+;     ((operator? lis '!  1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (not v))))))))
+
 (define mvalue-cps
   (lambda (lis s return)
     (cond
-      ((null? lis) (error error "Error: Evaluating null statement"))
+      ((null? lis) (error "Error: Evaluating null statement"))
 
       ; Base Cases
      ((number? lis) (return lis))
@@ -106,20 +148,5 @@
      ((not (list? lis)) (return (find lis s)))
 
      ; Cases with mathematical operators
-     ((operator? lis '+ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) +         s return))
-     ((operator? lis '* 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) *         s return))
-     ((operator? lis '/ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) quotient  s return))
-     ((operator? lis '% 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) remainder s return))
-     ((operator? lis '- 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) -         s return))
-     ((operator? lis '- 1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (* v -1)))))
-
-     ; Cases with comparison operators
-     ((operator? lis '== 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) eq? s return))
-     ((operator? lis '!= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (not (eq? op1 op2))) s return))
-     ((operator? lis '<  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) < s return))
-     ((operator? lis '>  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) > s return))
-     ((operator? lis '<= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) <= s return))
-     ((operator? lis '>= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) >= s return))
-     ((operator? lis '&& 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (and op1 op2) s return)))
-     ((operator? lis '|| 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (or op1 op2) s return)))
-     ((operator? lis '!  1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (not v))))))))
+     ((eq? (length lis) 1-operand) ((lambda (func) (mvalue-cps (operand1 lis) s (lambda (v) (return (func v))))) (1_op_switch lis)))
+     ((eq? (length lis) 2-operand) ((lambda (operator) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) operator s return)) (2_op_switch lis))))))
