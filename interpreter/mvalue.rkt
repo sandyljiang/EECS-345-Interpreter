@@ -32,6 +32,10 @@
   (lambda (statement operator)
     (eq? (statement-op statement) operator)))
 
+;; Function:    (2_op_switch lis)
+;; Parameters:  lis is the list that represents the parse tree. Must contain an operator
+;;                as the first element, then two operands as the subsequent elemnts.
+;; Description: Returns the correct function to use for the given operation.
 (define 2_op_switch
   (lambda (lis)
     (cond
@@ -40,7 +44,6 @@
       ((operator? lis '*) *)
       ((operator? lis '/) quotient)
       ((operator? lis '%) remainder)
-      ((operator? lis '-) (lambda (op1) (* -1 op1)))
 
       ; Cases with comparison operators
       ((operator? lis '==) eq?)
@@ -51,16 +54,20 @@
       ((operator? lis '>=) >=)
       ((operator? lis '&&) (lambda (op1 op2) (and op1 op2)))
       ((operator? lis '||) (lambda (op1 op2) (or op1 op2)))
-      ((operator? lis '! ) (lambda (op1)     (not op1)))
 
       ; Operator not recognized
       (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
-      
+
+;; Function:    (1_op_switch lis)
+;; Parameters:  lis is the list that represents the parse tree. Must contain an operator
+;;                as the first element, then one operands as the subsequent elemnt.
+;; Description: Returns the correct function to use for the given operation.
 (define 1_op_switch
   (lambda (lis)
     (cond
       ((operator? lis '-) (lambda (op1) (* -1 op1)))
-      ((operator? lis '!) (lambda (op1) (not op1))))))
+      ((operator? lis '!) (lambda (op1) (not op1)))
+      (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
 
 ;; Function:    (mvalue lis s)
 ;; Parameters:  lis is list representing the parse tree
@@ -82,59 +89,21 @@
 
       (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
 
-
-(define cps_tail_recur_helper
-  (lambda (cps_func op1 op2 operator state return)
-    (cps_func op1
-              state
-              (lambda (v1) (cps_func op2
-                                     state
-                                     (lambda (v2) (return (operator v1 v2))))))))
-
-;(define cps_tail_recur_helper2
-;  (lambda (cps_func recur operator state return v_prev)
-;    (if (null? (cdr recur))
-;        (cps_func (car recur)
-;                  state
-;                  (lambda (v) (return (operator v_prev v))))
-;        (cps_func (car recur)
-;                  state
-;                  (lambda (v) (cps_tail_recur_helper2 cps_func (cdr recur) operator state return v))))))
-
+;; Function:    (mvalue* lis s)
+;; Parameters:  lis is list representing the parse tree
+;;              s is the list representing state, which contains the name-value bindings
+;; Description: Evaluates the given expression using the given state. Calls a version of
+;;              mvalue that uses continuation passing style.
 (define mvalue*
   (lambda (lis s)
     (mvalue-cps lis s (lambda (v) v))))
 
-;(define mvalue-cps
-;  (lambda (lis s return)
-;    (cond
-;      ((null? lis) (error error "Error: Evaluating null statement"))
-;
-;      ; Base Cases
-;     ((number? lis) (return lis))
-;     ((eq? lis 'true) (return #t))
-;     ((eq? lis 'false)  (return #f))
-;     ((not (list? lis)) (return (find lis s)))
-;
-;     ; Cases with mathematical operators
-;     ((operator? lis '+ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) +         s return))
-;     ((operator? lis '* 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) *         s return))
-;     ((operator? lis '/ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) quotient  s return))
-;     ((operator? lis '% 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) remainder s return))
-;     ((operator? lis '- 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) -         s return))
-;     ((operator? lis '- 1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (* v -1)))))
-;
-;     ; Cases with comparison operators
-;     ((operator? lis '== 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) eq? s return))
-;     ((operator? lis '!= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (not (eq? op1 op2))) s return))
-;     ((operator? lis '<  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) < s return))
-;     ((operator? lis '>  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) > s return))
-;     ((operator? lis '<= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) <= s return))
-;     ((operator? lis '>= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) >= s return))
-;     ((operator? lis '&& 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (and op1 op2) s return)))
-;     ((operator? lis '|| 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (or op1 op2) s return)))
-;     ((operator? lis '!  1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (not v))))))))
-
+;; Function:    (mvalue-cps lis s return)
+;; Parameters:  lis is the list representing the parse tree
+;;              s is the list representing state, which contains name-value bindings.
+;;              return is the function handle to use to return the value
+;; Description: Evaluates the given exxpression using the given state. Uses continuation
+;;              passing style.
 (define mvalue-cps
   (lambda (lis s return)
     (cond
@@ -146,6 +115,10 @@
      ((eq? lis 'false)  (return #f))
      ((not (list? lis)) (return (find lis s)))
 
-     ; Cases with mathematical operators
+     ; Cases with operators
      ((eq? (length lis) 1-operand) ((lambda (func) (mvalue-cps (operand1 lis) s (lambda (v) (return (func v))))) (1_op_switch lis)))
-     ((eq? (length lis) 2-operand) ((lambda (operator) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) operator s return)) (2_op_switch lis))))))
+     ((eq? (length lis) 2-operand) ((lambda (operator) (mvalue-cps (operand1 lis)
+                                                                   s
+                                                                   (lambda (v1) (mvalue-cps (operand2 lis)
+                                                                                            s
+                                                                                            (lambda (v2) (return (operator v1 v2))))))) (2_op_switch lis))))))
