@@ -221,7 +221,7 @@
       ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
       ((operator? ptree 'if if-len)              if-statement) ; ptree == ((if cond body) ...)
       ((operator? ptree 'if if-else-len)         if-else-statement) ; ptree == ((if cond body else-body) ...)
-      (else                       (error "Error: Undefined operation.\nParse tree: " ptree)))))
+      (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
 
 ;; Function:    (mstate ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
