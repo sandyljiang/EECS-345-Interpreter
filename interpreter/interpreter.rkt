@@ -10,6 +10,8 @@
 ;;;; Interpreter Part 1
 ;;;; *********************************************************************************************************
 
+(define initial-state '(() ()))
+
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename)
@@ -22,4 +24,4 @@
      ;; interpret the code and get the return value
      (find return-var
            (mstate (parser filename)
-                   '(() ()))))))
+                   initial-state)))))

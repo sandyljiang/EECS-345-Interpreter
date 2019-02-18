@@ -1,52 +1,103 @@
 #lang racket
-(provide mvalue)
-(require "simpleParser.rkt")
-(require "state.rkt")
-(require "helper.rkt")
-
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
 ;;;; Interpreter Part 1
 ;;;; Mvalue calculation functions
 ;;;; *********************************************************************************************************
+; This file provides
+(provide mvalue)
 
-;; Function:    (mvalue lis s)
-;; Parameters:  lis is list representing the parse tree
+; Dependencies
+(require "simpleParser.rkt")
+(require "state.rkt")
+(require "helper.rkt")
+
+; The abstracted functions
+(define statement-op car)
+(define operand1 cadr)
+(define operand2 caddr)
+(define 2-operand 3)
+(define 1-operand 2)
+
+;; Function:    (operator? statement operator)
+;; Parameters:  statement is the parsed statement to evaluate. First element should be
+;;                the operator represented by an atom
+;;              operator is the operator to check for.
+;;              len is the number of expected elements in the list (including operator
+;;                and operands)
+;; Description: Helper function that compares operator of given list to given operator.
+;;              Returns true if it matches, false if not.
+(define operator?
+  (lambda (statement operator)
+    (eq? (statement-op statement) operator)))
+
+;; Function:    (2_op_switch expr)
+;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
+;;                as the first element, then two operands as the subsequent elemnts.
+;; Description: Returns the correct function to use for the given operation.
+(define 2_op_switch
+  (lambda (expr)
+    (cond
+      ;; cases with arithmetic operators
+      ((operator? expr '+) +)
+      ((operator? expr '-) -)
+      ((operator? expr '*) *)
+      ((operator? expr '/) quotient)
+      ((operator? expr '%) remainder)
+
+      ; Cases with comparison operators
+      ((operator? expr '==) eq?)
+      ((operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
+      ((operator? expr '< ) <)
+      ((operator? expr '> ) >)
+      ((operator? expr '<=) <=)
+      ((operator? expr '>=) >=)
+      ((operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
+      ((operator? expr '||) (lambda (op1 op2) (or op1 op2)))
+
+      ; Operator not recognized
+      (else (error "Error: Executing invalid expression.\nExpression: " expr)))))
+
+;; Function:    (1_op_switch expr)
+;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
+;;                as the first element, then one operands as the subsequent elemnt.
+;; Description: Returns the correct function to use for the given operation.
+(define 1_op_switch
+  (lambda (expr)
+    (cond
+      ((operator? expr '-) (lambda (op1) (* -1 op1)))
+      ((operator? expr '!) (lambda (op1) (not op1)))
+      (else (error "Error: Executing invalid expression.\nExpression: " expr)))))
+
+;; Function:    (mvalue expr state)
+;; Parameters:  expr is list representing the parse tree
 ;;              s is the list representing state, which contains the name-value bindings
 ;; Description: Evaluates the given expression using the given state.
 (define mvalue
-  (lambda (lis s)
+  (lambda (expr state)
     (cond
-      ((null? lis) (error 'undefined "undefined lis"))
+      ((null? expr) (error "Error: Evaluating null statement"))
 
       ; Base cases
-      ((number? lis) lis)
-      ((eq? lis 'true) #t)
-      ((eq? lis 'false) #f)
-      ((not (list? lis)) (find lis s))
+      ((number? expr)
+        expr)
 
-      ; Cases with mathematical operators
-      ((eq? (op lis) '+) (+ (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((and (eq? (op lis) '-) (eq? (len lis) '3)) (- (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((and (eq? (op lis) '-) (eq? (len lis) '2)) (* -1 (mvalue (opd1 lis) s)))
-      ((eq? (op lis) '*) (* (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '/) (quotient (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '%) (remainder (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
+      ((eq? expr 'true)
+        #t)
 
-      ; Cases with comparison operators
-      ((eq? (op lis) '==) (eq? (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '!=) (not (eq? (mvalue (opd1 lis) s) (mvalue (opd2 lis) s))))
-      ((eq? (op lis) '<)  (<   (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '>)  (>   (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '<=) (<=  (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '>=) (>=  (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '&&) (and (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '||) (or  (mvalue (opd1 lis) s) (mvalue (opd2 lis) s)))
-      ((eq? (op lis) '!)  (not (mvalue (opd1 lis) s))))))
+      ((eq? expr 'false)
+        #f)
 
-; The abstracted functions
-(define op car)
-(define opd1 cadr)
-(define opd2 caddr)
+      ((not (list? expr)) ; if the expression is a variable, lookup the variable
+        (find expr state))
 
+      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
+        ((lambda (func) (func (mvalue (operand1 expr) state))) (1_op_switch expr)))
+
+      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
+        ((lambda (func) (func (mvalue (operand1 expr) state) (mvalue (operand2 expr) state)))
+         (2_op_switch expr)))
+
+      (else
+        (error "Error: Executing invalid expression.\nExpression: " expr)))))
