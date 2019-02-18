@@ -33,6 +33,34 @@
     (and (eq? (statement-op statement) operator)
          (eq? (length statement) len))))
 
+(define 2_op_switch
+  (lambda (lis)
+    (cond
+      ((operator? lis '+ 2-operand) +)
+      ((operator? lis '- 2-operand) -)
+      ((operator? lis '* 2-operand) *)
+      ((operator? lis '/ 2-operand) quotient)
+      ((operator? lis '% 2-operand) remainder)
+
+      ; Cases with comparison operators
+      ((operator? lis '== 2-operand) eq?)
+      ((operator? lis '!= 2-operand) (lambda (op1 op2) (not (eq? op1 op2))))
+      ((operator? lis '<  2-operand) <)
+      ((operator? lis '>  2-operand) >)
+      ((operator? lis '<= 2-operand) <=)
+      ((operator? lis '>= 2-operand) >=)
+      ((operator? lis '&& 2-operand) (lambda (op1 op2) (and op1 op2)))
+      ((operator? lis '|| 2-operand) (lambda (op1 op2) (or op1 op2)))
+
+      ; Operator not recognized
+      (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
+      
+(define 1_op_switch
+  (lambda (lis)
+    (cond
+      ((operator? lis '- 1-operand) (lambda (op1) (* -1 op1)))
+      ((operator? lis '! 1-operand) (lambda (op1) (not op1))))))
+
 ;; Function:    (mvalue lis s)
 ;; Parameters:  lis is list representing the parse tree
 ;;              s is the list representing state, which contains the name-value bindings
@@ -48,24 +76,50 @@
       ((eq? lis 'false)  #f)
       ((not (list? lis)) (find lis s))
 
-      ; Cases with mathematical operators
-      ((operator? lis '+ 2-operand) (+         (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '- 2-operand) (-         (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '- 1-operand) (*         (mvalue (operand1 lis) s) -1))
-      ((operator? lis '* 2-operand) (*         (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '/ 2-operand) (quotient  (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '% 2-operand) (remainder (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
+      ((eq? (length lis) 1-operand) ((lambda (func) (func (mvalue (operand1 lis) s))) (1_op_switch lis)))
+      ((eq? (length lis) 2-operand) ((lambda (func) (func (mvalue (operand1 lis) s) (mvalue (operand2 lis) s))) (2_op_switch lis)))
 
-      ; Cases with comparison operators
-      ((operator? lis '== 2-operand) (eq?      (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '!= 2-operand) (not (eq? (mvalue (operand1 lis) s) (mvalue (operand2 lis) s))))
-      ((operator? lis '<  2-operand) (<        (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '>  2-operand) (>        (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '<= 2-operand) (<=       (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '>= 2-operand) (>=       (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '&& 2-operand) (and      (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '|| 2-operand) (or       (mvalue (operand1 lis) s) (mvalue (operand2 lis) s)))
-      ((operator? lis '!  1-operand) (not      (mvalue (operand1 lis) s)))
+      (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
 
-      (else (error "Error: Evaluating invalid expression\nExpression: " lis)))))
 
+(define cps_tail_recur_helper
+  (lambda (cps_func recur1 recur2 operator state return)
+    (cps_func recur1
+              state
+              (lambda (v1) (cps_func recur2
+                                     state
+                                     (lambda (v2) (return (operator v1 v2))))))))
+
+(define mvalue*
+  (lambda (lis s)
+    (mvalue-cps lis s (lambda (v) v))))
+
+(define mvalue-cps
+  (lambda (lis s return)
+    (cond
+      ((null? lis) (error error "Error: Evaluating null statement"))
+
+      ; Base Cases
+     ((number? lis) (return lis))
+     ((eq? lis 'true) (return #t))
+     ((eq? lis 'false)  (return #f))
+     ((not (list? lis)) (return (find lis s)))
+
+     ; Cases with mathematical operators
+     ((operator? lis '+ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) +         s return))
+     ((operator? lis '* 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) *         s return))
+     ((operator? lis '/ 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) quotient  s return))
+     ((operator? lis '% 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) remainder s return))
+     ((operator? lis '- 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) -         s return))
+     ((operator? lis '- 1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (* v -1)))))
+
+     ; Cases with comparison operators
+     ((operator? lis '== 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) eq? s return))
+     ((operator? lis '!= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (not (eq? op1 op2))) s return))
+     ((operator? lis '<  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) < s return))
+     ((operator? lis '>  2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) > s return))
+     ((operator? lis '<= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) <= s return))
+     ((operator? lis '>= 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) >= s return))
+     ((operator? lis '&& 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (and op1 op2) s return)))
+     ((operator? lis '|| 2-operand) (cps_tail_recur_helper mvalue-cps (operand1 lis) (operand2 lis) (lambda (op1 op2) (or op1 op2) s return)))
+     ((operator? lis '!  1-operand) (mvalue-cps (operand1 lis) s (lambda (v) (return (not v))))))))
