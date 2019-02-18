@@ -29,30 +29,29 @@
 ;; Description: Helper function that compares operator of given list to given operator.
 ;;              Returns true if it matches, false if not.
 (define operator?
-  (lambda (statement operator len)
-    (and (eq? (statement-op statement) operator)
-         (eq? (length statement) len))))
+  (lambda (statement operator)
+    (eq? (statement-op statement) operator)))
 
 (define 2_op_switch
   (lambda (lis)
     (cond
-      ((operator? lis '+ 2-operand) +)
-      ((operator? lis '- 2-operand) -)
-      ((operator? lis '* 2-operand) *)
-      ((operator? lis '/ 2-operand) quotient)
-      ((operator? lis '% 2-operand) remainder)
-      ((operator? lis '- 1-operand) (lambda (op1) (* -1 op1)))
+      ((operator? lis '+) +)
+      ((operator? lis '-) -)
+      ((operator? lis '*) *)
+      ((operator? lis '/) quotient)
+      ((operator? lis '%) remainder)
+      ((operator? lis '-) (lambda (op1) (* -1 op1)))
 
       ; Cases with comparison operators
-      ((operator? lis '== 2-operand) eq?)
-      ((operator? lis '!= 2-operand) (lambda (op1 op2) (not (eq? op1 op2))))
-      ((operator? lis '<  2-operand) <)
-      ((operator? lis '>  2-operand) >)
-      ((operator? lis '<= 2-operand) <=)
-      ((operator? lis '>= 2-operand) >=)
-      ((operator? lis '&& 2-operand) (lambda (op1 op2) (and op1 op2)))
-      ((operator? lis '|| 2-operand) (lambda (op1 op2) (or op1 op2)))
-      ((operator? lis '!  1-operand) (lambda (op1) (not op1)))
+      ((operator? lis '==) eq?)
+      ((operator? lis '!=) (lambda (op1 op2) (not (eq? op1 op2))))
+      ((operator? lis '< ) <)
+      ((operator? lis '> ) >)
+      ((operator? lis '<=) <=)
+      ((operator? lis '>=) >=)
+      ((operator? lis '&&) (lambda (op1 op2) (and op1 op2)))
+      ((operator? lis '||) (lambda (op1 op2) (or op1 op2)))
+      ((operator? lis '! ) (lambda (op1)     (not op1)))
 
       ; Operator not recognized
       (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
@@ -60,8 +59,8 @@
 (define 1_op_switch
   (lambda (lis)
     (cond
-      ((operator? lis '- 1-operand) (lambda (op1) (* -1 op1)))
-      ((operator? lis '! 1-operand) (lambda (op1) (not op1))))))
+      ((operator? lis '-) (lambda (op1) (* -1 op1)))
+      ((operator? lis '!) (lambda (op1) (not op1))))))
 
 ;; Function:    (mvalue lis s)
 ;; Parameters:  lis is list representing the parse tree
