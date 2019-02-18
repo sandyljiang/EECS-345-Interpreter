@@ -32,93 +32,72 @@
   (lambda (statement operator)
     (eq? (statement-op statement) operator)))
 
-;; Function:    (2_op_switch lis)
-;; Parameters:  lis is the list that represents the parse tree. Must contain an operator
+;; Function:    (2_op_switch expr)
+;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
 ;;                as the first element, then two operands as the subsequent elemnts.
 ;; Description: Returns the correct function to use for the given operation.
 (define 2_op_switch
-  (lambda (lis)
+  (lambda (expr)
     (cond
-      ((operator? lis '+) +)
-      ((operator? lis '-) -)
-      ((operator? lis '*) *)
-      ((operator? lis '/) quotient)
-      ((operator? lis '%) remainder)
+      ;; cases with arithmetic operators
+      ((operator? expr '+) +)
+      ((operator? expr '-) -)
+      ((operator? expr '*) *)
+      ((operator? expr '/) quotient)
+      ((operator? expr '%) remainder)
 
       ; Cases with comparison operators
-      ((operator? lis '==) eq?)
-      ((operator? lis '!=) (lambda (op1 op2) (not (eq? op1 op2))))
-      ((operator? lis '< ) <)
-      ((operator? lis '> ) >)
-      ((operator? lis '<=) <=)
-      ((operator? lis '>=) >=)
-      ((operator? lis '&&) (lambda (op1 op2) (and op1 op2)))
-      ((operator? lis '||) (lambda (op1 op2) (or op1 op2)))
+      ((operator? expr '==) eq?)
+      ((operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
+      ((operator? expr '< ) <)
+      ((operator? expr '> ) >)
+      ((operator? expr '<=) <=)
+      ((operator? expr '>=) >=)
+      ((operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
+      ((operator? expr '||) (lambda (op1 op2) (or op1 op2)))
 
       ; Operator not recognized
-      (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
+      (else (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
-;; Function:    (1_op_switch lis)
-;; Parameters:  lis is the list that represents the parse tree. Must contain an operator
+;; Function:    (1_op_switch expr)
+;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
 ;;                as the first element, then one operands as the subsequent elemnt.
 ;; Description: Returns the correct function to use for the given operation.
 (define 1_op_switch
-  (lambda (lis)
+  (lambda (expr)
     (cond
-      ((operator? lis '-) (lambda (op1) (* -1 op1)))
-      ((operator? lis '!) (lambda (op1) (not op1)))
-      (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
+      ((operator? expr '-) (lambda (op1) (* -1 op1)))
+      ((operator? expr '!) (lambda (op1) (not op1)))
+      (else (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
-;; Function:    (mvalue lis s)
-;; Parameters:  lis is list representing the parse tree
+;; Function:    (mvalue expr state)
+;; Parameters:  expr is list representing the parse tree
 ;;              s is the list representing state, which contains the name-value bindings
 ;; Description: Evaluates the given expression using the given state.
 (define mvalue
-  (lambda (lis s)
+  (lambda (expr state)
     (cond
-      ((null? lis) (error "Error: Evaluating null statement"))
+      ((null? expr) (error "Error: Evaluating null statement"))
 
       ; Base cases
-      ((number? lis)     lis)
-      ((eq? lis 'true)   #t)
-      ((eq? lis 'false)  #f)
-      ((not (list? lis)) (find lis s))
+      ((number? expr)
+        expr)
 
-      ((eq? (length lis) 1-operand) ((lambda (func) (func (mvalue (operand1 lis) s))) (1_op_switch lis)))
-      ((eq? (length lis) 2-operand) ((lambda (func) (func (mvalue (operand1 lis) s) (mvalue (operand2 lis) s))) (2_op_switch lis)))
+      ((eq? expr 'true)
+        #t)
 
-      (else (error "Error: Executing invalid expression.\nExpression: " lis)))))
+      ((eq? expr 'false)
+        #f)
 
-;; Function:    (mvalue* lis s)
-;; Parameters:  lis is list representing the parse tree
-;;              s is the list representing state, which contains the name-value bindings
-;; Description: Evaluates the given expression using the given state. Calls a version of
-;;              mvalue that uses continuation passing style.
-(define mvalue*
-  (lambda (lis s)
-    (mvalue-cps lis s (lambda (v) v))))
+      ((not (list? expr)) ; if the expression is a variable, lookup the variable
+        (find expr state))
 
-;; Function:    (mvalue-cps lis s return)
-;; Parameters:  lis is the list representing the parse tree
-;;              s is the list representing state, which contains name-value bindings.
-;;              return is the function handle to use to return the value
-;; Description: Evaluates the given exxpression using the given state. Uses continuation
-;;              passing style.
-(define mvalue-cps
-  (lambda (lis s return)
-    (cond
-      ((null? lis) (error "Error: Evaluating null statement"))
+      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
+        ((lambda (func) (func (mvalue (operand1 expr) state))) (1_op_switch expr)))
 
-      ; Base Cases
-     ((number? lis) (return lis))
-     ((eq? lis 'true) (return #t))
-     ((eq? lis 'false)  (return #f))
-     ((not (list? lis)) (return (find lis s)))
+      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
+        ((lambda (func) (func (mvalue (operand1 expr) state) (mvalue (operand2 expr) state)))
+         (2_op_switch expr)))
 
-     ; Cases with operators
-     ((eq? (length lis) 1-operand) ((lambda (func) (mvalue-cps (operand1 lis) s (lambda (v) (return (func v))))) (1_op_switch lis)))
-     ((eq? (length lis) 2-operand) ((lambda (operator) (mvalue-cps (operand1 lis)
-                                                                   s
-                                                                   (lambda (v1) (mvalue-cps (operand2 lis)
-                                                                                            s
-                                                                                            (lambda (v2) (return (operator v1 v2))))))) (2_op_switch lis))))))
+      (else
+        (error "Error: Executing invalid expression.\nExpression: " expr)))))
