@@ -58,13 +58,13 @@
   (lambda (name state)
     (cond
       ((invalid-state? state)
-        (error "Error: Invalid state given " state))
+        (error "Error: Invalid state given.\nState: " state))
 
       ((null-state? state)
-        (error "Error: Variable not defined " name))
+        (error "Error: Variable not declared.\nVariable: " name))
 
       ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
-        (error "Error: Using variable before definition: " name))
+        (error "Error: Using variable before definition.\nVariable: " name))
 
       ((eq? (current-name state) name)
         (current-value state))
