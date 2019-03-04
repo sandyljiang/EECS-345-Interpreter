@@ -24,9 +24,13 @@
 
 ;; define the length of each statement
 (define return-len 2)
+(define break-len 1)
+(define throw-len 2)
+(define continue-len 1)
 (define declare-len 2)
 (define declare-assign-len 3)
 (define assign-len 3)
+(define begin-len 2)
 (define if-len 3)
 (define if-else-len 4)
 (define while-len 3)
@@ -300,6 +304,10 @@
       ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
       ((operator? ptree 'if if-len)              if-statement) ; ptree == ((if cond body) ...)
       ((operator? ptree 'if if-else-len)         if-else-statement) ; ptree == ((if cond body else-body) ...)
+      ((operator? ptree 'break break-len)        break-statement)
+      ((operator? ptree 'throw throw-len)        throw-statement)
+      ((operator? ptree 'continue continue-len)  continue-statement)
+      ((operator? ptree 'begin begin-len)        begin-statement)
       (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
 
 ;; Function:    (mstate ptree state)
