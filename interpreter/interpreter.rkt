@@ -22,4 +22,8 @@
      ;; interpret the code and get the return value
      (find return-var
            (mstate (parser filename)
-                   initial-state)))))
+                   initial-state
+                   (lambda (v) v)
+                   (lambda (v) v)
+                   (lambda (v) (error v))
+                   (lambda (v) v))))))

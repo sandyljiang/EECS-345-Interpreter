@@ -166,11 +166,15 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (declare-statement ptree state)
-;; Parameters:  ptree parse tree in the format ((var var-name) ...)
-;;              state binding list in the form defined in state.rkt
+;; Parameters:  ptree    - parse tree in the format ((var var-name) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
 ;; Description: adds a new undefined variable variable to the state
 (define declare-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     (add (var-name ptree) undefined-var state)))
 
 ;;;; *********************************************************************************************************
@@ -178,11 +182,15 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (declare-assign-statement ptree state)
-;; Parameters:  ptree parse tree in the format ((var var-name var-value) ...)
-;;              state binding list in the form defined in state.rkt
+;; Parameters:  ptree    - parse tree in the format ((var var-name var-value) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
 ;; Description: adds a new variable to the state and assigns it the specified value from the parse tree
 (define declare-assign-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     ;; extract the name and value from the ptree and add the to the state
     (add (var-name ptree)
          (mvalue (var-value ptree) state)
@@ -193,11 +201,15 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (assign-statement ptree state)
-;; Parameters:  ptree parse tree in the format ((= var-name var-value) ...)
-;;              state binding list in the form defined in state.rkt
+;; Parameters:  ptree    - parse tree in the format ((= var-name var-value) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
 ;; Description: changes the value of the specifed variable in the parse tree to the new value
 (define assign-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     ;; extract the name of the variable name and pass it into the following function
     ((lambda (name)
       ;; make sure the variable has been declared
@@ -231,16 +243,20 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (if-statement ptree state)
-;; Parameters:  ptree parse tree in the format ((if if_cond if_body) ...)
-;;              state binding list in the form defined in state.rkt
+;; Parameters:  ptree    - parse tree in the format ((if if_cond if_body) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
 ;; Description: calculate the new state after evaluating the if statement at the beginning of the parse tree
 ;; Note:        that this function is used when the else-body is NOT included
 (define if-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     ;; evaluate the if statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) state))
+        ((eq? condition #t) (mstate (list (if-body ptree)) state return break throw continue))
         ((eq? condition #f) state) ; condition was false, so don't change the state
         (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
                             condition))))
@@ -251,18 +267,22 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (if-else-statement ptree state)
-;; Parameters:  ptree parse tree in the format ((if if_cond if_body else_body) ...)
-;;              state binding list in the form defined in state.rkt
+;; Parameters:  ptree    - parse tree in the format ((if if_cond if_body else_body) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
 ;; Description: Calculate the new state after evaluating the
 ;;              if/else statement at the beginning of the parse tree
 ;; Note:        This function is used when the else-body IS included
 (define if-else-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     ;; evaluate the if/else statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) state)) ; cond true, so evaluate the if-body
-        ((eq? condition #f) (mstate (list (else-body ptree)) state)) ; cond false, so evaluate the else body
+        ((eq? condition #t) (mstate (list (if-body ptree)) state return break throw continue)) ; cond true, so evaluate the if-body
+        ((eq? condition #f) (mstate (list (else-body ptree)) state return break throw continue)) ; cond false, so evaluate the else body
         (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
                                    condition))))
      (mvalue (if-cond ptree) state))))
@@ -271,13 +291,13 @@
 ;;;; while operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (while-statement ptree state)
+;; Function:    (while-statement ptree state return break throw continue)
 ;; Parameters:  ptree parse tree in the format ((while while-cond while-body) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: calculate the new state after evaluating the while
 ;;              statement at the beginning of the parse tree
 (define while-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (condition)
       (cond
@@ -310,13 +330,13 @@
       ((operator? ptree 'begin begin-len)        begin-statement)
       (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
 
-;; Function:    (mstate ptree state)
+;; Function:    (mstate ptree state return break throw continue)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: Performs the the operations in the parse tree based on the state to return the new state
 (define mstate
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     (if (null? ptree)
         state
-        ((lambda (func) (mstate (next-statement ptree) (func ptree state)))
+        ((lambda (func) (mstate (next-statement ptree) (func ptree state return break throw continue) return break throw continue))
          (operator_switch ptree)))))
