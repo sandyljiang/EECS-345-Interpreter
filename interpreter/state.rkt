@@ -13,6 +13,9 @@
 (define undeclared-var 'undeclared)
 (define undefined-var 'undefined)
 
+;;;; *********************************************************************************************************
+;;;; error functions
+;;;; *********************************************************************************************************
 (define undeclared-error
   (lambda (name) (error "Error: Variable not declared.\nVariable: " name)))
 

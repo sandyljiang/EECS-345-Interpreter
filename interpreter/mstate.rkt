@@ -83,6 +83,9 @@
     (and (eq? (statement-op ptree) op)
          (eq? (len (current-statement ptree)) statement-len))))
 
+;;;; *********************************************************************************************************
+;;;; error functions
+;;;; *********************************************************************************************************
 (define multiple-returns-error
   (lambda () (error "Error: Multiple returns")))
 
