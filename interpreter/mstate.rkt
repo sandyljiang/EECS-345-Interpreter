@@ -179,7 +179,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state))
         ((eq? condition #f) state) ; condition was false, so don't change the state
-        (else               (boolean-mismatch-error))))
+        (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -199,7 +199,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state)) ; cond true, so evaluate the if-body
         ((eq? condition #f) (mstate (list (else-body ptree)) state)) ; cond false, so evaluate the else body
-        (else               (boolean-mismatch-error))))
+        (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -218,7 +218,7 @@
       (cond
         ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
-        (else               (boolean-mismatch-error))))
+        (else               (boolean-mismatch-error condition))))
      (mvalue (while-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
