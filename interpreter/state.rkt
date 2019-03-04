@@ -13,6 +13,18 @@
 (define undeclared-var 'undeclared)
 (define undefined-var 'undefined)
 
+(define undeclared-error
+  (lambda (name) (error "Error: Variable not declared.\nVariable: " name)))
+
+(define undefined-error
+  (lambda (name) (error "Error: Using variable before definition.\nVariable: " name)))
+
+(define double-declare-error
+  (lambda (name) (error "Error: Double declaration of variable.\nVariable: " name)))
+
+(define invalid-state-error
+  (lambda (state) (error "Error: Invalid state given.\nState: " state)))
+
 ;;;; *********************************************************************************************************
 ;;;; State format
 ;;;;
@@ -32,32 +44,29 @@
 (define current-layer car)
 (define next-layer cdr)
 
-;; Function:    (null-state? state)
-;; Parameters:  state the binding list to check if it is an empty state
-;; Description: the layer is null if the names and values lists inside it are null
+;; Function:    (null-layer? state)
+;; Parameters:  state the binding list to check if the top layer is empty
+;; Description: the top layer is null if the names and values lists inside it are null
 ;;              ie layer == '(() ())
 (define null-layer?
   (lambda (state)
     (and (null? (names state)) (null? (values state)))))
 
+;; Function:    (null-state? state)
+;; Parameters:  state the binding list to check if it is an empty state
+;; Description: the state is null if all layers are empty or there are no layers
 (define null-state?
   (lambda (state)
     (cond
-      ((null? state)
-        #t
-      )
-      ((null-layer? state)
-        (null-state? (next-layer state))
-      )
-      (else
-        #f
-      )
-    )
-  )
-)
+      ((null? state) ; all layers in state were empty
+        #t)
+      ((null-layer? state) ; top layer is empty, so check the next one
+        (null-state? (next-layer state)))
+      (else ; layer/state was not empty
+        #f))))
 
 ;; Function:    (invalid-state? state)
-;; Parameters:  state the binding list to check if valid
+;; Parameters:  state the binding list to check if top layer is valid
 ;; Description: the state is invalid if either names or values are null and the other is not
 (define invalid-layer?
   (lambda (state)
@@ -67,102 +76,97 @@
 ;; Function:    (next-state state)
 ;; Parameters:  state the binding list to find the next state from
 ;; Description: Effectively like calling cdr for the binding list.
-;;              takes the cdrs of the names and values and creates a new binding list using those lists
+;;              removes the first name and value from the list and returns the result
 (define next-state
   (lambda (state)
     (cons (cons (next-names state)
                 (list (next-values state)))
           (next-layer state))))
 
+;; Function:    (push-layer state)
+;; Parameters:  state the binding list to add a new empty layer to
+;; Description: Adds a new empty layer to the state
 (define push-layer
   (lambda (state)
-    (cons null-layer state)
-  )
-)
+    (cons null-layer state)))
 
+;; Function:    (remove-top-layer state)
+;; Parameters:  state the binding list to remove the top layer from
+;; Description: Removes the top layer in the state
 (define remove-top-layer
   (lambda (state)
-    (next-layer state)
-  )
-)
+    (next-layer state)))
 
-;; Function:    (find name state)
+;; Function:    (find-box name state)
 ;; Parameters:  name  the name of the variable to find in the state
 ;;              state the binding list to search
-;; Description: Searches the state for the name and returns the associated value
+;; Description: Searches the state for the name and returns a box with the associated value
 (define find-box
   (lambda (name state)
     (cond
-      ((null-state? state)
+      ((null-state? state) ; reached an empty state, so the variable does not exist
         undeclared-var)
 
-      ((invalid-layer? state)
-        (error "Error: Invalid state given.\nState: " state))
+      ((invalid-layer? state) ; state is corrupt
+        (invalid-state-error state))
 
-      ((null-layer? state)
+      ((null-layer? state) ; variable was not in this layer, so check the next
         (find-box name (next-layer state)))
 
-      ((eq? (current-name state) name)
+      ((eq? (current-name state) name) ; found the variable
         (current-value state))
 
-      (else
+      (else ; recurse on the state without the current name and value
         (find-box name (next-state state))))))
 
+;; Function:    (find name state)
+;; Parameters:  name  the name of the variable to find in the state
+;; Description: Searches the state for the name and returns the associated value
+;; Note:        The function throws an error is the variable was not found or is undefined
 (define find
   (lambda (name state)
     (unbox ((lambda (box-found)
               (cond
                 ((eq? box-found undeclared-var)
-                  (error "Error: Variable not declared.\nVariable: " name))
+                  (undeclared-error name))
                 ((eq? (unbox box-found) undefined-var)
-                  (error "Error: Using variable before definition.\nVariable: " name))
+                  (undefined-error name))
                 (else
-                  box-found)
-              )
-            )
-            (find-box name state)
-           )
-    )
-  )
-)
+                  box-found)))
+            (find-box name state)))))
 
 ;; Function:    (add name value state)
 ;; Parameters:  name  the name of the variable to add to the state
 ;;              value the value to associate with the name
 ;;              state the binding list to add the name/value pair to
-;; Description: Adds a new name/value pair to the state.
+;; Description: Adds a new name/value pair to the top layer of the state.
 ;; Note:        This function throws an error if the value it is adding already exists in the state
 (define add
   (lambda (name value state)
     (if (exists-in-top-layer? name state)
-      (error "Error: Double declaration of variable.\nVariable: " name)
+      (double-declare-error name)
       (cons (cons (cons name (names state))
                   (list (cons (box value) (values state))))
             (next-layer state)))))
 
+;; Function:    (exists-in-top-layer? name state)
+;; Parameters:  name  the name of the variable to check if it is in the top
+;;                    layer of the state
+;;              state the binding list to check for the name in the top layer
+;; Description: Checks if a variable exists in the top layer of the state.
+;;              returns #t if it does, #f otherwise
 (define exists-in-top-layer?
   (lambda (name state)
     (cond
-      ((null-state? state)
-        #f
-      )
-      ((null-layer? state)
-        #f
-      )
-      ((eq? name (current-name state))
-        #t
-      )
-      (else
-        (exists-in-top-layer? name (next-state state))
-      )
-    )
-  )
-)
+      ((null-state? state)             #f)
+      ((null-layer? state)             #f)
+      ((eq? name (current-name state)) #t)
+      (else                            (exists-in-top-layer? name (next-state state))))))
 
 ;; Function:    (exists? name state)
-;; Parameters:  name is the name of the binding to check for
+;; Parameters:  name  is the name of the binding to check for
 ;;              state is the binding list
-;; Description: Checks if a binding with the given name exists.
+;; Description: Checks if a binding with the given name exists anywhere in the state.
 ;;              Returns #t if it does, #f if not
 (define exists?
   (lambda (name state)
@@ -179,17 +183,11 @@
 ;;              state     the binding list to change the value in
 ;; Description: Changes a variable in the state to a have a new value.
 ;; Note:        This function does not change the state if name is not in the state
+;; Note:        The variable changed is the one in the highest layer in the state
 (define change-value
   (lambda (name new-value state)
     ((lambda (box-found)
        (cond
-         ((eq? box-found undeclared-var)
-           state)
-         (else
-           (begin (set-box! box-found new-value) state))
-       )
-     )
-     (find-box name state)
-     )
-  )
-)
+         ((eq? box-found undeclared-var) state)
+         (else                           (begin (set-box! box-found new-value) state))))
+     (find-box name state))))

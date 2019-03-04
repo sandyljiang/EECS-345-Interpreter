@@ -1,6 +1,10 @@
 #lang racket
 (provide mstate)
 (provide return-var)
+(provide multiple-returns-error)
+(provide assign-error)
+(provide boolean-mismatch-error)
+(provide undefined-op-error)
 (require "state.rkt")
 (require "mvalue.rkt")
 (require "helper.rkt")
@@ -79,6 +83,19 @@
     (and (eq? (statement-op ptree) op)
          (eq? (len (current-statement ptree)) statement-len))))
 
+(define multiple-returns-error
+  (lambda () (error "Error: Multiple returns")))
+
+(define assign-error
+  (lambda (name) (error "Error: assigning value before declaration\nVariable: " name)))
+
+(define boolean-mismatch-error
+  (lambda (condition) (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
+                             condition)))
+
+(define undefined-op-error
+  (lambda (ptree) (error "Error: Undefined operation.\nParse tree: " ptree)))
+
 ;;;; *********************************************************************************************************
 ;;;; return operator
 ;;;; *********************************************************************************************************
@@ -93,7 +110,7 @@
     ;; make sure the return variable doesn't exist
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
-      (error "Error: Multiple returns")
+      (multiple-returns-error)
       (add return-var (mvalue (return-expr ptree) state) state)))) ; return a new state with the return value
 
 ;;;; *********************************************************************************************************
@@ -140,7 +157,7 @@
         (change-value name
                 (mvalue (var-value ptree) state)
                 state)
-        (error "Error: assigning value before declaration\nVariable: " name)))
+        (assign-error name)))
      (var-name ptree))))
 
 ;;;; *********************************************************************************************************
@@ -159,8 +176,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state))
         ((eq? condition #f) state) ; condition was false, so don't change the state
-        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                            condition))))
+        (else               (boolean-mismatch-error))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -180,8 +196,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state)) ; cond true, so evaluate the if-body
         ((eq? condition #f) (mstate (list (else-body ptree)) state)) ; cond false, so evaluate the else body
-        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                                   condition))))
+        (else               (boolean-mismatch-error))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -200,8 +215,7 @@
       (cond
         ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
-        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                            condition))))
+        (else               (boolean-mismatch-error))))
      (mvalue (while-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -221,7 +235,7 @@
       ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
       ((operator? ptree 'if if-len)              if-statement) ; ptree == ((if cond body) ...)
       ((operator? ptree 'if if-else-len)         if-else-statement) ; ptree == ((if cond body else-body) ...)
-      (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
+      (else                                      (undefined-op-error ptree)))))
 
 ;; Function:    (mstate ptree state)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)

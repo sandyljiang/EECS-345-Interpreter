@@ -26,26 +26,83 @@
     )
 )
 
-(define test11
-    (lambda ()
-        (display (interpret "test_cases/test11")) (display " = ") (newline)
-    )
-)
-
 (define test12
     (lambda ()
-        (display (interpret "test_cases/test12")) (display " = ") (newline)
+        (display (interpret "test_cases/test12")) (display " = Variable not declared") (newline)
     )
 )
 
 (define test13
     (lambda ()
-        (display (interpret "test_cases/test13")) (display " = ") (newline)
+        (display (interpret "test_cases/test13")) (display " = Using variable before definition") (newline)
     )
 )
 
 (define test14
     (lambda ()
-        (display (interpret "test_cases/test14")) (display " = ") (newline)
+        (display (interpret "test_cases/test14")) (display " = Double declaration of variable") (newline)
     )
 )
+
+(define error_test_case
+    (lambda (result expected)
+        (newline)
+        (display "error test case")
+        (newline)
+        (with-handlers ((exn:fail? (lambda (e) (display e)))) (result))
+        (newline)
+        (display " = ")
+        (newline)
+        (with-handlers ((exn:fail? (lambda (e) (display e)))) (expected))
+        (newline)
+        (newline)
+    )
+)
+
+(define test_case
+  (lambda (result expected)
+    ;; <<result == expected>> <= <<result>> = <<expected>>\n
+    (display (equal? result expected)) (display " <= ") (display result) (display " = ") (display expected) (newline)
+  )
+)
+
+(newline)
+
+(error_test_case (lambda () (interpret "test_cases/test11")) (lambda () (assign-error 'y)))
+(error_test_case (lambda () (interpret "test_cases/test12")) (lambda () (undeclared-error 'x)))
+(error_test_case (lambda () (interpret "test_cases/test13")) (lambda () (undefined-error 'x)))
+(error_test_case (lambda () (interpret "test_cases/test14")) (lambda () (double-declare-error 'x)))
+
+(test_case (interpret "test_cases/test1")
+           150)
+(test_case (interpret "test_cases/test2")
+           -4)
+(test_case (interpret "test_cases/test3")
+           10)
+(test_case (interpret "test_cases/test4")
+           16)
+(test_case (interpret "test_cases/test5")
+           220)
+(test_case (interpret "test_cases/test6")
+           5)
+(test_case (interpret "test_cases/test7")
+           6)
+(test_case (interpret "test_cases/test8")
+           10)
+(test_case (interpret "test_cases/test9")
+           5)
+(test_case (interpret "test_cases/test10")
+           -39)
+(test_case (interpret "test_cases/test15")
+           'true)
+(test_case (interpret "test_cases/test16")
+           100)
+(test_case (interpret "test_cases/test17")
+           'false)
+(test_case (interpret "test_cases/test18")
+           'true)
+(test_case (interpret "test_cases/test19")
+           128)
+(test_case (interpret "test_cases/test20")
+           12)
+
