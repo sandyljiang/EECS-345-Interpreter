@@ -134,7 +134,7 @@
 ;; Note:        This function throws an error if the value it is adding already exists in the state
 (define add
   (lambda (name value state)
-    (if (exists? name state)
+    (if (exists-in-top-layer? name state)
       (error "Error: Double declaration of variable.\nVariable: " name)
       (cons (cons (cons name (names state))
                   (list (cons (box value) (values state))))
