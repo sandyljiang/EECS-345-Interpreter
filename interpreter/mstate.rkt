@@ -47,6 +47,9 @@
 ;; expression for return operator
 (define return-expr cadar)
 
+;; expression for throw operator
+(define throw-expr cadar)
+
 ;; name of variable being declared/assigned
 (define var-name cadar)
 
@@ -83,18 +86,73 @@
 ;;;; return operator
 ;;;; *********************************************************************************************************
 
-;; Function:    (return-statement ptree state)
-;; Parameters:  ptree parse tree in the format ((return return-expr) ...)
-;;              state binding list in the form defined in state.rkt
+;; Function:    (return-statement ptree state break throw continue)
+;; Parameters:  ptree    - parse tree in the format ((return return-expr) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - the return continuation to call in this function
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
 ;; Description: adds a variable with the name in return-var to the state with the value of the
-;;              return expression
+;;              return expression. If one already exists, previous value is overwritten (For cases where
+;;              return is in a finally block).
 (define return-statement
-  (lambda (ptree state)
+  (lambda (ptree state return break throw continue)
     ;; make sure the return variable doesn't exist
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
-      (error "Error: Multiple returns")
-      (add return-var (mvalue (return-expr ptree) state) state)))) ; return a new state with the return value
+      (return (change-value return-var (mvalue (return-expr ptree) state) state)) ; return a new state with the return value changed
+      (return (add          return-var (mvalue (return-expr ptree) state) state))))) ; return a new state with the return value added.
+
+;;;; *********************************************************************************************************
+;;; break operator
+;;;; *********************************************************************************************************
+
+;; Function:    (break-statement ptree state return break throw continue)
+;; Parameters:  ptree    - parse tree in the format ((break) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - the break continuation to call in this function
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: Calls the break continuation and passes the given state as an argument.
+;;              Used to break out of execution of a loop.
+(define break-statement
+  (lambda (ptree state return break throw continue)
+    (break state)))
+
+;;;; *********************************************************************************************************
+;;; continue operator
+;;;; *********************************************************************************************************
+
+;; Function:    (continue-statement ptree state return break throw continue)
+;; Parameters:  ptree    - parse tree in the format ((continue) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - the continue continuation to call in this function
+;; Description: Calls the continue continuation and passes the given state as an argument.
+;;              Used to return to the condition of a loop.
+(define continue-statement
+  (lambda (ptree state return break throw continue)
+    (continue state)))
+
+;;;; *********************************************************************************************************
+;;;; throw operator
+;;;; *********************************************************************************************************
+
+;; Function:    (throw-statement ptree state break throw continue)
+;; Parameters:  ptree    - parse tree in the format ((return return-expr) ...)
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - the throw continuation to call in this function
+;;              continue - a continue continuation
+;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
+(define throw-statement
+  (lambda (ptree state return break throw continue)
+    (throw (mvalue (throw-expr ptree) state))))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
