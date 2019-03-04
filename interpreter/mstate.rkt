@@ -50,6 +50,9 @@
 ;; expression for throw operator
 (define throw-expr cadar)
 
+;; expression for statement list in begin block
+(define stmt-list cdr)
+
 ;; name of variable being declared/assigned
 (define var-name cadar)
 
@@ -200,6 +203,24 @@
                 state)
         (error "Error: assigning value before declaration\nVariable: " name)))
      (var-name ptree))))
+
+;;;; *********************************************************************************************************
+;;;; block/begin function
+;;;; *********************************************************************************************************
+
+;; Function:    (begin-statement ptree state return break throw continue)
+;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...) )
+;;              state    - state binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: Creates a "code block" of statements where a new layer is added to the state for locally scoped
+;;              variables and bindings are added, but not visible outside of the block
+(define begin-statement
+  (lambda (ptree state return break throw continue)
+    (remove-top-layer
+      (mstate (stmt-list ptree) (push-layer state) return break throw continue))))
 
 ;;;; *********************************************************************************************************
 ;;;; if operator
