@@ -10,8 +10,6 @@
 ;;;; Interpreter Part 1
 ;;;; *********************************************************************************************************
 
-(define initial-state '(() ()))
-
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename)

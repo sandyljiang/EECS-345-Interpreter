@@ -8,6 +8,11 @@
 ;;;; State handling functions
 ;;;; *********************************************************************************************************
 
+(define null-layer '(() ()))
+(define initial-state (list null-layer))
+(define undeclared-var 'undeclared)
+(define undefined-var 'undefined)
+
 ;;;; *********************************************************************************************************
 ;;;; State format
 ;;;;
@@ -18,25 +23,43 @@
 ;;;; the (value1 value2 ...) sublist is the values list
 ;;;; *********************************************************************************************************
 
-(define names car)
-(define values cadr)
-(define current-name caar)
-(define current-value caadr)
-(define next-names cdar)
-(define next-values cdadr)
+(define names caar)
+(define values cadar)
+(define current-name caaar)
+(define current-value caadar)
+(define next-names cdaar)
+(define next-values cdadar)
+(define current-layer car)
+(define next-layer cdr)
 
 ;; Function:    (null-state? state)
 ;; Parameters:  state the binding list to check if it is an empty state
-;; Description: the state is invalid if the names and values lists inside it are null
-;;              ie state == '(() ())
-(define null-state?
+;; Description: the layer is null if the names and values lists inside it are null
+;;              ie layer == '(() ())
+(define null-layer?
   (lambda (state)
     (and (null? (names state)) (null? (values state)))))
+
+(define null-state?
+  (lambda (state)
+    (cond
+      ((null? state)
+        #t
+      )
+      ((null-layer? state)
+        (null-state? (next-layer state))
+      )
+      (else
+        #f
+      )
+    )
+  )
+)
 
 ;; Function:    (invalid-state? state)
 ;; Parameters:  state the binding list to check if valid
 ;; Description: the state is invalid if either names or values are null and the other is not
-(define invalid-state?
+(define invalid-layer?
   (lambda (state)
     (or (and (null? (names state)) (not (null? (values state))))
         (and (not (null? (names state))) (null? (values state))))))
@@ -47,30 +70,61 @@
 ;;              takes the cdrs of the names and values and creates a new binding list using those lists
 (define next-state
   (lambda (state)
-    (cons (next-names state)
-          (list (next-values state)))))
+    (cons (cons (next-names state)
+                (list (next-values state)))
+          (next-layer state))))
+
+(define push-layer
+  (lambda (state)
+    (cons null-layer state)
+  )
+)
+
+(define remove-top-layer
+  (lambda (state)
+    (next-layer state)
+  )
+)
 
 ;; Function:    (find name state)
-;; Parameters:  name  the name of the variable to find int he state
+;; Parameters:  name  the name of the variable to find in the state
 ;;              state the binding list to search
 ;; Description: Searches the state for the name and returns the associated value
-(define find
+(define find-box
   (lambda (name state)
     (cond
-      ((invalid-state? state)
+      ((null-state? state)
+        undeclared-var)
+
+      ((invalid-layer? state)
         (error "Error: Invalid state given.\nState: " state))
 
-      ((null-state? state)
-        (error "Error: Variable not declared.\nVariable: " name))
-
-      ((and (eq? (current-name state) name) (eq? (current-value state) 'undefined))
-        (error "Error: Using variable before definition.\nVariable: " name))
+      ((null-layer? state)
+        (find-box name (next-layer state)))
 
       ((eq? (current-name state) name)
         (current-value state))
 
       (else
-        (find name (next-state state))))))
+        (find-box name (next-state state))))))
+
+(define find
+  (lambda (name state)
+    (unbox ((lambda (box-found)
+              (cond
+                ((eq? box-found undeclared-var)
+                  (error "Error: Variable not declared.\nVariable: " name))
+                ((eq? (unbox box-found) undefined-var)
+                  (error "Error: Using variable before definition.\nVariable: " name))
+                (else
+                  box-found)
+              )
+            )
+            (find-box name state)
+           )
+    )
+  )
+)
 
 ;; Function:    (add name value state)
 ;; Parameters:  name  the name of the variable to add to the state
@@ -82,42 +136,28 @@
   (lambda (name value state)
     (if (exists? name state)
       (error "Error: Double declaration of variable.\nVariable: " name)
-      (cons (cons name (names state))
-            (list (cons value (values state)))))))
+      (cons (cons (cons name (names state))
+                  (list (cons (box value) (values state))))
+            (next-layer state)))))
 
-;; Function:    (remove-acc name front state)
-;; Parameters:  name     is the name of the binding to remove
-;;              front is the accumulator of the bindings list
-;;              state   is the bindings list
-;; Description: Helper function for function (remove ...) that uses an accumulator to
-;;              implement efficient removal of given atom name from the given bindings list.
-(define remove-acc
-  (lambda (name front state)
-    (cond
-      ((invalid-state? state)
-       (error "Error in Remove: Name and value binding mismatch\nState: " state)) ; Raise Error
-
-      ((null-state? state) ; Both name and value lists null
-       front)
-
-      ((eq? name (current-name state))                      ; Found Element to remove
-       (cons (append (names front) (next-names state))
-             (list (append (values front) (next-values state))))) ; remove element
-
-      (else                                           ; Recurse onto rest of list
-       (remove-acc name
-                   (cons (append (names front) (list (current-name state)))
-                         (list (append (values front) (list (current-value state)))))
-                   (cons (next-names state) (list (next-values state))))))))
-
-;; Function:    (remove name state)
-;; Parameters:  name is the name of the binding to remove
-;;              state is the binding list
-;; Description: Removes given name/atom from the given bindings list.
-;;              Removes both the name and bound value.
-(define remove
+(define exists-in-top-layer?
   (lambda (name state)
-    (remove-acc name '(() ()) state)))
+    (cond
+      ((null-state? state)
+        #f
+      )
+      ((null-layer? state)
+        #f
+      )
+      ((eq? name (current-name state))
+        #t
+      )
+      (else
+        (exists-in-top-layer? name (next-state state))
+      )
+    )
+  )
+)
 
 ;; Function:    (exists? name state)
 ;; Parameters:  name is the name of the binding to check for
@@ -127,9 +167,11 @@
 (define exists?
   (lambda (name state)
     (cond
-      ((null-state? state)             #f)
-      ((eq? name (current-name state)) #t)
-      (else                            (exists? name (next-state state))))))
+      ((null-state? state)               #f)
+      ((exists-in-top-layer? name state) #t)
+      (else                              (exists? name (next-layer state))))))
+
+
 
 ;; Function:    (change-value name new-value state)
 ;; Parameters:  name      the name of the variable to change in the state
@@ -139,4 +181,15 @@
 ;; Note:        This function does not change the state if name is not in the state
 (define change-value
   (lambda (name new-value state)
-    (add name new-value (remove name state))))
+    ((lambda (box-found)
+       (cond
+         ((eq? box-found undeclared-var)
+           state)
+         (else
+           (begin (set-box! box-found new-value) state))
+       )
+     )
+     (find-box name state)
+     )
+  )
+)
