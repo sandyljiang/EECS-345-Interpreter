@@ -154,7 +154,7 @@
 ;;              Used to break out of execution of a loop.
 (define break-statement
   (lambda (ptree state return break throw continue)
-    (break (remove-top-layer state))))
+    (break state)))
 
 ;;;; *********************************************************************************************************
 ;;; continue operator
@@ -171,7 +171,7 @@
 ;;              Used to return to the condition of a loop.
 (define continue-statement
   (lambda (ptree state return break throw continue)
-    (continue (remove-top-layer state))))
+    (continue state)))
 
 ;;;; *********************************************************************************************************
 ;;;; throw operator
@@ -264,7 +264,12 @@
 (define begin-statement
   (lambda (ptree state return break throw continue)
     (remove-top-layer
-      (mstate (stmt-list ptree) (push-layer state) return break throw continue))))
+      (mstate (stmt-list ptree)
+              (push-layer state)
+              return
+              (lambda (v) (break (remove-top-layer v)))
+              (lambda (v) (throw (remove-top-layer v)))
+              (lambda (v) (continue (remove-top-layer v)))))))
 
 ;;;; *********************************************************************************************************
 ;;;; if operator
