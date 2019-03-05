@@ -21,9 +21,18 @@
         (else       v)))
      ;; interpret the code and get the return value
      (find return-var
+       (call/cc
+         (lambda (return)
            (mstate (parser filename)
                    initial-state
-                   (lambda (v) v)
-                   (lambda (v) (error "Usage of break outside of loop."))
-                   (lambda (v) (error v))
-                   (lambda (v) (error "Usage of continue outside of a loop.")))))))
+                   return
+                   (lambda (v) (error "break"))
+                   (lambda (v) (error "throw"))
+                   (lambda (v) (error "continue"))
+           )
+         )
+       )
+     )
+    )
+  )
+)
