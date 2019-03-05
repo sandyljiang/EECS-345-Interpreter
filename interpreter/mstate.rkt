@@ -330,11 +330,11 @@
 ;; Description: Returns the state that is given to the finally block after we do trycatch
 
 (define catch_state
-  (lambda (try_state catch_statement state return break throw continue)
+  (lambda (try_state catch-block state return break throw continue)
     (cond
       ((list? try_state) try_state)
-      ((null? catch_statement) (error 'throwstatement try_state))
-      (else (remove-top-layer (mstate (begin-statement catch_statement (mstate (cons (list (cons 'var (return-e catch_statement)) try_state)) (push-layer state)) return break throw continue)))))))
+      ((null? catch-block) (error 'throwstatement try_state))
+      (else (remove-top-layer (mstate (begin-statement catch-block (mstate (cons (list (cons 'var (return-e catch-block)) try_state)) (push-layer state)) return break throw continue)))))))
 
 ;;;; *********************************************************************************************************
 ;;;;  final_state function
