@@ -20,6 +20,9 @@
 ;;;; constants
 ;;;; *********************************************************************************************************
 
+;; define the value for the throw variable before it gets assigned
+(define throw-var 'throw)
+
 ;; define the value for an undeclared variable
 (define undefined-var 'undefined)
 
@@ -184,7 +187,7 @@
 ;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
 (define throw-statement
   (lambda (ptree state return break throw continue)
-    (throw (mvalue (throw-expr ptree) state))))
+    (throw (add throw-var (mvalue (throw-expr ptree)) (push-layer (remove-top-layer state))))))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
