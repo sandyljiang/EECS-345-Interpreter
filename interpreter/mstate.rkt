@@ -330,7 +330,7 @@
 ;; Description: Returns the state that is given to the finally block after we do trycatch
 
 (define catch_state
-  (lambda (try_state catch-block state return break throw continue)
+  (lambda (try_state   state return break throw continue)
     (cond
       ((list? try_state) try_state)
       ((null? catch-block) (error 'throwstatement try_state))
@@ -356,7 +356,7 @@
         (mstate (begin-statement (final-block) state return break throw continue))))
 
 ;;;; *********************************************************************************************************
-;;;; try_statement function
+;;;; try-catch-statement function
 ;;;; *********************************************************************************************************
 
 ;; Function:    (ptree state return break throw continue)
@@ -368,7 +368,7 @@
 ;;              continue - a continue continuation
 ;; Description: Returns the state of the try-catch-finally block
   
-(define try_statement
+(define try-catch-statement
   (lambda (ptree state return break throw continue)
     (final_state (final-block ptree)
                  (catch_state
@@ -415,7 +415,7 @@
       ((operator? ptree 'begin begin-len)        begin-statement)
       ((operator? ptree 'try try-catch-len)      try-catch-statement) ; ptree == ((try block catch block final block) ...)
       (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
-
+  
 ;; Function:    (mstate ptree state return break throw continue)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
 ;;              state binding list in the form defined in state.rkt
