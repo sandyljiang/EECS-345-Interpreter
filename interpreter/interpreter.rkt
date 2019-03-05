@@ -24,6 +24,6 @@
            (mstate (parser filename)
                    initial-state
                    (lambda (v) v)
-                   (lambda (v) (error "Incorrect usage of break. Not overriden by loop code"))
+                   (lambda (v) (error "Usage of break outside of loop."))
                    (lambda (v) (error v))
-                   (lambda (v) (error "Incorrect usage of continue. Not overriden by loop code")))))))
+                   (lambda (v) (error "Usage of continue outside of a loop.")))))))
