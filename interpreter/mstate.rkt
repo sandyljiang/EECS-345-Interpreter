@@ -59,7 +59,7 @@
 (define throw-expr cadar)
 
 ;; expression for statement list in begin block
-(define stmt-list cdr)
+(define stmt-list cdar)
 
 ;; name of variable being declared/assigned
 (define var-name cadar)
@@ -319,7 +319,12 @@
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state return break throw (lambda (s) s)) return break throw continue)) ; evaluate the body again
+        ((eq? condition #t) (while-statement ptree
+                                             (mstate (list (while-body ptree)) state return break throw (lambda (s) s))
+                                             return
+                                             break
+                                             throw
+                                             continue)) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
         (else               (boolean-mismatch-error condition))))
      (mvalue (while-cond ptree) state))))
@@ -356,6 +361,8 @@
     (cond
       ((null? ptree)
         state)
+      ((operator? ptree 'return return-len)
+        (return (return-statement ptree state return break throw continue)))
       ((operator? ptree 'while while-len)
         (mstate (next-statement ptree) (while-statement ptree state return (lambda (s) s) throw continue) return break throw continue))
       (else
