@@ -81,10 +81,12 @@
 
 ;try catch body statement
 (define try-block cadar)
-(define catch-block caddar)
+(define catch-block
+  (lambda (ptree)
+    (cdr (cdr (caddar ptree)))))
 (define final-block
   (lambda (ptree)
-    (car (cdddar ptree))));caddar
+    (cdr (car (cdddar ptree)))));caddar
 (define return-e
    (lambda (ptree)
     (car (cdr (caddar ptree)))))
@@ -346,17 +348,17 @@
   (lambda (ptree state return break throw continue)
     ;; evaluate the try statement based on the block
       (cond
-        ((null? (final-block ptree) state))
+        ((null? (final-block ptree)) state)
         (else (mstate
-               ((list(final-block ptree))
+               ((final-block ptree)
                       (call/cc
                           (lambda (t)
-                              (mstate (list (try-block ptree)) state
-                                                    (lambda (v) (return   (mstate (list(final-block (remove-top-layer v) return break throw continue)))));return
-                                                    (lambda (v) (break    (mstate (list(final-block (remove-top-layer v) return break throw continue))))) ;break
-                                                    (lambda (v) (t        (mstate (list(catch-block (change-value throw-var (return-e ptree) v) return break throw continue))))) ;throw
-                                                    (lambda (v) (continue (mstate ((list(final-block (remove-top-layer v) return break throw continue))))) ;continue
-                                                    )) return break throw continue))))))))
+                              (mstate (try-block ptree) state
+                                                    (lambda (v) (return   (mstate (final-block (remove-top-layer v) return break throw continue))));return
+                                                    (lambda (v) (break    (mstate (final-block (remove-top-layer v) return break throw continue)))) ;break
+                                                    (lambda (v) (t        (mstate (catch-block (change-value throw-var (return-e ptree) v) return break throw continue)))) ;throw
+                                                    (lambda (v) (continue (mstate (final-block (remove-top-layer v) return break throw continue)))) ;continue
+                                                    ))) return break throw continue))))))
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
 ;;;; *********************************************************************************************************
