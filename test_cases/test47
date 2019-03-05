@@ -3,7 +3,13 @@ while (true) {
     {
         var y = 2;
         {
-            break;
+            {
+                {
+                    {
+                        break;
+                    }
+                }
+            }
         }
     }
 }
