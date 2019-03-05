@@ -38,7 +38,7 @@
 (define if-len 3)
 (define if-else-len 4)
 (define while-len 3)
-(define try-catch-len 6)
+(define try-catch-len 4)
 
 ;;;; *********************************************************************************************************
 ;;;; expression/operator location definitions
@@ -85,7 +85,9 @@
 (define final-block
   (lambda (ptree)
     (car (cdddar ptree))));caddar
-(define return-e caadar) ;returns e from catch
+(define return-e
+   (lambda (ptree)
+    (car (cdr (caddar ptree)))))
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
