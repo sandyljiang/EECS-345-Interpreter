@@ -24,7 +24,7 @@
        (call/cc
          (lambda (return)
            (mstate (parser filename)
-                   initial-state
+                   (initial-state)
                    return
                    (lambda (v) (error "break"))
                    (lambda (v) (error "throw"))

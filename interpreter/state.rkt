@@ -1,5 +1,6 @@
 #lang racket
 (provide (all-defined-out))
+(require "helper.rkt")
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
@@ -9,7 +10,7 @@
 ;;;; *********************************************************************************************************
 
 (define null-layer '(() ()))
-(define initial-state (list null-layer))
+(define empty-state (list null-layer))
 (define undeclared-var 'undeclared)
 (define undefined-var 'undefined)
 
@@ -194,3 +195,7 @@
          ((eq? box-found undeclared-var) state)
          (else                           (begin (set-box! box-found new-value) state))))
      (find-box name state))))
+
+(define initial-state
+  (lambda ()
+    (add return-var undefined-var empty-state)))

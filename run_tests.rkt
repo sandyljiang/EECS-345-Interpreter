@@ -32,15 +32,15 @@
 (error_test_case (lambda () (interpret "test_cases/test12")) (lambda () (undeclared-error 'x)))
 (error_test_case (lambda () (interpret "test_cases/test13")) (lambda () (undefined-error 'x)))
 (error_test_case (lambda () (interpret "test_cases/test14")) (lambda () (double-declare-error 'x)))
-(error_test_case (lambda () (interpret "test_cases/test22")) (lambda () (multiple-returns-error)))
+;(error_test_case (lambda () (interpret "test_cases/test22")) (lambda () (multiple-returns-error)))
 (error_test_case (lambda () (interpret "test_cases/test23")) (lambda () (boolean-mismatch-error 5)))
 (error_test_case (lambda () (interpret "test_cases/test24")) (lambda () (boolean-mismatch-error 10)))
-(error_test_case (lambda () (interpret "test_cases/test25")) (lambda () (undeclared-error 'return)))
+(error_test_case (lambda () (interpret "test_cases/test25")) (lambda () (undefined-error 'return)))
 ;; TODO: fix these once you start testing
-;(error_test_case (lambda () (interpret "test_cases/test30")) (lambda () (undefined-op-error 'todo)));
-;(error_test_case (lambda () (interpret "test_cases/test36")) (lambda () (undefined-op-error 'todo)))
-;(error_test_case (lambda () (interpret "test_cases/test37")) (lambda () (undefined-op-error 'todo)))
-;(error_test_case (lambda () (interpret "test_cases/test38")) (lambda () (undefined-op-error 'todo)))
+(error_test_case (lambda () (interpret "test_cases/test30")) (lambda () (undeclared-error 'min)));
+(error_test_case (lambda () (interpret "test_cases/test36")) (lambda () (undeclared-error 'y)))
+(error_test_case (lambda () (interpret "test_cases/test37")) (lambda () (undeclared-error 'a)))
+(error_test_case (lambda () (interpret "test_cases/test38")) (lambda () (undefined-op-error 'todo)))
 ;(error_test_case (lambda () (interpret "test_cases/test44")) (lambda () (undefined-op-error 'todo)))
 
 (test_case (interpret "test_cases/test1")
@@ -105,3 +105,5 @@
            2000400)
 (test_case (interpret "test_cases/test43")
            101)
+(test_case (interpret "test_cases/test45")
+           12)

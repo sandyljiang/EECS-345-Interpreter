@@ -20,9 +20,6 @@
 ;;;; constants
 ;;;; *********************************************************************************************************
 
-;; define the name of the return variable that the interpreter will look for at the end of the program
-(define return-var 'return)
-
 ;; define the value for an undeclared variable
 (define undefined-var 'undefined)
 
@@ -137,7 +134,7 @@
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
       (return (change-value return-var (mvalue (return-expr ptree) state) state)) ; return a new state with the return value changed
-      (return (add          return-var (mvalue (return-expr ptree) state) state))))) ; return a new state with the return value added.
+      (multiple-returns-error))))
 
 ;;;; *********************************************************************************************************
 ;;; break operator
@@ -154,7 +151,7 @@
 ;;              Used to break out of execution of a loop.
 (define break-statement
   (lambda (ptree state return break throw continue)
-    (break state)))
+    (break (remove-top-layer state))))
 
 ;;;; *********************************************************************************************************
 ;;; continue operator
@@ -171,7 +168,7 @@
 ;;              Used to return to the condition of a loop.
 (define continue-statement
   (lambda (ptree state return break throw continue)
-    (continue state)))
+    (continue (remove-top-layer state))))
 
 ;;;; *********************************************************************************************************
 ;;;; throw operator
@@ -337,67 +334,6 @@
         ((eq? condition #f) state) ; done evaluating the while loop
         (else               (boolean-mismatch-error condition))))
      (mvalue (while-cond ptree) state))))
-
-;;;; *********************************************************************************************************
-;;;;  catch_state function
-;;;; *********************************************************************************************************
-
-;; Function:    (try_state ptree state return break throw continue)
-;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...) )
-;;              state    - state binding list in the form defined in state.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
-;; Description: Returns the state that is given to the finally block after we do trycatch
-
-(define catch_state
-  (lambda (try_state   state return break throw continue)
-    (cond
-      ((list? try_state) try_state)
-      ((null? catch-block) (error 'throwstatement try_state))
-      (else (remove-top-layer (mstate (begin-statement catch-block (mstate (cons (list (cons 'var (return-e catch-block)) try_state)) (push-layer state)) return break throw continue)))))))
-
-;;;; *********************************************************************************************************
-;;;;  final_state function
-;;;; *********************************************************************************************************
-
-;; Function:    (final-block ptree state return break throw continue)
-;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...) )
-;;              state    - state binding list in the form defined in state.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
-;; Description: Returns the state after the final-block is run
-
-(define final_state
-  (lambda (final-block state return break throw continue)
-    (if (null? final-block)
-        state
-        (begin-statement (final-block) state return break throw continue))))
-
-;;;; *********************************************************************************************************
-;;;; try-catch-statement function
-;;;; *********************************************************************************************************
-
-;; Function:    (ptree state return break throw continue)
-;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...) )
-;;              state    - state binding list in the form defined in state.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
-;; Description: Returns the state of the try-catch-finally block
-
-(define try-catch-statement
-  (lambda (ptree state return break throw continue)
-    (final_state (final-block ptree)
-                 (catch_state
-                  (call/cc
-                   (lambda ('throwstatement)
-                     (mstate (begin-statement (try-block ptree)) state return break throw continue)))
-                     (catch-block ptree) state return break throw continue) return break throw continue)))
 
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
