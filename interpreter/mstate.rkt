@@ -370,8 +370,6 @@
     (cond
       ((null? ptree)
         state)
-      ;((operator? ptree 'return return-len)
-       ; (return (return-statement ptree state return break throw continue)))
       ((operator? ptree 'while while-len)
         (mstate (next-statement ptree) (call/cc (lambda (b) (while-statement ptree state return b throw continue))) return break throw continue))
       (else
