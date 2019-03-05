@@ -322,7 +322,7 @@
     (cond
       ((list? try_state) try_state)
       ((null? catch_statement) (error 'throwstatement try_state))
-      (else (remove-top-layer (mstate (begin-statement catch_statement (mstate (cons (list (return-e catch_statement) try_state)) (push-layer state)) return break throw continue)))))))
+      (else (remove-top-layer (mstate (begin-statement catch_statement (mstate (cons (list (cons 'var (return-e catch_statement)) try_state)) (push-layer state)) return break throw continue)))))))
 
 ;Returns the state after the finally body is run
 (define final_state
@@ -339,10 +339,10 @@
                   (call/cc
                    (lambda ('throwstatement)
                      (mstate (begin-statement (try-block ptree)) state return break throw continue)))
-                  (catch-block ptree) state return break throw continue) return break throw continue)))
+                     (catch-block ptree) state return break throw continue) return break throw continue)))
+  
 
-
-
+;psuedo code try statement
 (define try-statement
   (lambda (ptree state return break throw continue)
     ;; evaluate the try statement based on the block
