@@ -74,6 +74,13 @@
 (define while-cond cadar)
 (define while-body caddar)
 
+;try catch body statement
+(define try-block cadar)
+(define catch-block caddar)
+(define final-block
+  (lambda (ptree)
+    (car (cdddar ptree))));caddar
+
 ;;;; *********************************************************************************************************
 ;;;; helper functions
 ;;;; *********************************************************************************************************
@@ -307,6 +314,19 @@
                             condition))))
      (mvalue (while-cond ptree) state))))
 
+(define try-statement
+  (lambda (ptree state return break throw continue)
+    ;; evaluate the try statement based on the block
+    (lambda (final-block)
+      (cond
+        ((null? final-block) state)
+        (else (mstate(final-block mstate(try-block state
+                                                    (lambda (v) (return   (mstate (final-block poplayer(v) return break throw continue))));return
+                                                    (lambda (v) (break    (mstate (final-block poplayer(v) return break throw continue)))) ;break
+                                                    (lambda (v)           (mstate (catch-block changename(throw e v) return break throw continue))) ;throw
+                                                    (lambda (v) (continue (mstate (final-block poplayer(v) return break throw continue)))) ;continue
+                                                    )) return break throw continue))))))
+
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
 ;;;; *********************************************************************************************************
@@ -328,6 +348,7 @@
       ((operator? ptree 'throw throw-len)        throw-statement)
       ((operator? ptree 'continue continue-len)  continue-statement)
       ((operator? ptree 'begin begin-len)        begin-statement)
+      ((operator? ptree 'try try-catch-len)      try-catch-statement) ; ptree == ((try block catch block final block) ...)
       (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
 
 ;; Function:    (mstate ptree state return break throw continue)
