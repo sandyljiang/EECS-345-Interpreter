@@ -319,7 +319,7 @@
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
+        ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state return break throw (lambda (s) s)) return break throw continue)) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
         (else               (boolean-mismatch-error condition))))
      (mvalue (while-cond ptree) state))))
@@ -335,7 +335,7 @@
   (lambda (ptree)
     (cond
       ((operator? ptree 'return return-len)      return-statement) ; ptree == (((return value) ...)
-      ((operator? ptree 'while while-len)        while-statement) ; ptree == ((while cond body) ...)
+      ;((operator? ptree 'while while-len)        while-statement) ; ptree == ((while cond body) ...)
       ((operator? ptree '= assign-len)           assign-statement) ; ptree == ((= name newvalue) ...)
       ((operator? ptree 'var declare-len)        declare-statement) ; ptree == ((var name) ...)
       ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
@@ -344,7 +344,7 @@
       ((operator? ptree 'break break-len)        break-statement)
       ((operator? ptree 'throw throw-len)        throw-statement)
       ((operator? ptree 'continue continue-len)  continue-statement)
-      ((operator? ptree 'begin begin-len)        begin-statement)
+      ((eq? (statement-op ptree) 'begin)         begin-statement)
       (else                                      (undefined-op-error ptree)))))
 
 ;; Function:    (mstate ptree state return break throw continue)
@@ -353,7 +353,11 @@
 ;; Description: Performs the the operations in the parse tree based on the state to return the new state
 (define mstate
   (lambda (ptree state return break throw continue)
-    (if (null? ptree)
-        state
+    (cond
+      ((null? ptree)
+        state)
+      ((operator? ptree 'while while-len)
+        (mstate (next-statement ptree) (while-statement ptree state return (lambda (s) s) throw continue) return break throw continue))
+      (else
         ((lambda (func) (mstate (next-statement ptree) (func ptree state return break throw continue) return break throw continue))
-         (operator_switch ptree)))))
+         (operator_switch ptree))))))
