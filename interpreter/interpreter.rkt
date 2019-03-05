@@ -10,6 +10,15 @@
 ;;;; Interpreter Part 1
 ;;;; *********************************************************************************************************
 
+(define break-error
+  (lambda (state) (error "Error: break outside of loop.\nstate: " state)))
+
+(define throw-error
+  (lambda (state) (error "Error: throw outside of try.\nstate: " state)))
+
+(define continue-error
+  (lambda (state) (error "Error: continue outside of loop.\nstate: " state)))
+
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename)
@@ -21,9 +30,18 @@
         (else       v)))
      ;; interpret the code and get the return value
      (find return-var
+       (call/cc
+         (lambda (return)
            (mstate (parser filename)
-                   initial-state
-                   (lambda (v) v)
-                   (lambda (v) (error "Usage of break outside of loop."))
-                   (lambda (v) (error v))
-                   (lambda (v) (error "Usage of continue outside of a loop.")))))))
+                   (initial-state)
+                   return
+                   break-error
+                   throw-error
+                   continue-error
+           )
+         )
+       )
+     )
+    )
+  )
+)

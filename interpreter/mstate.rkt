@@ -1,6 +1,10 @@
 #lang racket
 (provide mstate)
 (provide return-var)
+(provide multiple-returns-error)
+(provide assign-error)
+(provide boolean-mismatch-error)
+(provide undefined-op-error)
 (require "state.rkt")
 (require "mvalue.rkt")
 (require "helper.rkt")
@@ -16,8 +20,8 @@
 ;;;; constants
 ;;;; *********************************************************************************************************
 
-;; define the name of the return variable that the interpreter will look for at the end of the program
-(define return-var 'return)
+;; define the value for the throw variable before it gets assigned
+(define throw-var 'throw)
 
 ;; define the value for an undeclared variable
 (define undefined-var 'undefined)
@@ -56,7 +60,7 @@
 (define throw-expr cadar)
 
 ;; expression for statement list in begin block
-(define stmt-list cdr)
+(define stmt-list cdar)
 
 ;; name of variable being declared/assigned
 (define var-name cadar)
@@ -71,7 +75,7 @@
   (lambda (ptree)
     (car (cdddar ptree)))) ; cadddar
 
-;; while condition and body statement
+;; while condition and budy statement
 (define while-cond cadar)
 (define while-body caddar)
 
@@ -99,6 +103,22 @@
          (eq? (len (current-statement ptree)) statement-len))))
 
 ;;;; *********************************************************************************************************
+;;;; error functions
+;;;; *********************************************************************************************************
+(define multiple-returns-error
+  (lambda () (error "Error: Multiple returns")))
+
+(define assign-error
+  (lambda (name) (error "Error: assigning value before declaration\nVariable: " name)))
+
+(define boolean-mismatch-error
+  (lambda (condition) (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
+                             condition)))
+
+(define undefined-op-error
+  (lambda (ptree) (error "Error: Undefined operation.\nParse tree: " ptree)))
+
+;;;; *********************************************************************************************************
 ;;;; return operator
 ;;;; *********************************************************************************************************
 
@@ -118,8 +138,7 @@
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
       (return (change-value return-var (mvalue (return-expr ptree) state) state)) ; return a new state with the return value changed
-      (return (add          return-var (mvalue (return-expr ptree) state) state))))) ; return a new state with the return value added.
-      
+      (multiple-returns-error))))
 
 ;;;; *********************************************************************************************************
 ;;; break operator
@@ -136,7 +155,7 @@
 ;;              Used to break out of execution of a loop.
 (define break-statement
   (lambda (ptree state return break throw continue)
-    (break state)))
+    (break (remove-top-layer state))))
 
 ;;;; *********************************************************************************************************
 ;;; continue operator
@@ -153,7 +172,7 @@
 ;;              Used to return to the condition of a loop.
 (define continue-statement
   (lambda (ptree state return break throw continue)
-    (continue state)))
+    (continue (remove-top-layer state))))
 
 ;;;; *********************************************************************************************************
 ;;;; throw operator
@@ -169,7 +188,7 @@
 ;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
 (define throw-statement
   (lambda (ptree state return break throw continue)
-    (throw (mvalue (throw-expr ptree) state))))
+    (throw (add throw-var (mvalue (throw-expr ptree)) (push-layer (remove-top-layer state))))))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
@@ -227,7 +246,7 @@
         (change-value name
                 (mvalue (var-value ptree) state)
                 state)
-        (error "Error: assigning value before declaration\nVariable: " name)))
+        (assign-error name)))
      (var-name ptree))))
 
 ;;;; *********************************************************************************************************
@@ -268,8 +287,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state return break throw continue))
         ((eq? condition #f) state) ; condition was false, so don't change the state
-        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                            condition))))
+        (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -293,8 +311,7 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state return break throw continue)) ; cond true, so evaluate the if-body
         ((eq? condition #f) (mstate (list (else-body ptree)) state return break throw continue)) ; cond false, so evaluate the else body
-        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                                   condition))))
+        (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) state))))
 
 ;;;; *********************************************************************************************************
@@ -311,12 +328,17 @@
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (while-statement ptree (mstate (list (while-body ptree)) state))) ; evaluate the body again
+        ((eq? condition #t)
+          (while-statement ptree
+            (call/cc (lambda (c) (mstate (list (while-body ptree)) state return break throw c)))
+            return
+            break
+            throw
+            continue)) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
-        (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                            condition))))
-     (mvalue (while-cond ptree) state)))) 
-;
+        (else               (boolean-mismatch-error condition))))
+     (mvalue (while-cond ptree) state))))
+
 ;;;;;; *********************************************************************************************************
 ;;;;;;  catch_state function
 ;;;;;; *********************************************************************************************************
@@ -395,7 +417,6 @@
                                                     (lambda (v) (t        (mstate (catch-block change-value('throw (return-e ptree) v) return break throw continue)))) ;throw
                                                     (lambda (v) (continue (mstate (final-block remove-top-layer(v) return break throw continue)))) ;continue
                                                     )) return break throw continue))))))))
-
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
 ;;;; *********************************************************************************************************
@@ -407,7 +428,7 @@
   (lambda (ptree)
     (cond
       ((operator? ptree 'return return-len)      return-statement) ; ptree == (((return value) ...)
-      ((operator? ptree 'while while-len)        while-statement) ; ptree == ((while cond body) ...)
+      ;((operator? ptree 'while while-len)        while-statement) ; ptree == ((while cond body) ...)
       ((operator? ptree '= assign-len)           assign-statement) ; ptree == ((= name newvalue) ...)
       ((operator? ptree 'var declare-len)        declare-statement) ; ptree == ((var name) ...)
       ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
@@ -416,17 +437,21 @@
       ((operator? ptree 'break break-len)        break-statement)
       ((operator? ptree 'throw throw-len)        throw-statement)
       ((operator? ptree 'continue continue-len)  continue-statement)
-      ((operator? ptree 'begin begin-len)        begin-statement)
+      ((eq? (statement-op ptree) 'begin)         begin-statement)
       ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try block catch block final block) ...)
-      (else                                      (error "Error: Undefined operation.\nParse tree: " ptree)))))
-  
+      (else                                      (undefined-op-error ptree)))))
+
 ;; Function:    (mstate ptree state return break throw continue)
 ;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
 ;;              state binding list in the form defined in state.rkt
 ;; Description: Performs the the operations in the parse tree based on the state to return the new state
 (define mstate
   (lambda (ptree state return break throw continue)
-    (if (null? ptree)
-        state
+    (cond
+      ((null? ptree)
+        state)
+      ((operator? ptree 'while while-len)
+        (mstate (next-statement ptree) (call/cc (lambda (b) (while-statement ptree state return b throw continue))) return break throw continue))
+      (else
         ((lambda (func) (mstate (next-statement ptree) (func ptree state return break throw continue) return break throw continue))
-         (operator_switch ptree)))))
+         (operator_switch ptree))))))

@@ -1,5 +1,6 @@
 #lang racket
 (provide len)
+(provide return-var)
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
@@ -7,6 +8,9 @@
 ;;;; Interpreter Part 1
 ;;;; Helper functions for the project
 ;;;; *********************************************************************************************************
+
+;; define the name of the return variable that the interpreter will look for at the end of the program
+(define return-var 'return)
 
 ;; Function:    (len-acc lis acc)
 ;; Parameters:  lis the list to find the length of
