@@ -392,7 +392,7 @@
 ;;;              throw    - a throw continuation
 ;;;              continue - a continue continuation
 ;;; Description: Returns the state of the try-catch-finally block
-;  
+;
 ;(define try-catch-statement
 ;  (lambda (ptree state return break throw continue)
 ;    (final_state (final-block ptree)
@@ -401,7 +401,7 @@
 ;                   (lambda (t
 ;                     (mstate (begin-statement (try-block ptree)) state return break throw continue)))
 ;                     (catch-block ptree) state return break throw continue) return break throw continue)))
-  
+
 
 ;psuedo code try statement
 (define try-statement
@@ -410,14 +410,14 @@
     (lambda (final-block)
       (cond
         ((null? final-block) state)
-        (else (mstate(final-block
+        (else (mstate (final-block
                       (call/cc
                           (lambda (t)
-                              mstate(try-block state
-                                                    (lambda (v) (return   (mstate (final-block remove-top-layer(v) return break throw continue))));return
-                                                    (lambda (v) (break    (mstate (final-block remove-top-layer(v) return break throw continue)))) ;break
-                                                    (lambda (v) (t        (mstate (catch-block change-value('throw (return-e ptree) v) return break throw continue)))) ;throw
-                                                    (lambda (v) (continue (mstate (final-block remove-top-layer(v) return break throw continue)))) ;continue
+                              (mstate try-block state
+                                                    (lambda (v) (return   (mstate (final-block (remove-top-layer v) return break throw continue))));return
+                                                    (lambda (v) (break    (mstate (final-block (remove-top-layer v) return break throw continue)))) ;break
+                                                    (lambda (v) (t        (mstate (catch-block (change-value throw-var (return-e ptree) v) return break throw continue)))) ;throw
+                                                    (lambda (v) (continue (mstate (final-block (remove-top-layer v) return break throw continue)))) ;continue
                                                     )) return break throw continue))))))))
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
