@@ -34,6 +34,7 @@
 (define if-len 3)
 (define if-else-len 4)
 (define while-len 3)
+(define try-catch-len 6)
 
 ;;;; *********************************************************************************************************
 ;;;; expression/operator location definitions
@@ -80,6 +81,7 @@
 (define final-block
   (lambda (ptree)
     (car (cdddar ptree))));caddar
+(define return-e caadar) ;returns e from catch
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -312,7 +314,22 @@
         ((eq? condition #f) state) ; done evaluating the while loop
         (else               (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
                             condition))))
-     (mvalue (while-cond ptree) state))))
+     (mvalue (while-cond ptree) state)))) 
+
+;Returns the state that is given to the finally block after we do trycatch
+(define catch_state
+  (lambda (try_state catch_statement state return break throw continue)
+    (cond
+      ((list? try_state) trystate)
+      ((null? catch_statement) (error 'throwstatement try_state))
+      (else (remove-top-layer (mstate (begin-statement catch_statement (mstate (cons (list (return-e catch_statement) trystate)) (push-layer state)) return break throw continue)))))))
+
+;Returns the state after the finally body is run
+(define final_state
+  (lambda (final-block state return break throw continue)
+    (if (null? final-block)
+        state
+        (mstate (begin-statement (final-block) state return break throw continue))))
 
 (define try-statement
   (lambda (ptree state return break throw continue)
@@ -321,11 +338,13 @@
       (cond
         ((null? final-block) state)
         (else (mstate(final-block mstate(try-block state
-                                                    (lambda (v) (return   (mstate (final-block poplayer(v) return break throw continue))));return
-                                                    (lambda (v) (break    (mstate (final-block poplayer(v) return break throw continue)))) ;break
-                                                    (lambda (v)           (mstate (catch-block changename(throw e v) return break throw continue))) ;throw
-                                                    (lambda (v) (continue (mstate (final-block poplayer(v) return break throw continue)))) ;continue
+                                                    (lambda (v) (return   (mstate (final-block remove-top-layer(v) return break throw continue))));return
+                                                    (lambda (v) (break    (mstate (final-block remove-top-layer(v) return break throw continue)))) ;break
+                                                    (lambda (v)           (mstate (catch-block change-value(throw e v) return break throw continue))) ;throw
+                                                    (lambda (v) (continue (mstate (final-block remove-top-layer(v) return break throw continue)))) ;continue
                                                     )) return break throw continue))))))
+
+
 
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
