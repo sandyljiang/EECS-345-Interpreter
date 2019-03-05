@@ -319,12 +319,13 @@
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (while-statement ptree
-                                             (mstate (list (while-body ptree)) state return break throw (lambda (s) s))
-                                             return
-                                             break
-                                             throw
-                                             continue)) ; evaluate the body again
+        ((eq? condition #t)
+          (while-statement ptree
+            (mstate (list (while-body ptree)) state return break throw (lambda (s) s))
+            return
+            break
+            throw
+            continue)) ; evaluate the body again
         ((eq? condition #f) state) ; done evaluating the while loop
         (else               (boolean-mismatch-error condition))))
      (mvalue (while-cond ptree) state))))
@@ -339,7 +340,7 @@
 (define operator_switch
   (lambda (ptree)
     (cond
-      ((operator? ptree 'return return-len)      return-statement) ; ptree == (((return value) ...)
+      ;((operator? ptree 'return return-len)      return-statement) ; ptree == (((return value) ...)
       ;((operator? ptree 'while while-len)        while-statement) ; ptree == ((while cond body) ...)
       ((operator? ptree '= assign-len)           assign-statement) ; ptree == ((= name newvalue) ...)
       ((operator? ptree 'var declare-len)        declare-statement) ; ptree == ((var name) ...)
