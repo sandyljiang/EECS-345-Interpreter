@@ -1,0 +1,10 @@
+while (true) {
+    var x = 10;
+    {
+        var y = 2;
+        {
+            break;
+        }
+    }
+}
+return x;
