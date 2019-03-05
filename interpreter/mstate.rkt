@@ -320,9 +320,9 @@
 (define catch_state
   (lambda (try_state catch_statement state return break throw continue)
     (cond
-      ((list? try_state) trystate)
+      ((list? try_state) try_state)
       ((null? catch_statement) (error 'throwstatement try_state))
-      (else (remove-top-layer (mstate (begin-statement catch_statement (mstate (cons (list (return-e catch_statement) trystate)) (push-layer state)) return break throw continue)))))))
+      (else (remove-top-layer (mstate (begin-statement catch_statement (mstate (cons (list (return-e catch_statement) try_state)) (push-layer state)) return break throw continue)))))))
 
 ;Returns the state after the finally body is run
 (define final_state
@@ -330,6 +330,18 @@
     (if (null? final-block)
         state
         (mstate (begin-statement (final-block) state return break throw continue))))
+
+;Returns the state of the try-catch-finally block
+(define try_statement
+  (lambda (ptree state return break throw continue)
+    (final_state (final-block ptree)
+                 (catch_state
+                  (call/cc
+                   (lambda ('throwstatement)
+                     (mstate (begin-statement (try-block ptree)) state return break throw continue)))
+                  (catch-block ptree) state return break throw continue) return break throw continue)))
+
+
 
 (define try-statement
   (lambda (ptree state return break throw continue)
@@ -343,8 +355,6 @@
                                                     (lambda (v)           (mstate (catch-block change-value(throw e v) return break throw continue))) ;throw
                                                     (lambda (v) (continue (mstate (final-block remove-top-layer(v) return break throw continue)))) ;continue
                                                     )) return break throw continue))))))
-
-
 
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
