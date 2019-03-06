@@ -369,6 +369,16 @@
 ;;;; try operator
 ;;;; *********************************************************************************************************
 
+;; Function:    (try-catch ptree state return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         ((try try-block (catch (catch-arg) catch-block) ()) ...)
+;;              state    - binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: calculate the new state after evaluating the try-catch
+;;              statement at the beginning of the parse tree
 (define try-catch
   (lambda (ptree state return break throw continue)
     (call/cc (lambda (exit-catch)
@@ -391,6 +401,16 @@
   )
 )
 
+;; Function:    (try-finally ptree state return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         ((try try-block () (finally finally-block)) ...)
+;;              state    - binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: calculate the new state after evaluating the try-finally
+;;              statement at the beginning of the parse tree
 (define try-finally
   (lambda (ptree state return break throw continue)
     (mstate (final-block ptree)
@@ -427,7 +447,7 @@
                                         break
                                         throw
                                         continue))
-                    )) ;continue
+                    ))
             return
             break
             throw
@@ -435,6 +455,16 @@
   )
 )
 
+;; Function:    (try-catch-finally ptree state return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         ((try try-block (catch (catch-arg) catch-block) (finally finally-block)) ...)
+;;              state    - binding list in the form defined in state.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: calculate the new state after evaluating the try-catch-finally
+;;              statement at the beginning of the parse tree
 (define try-catch-finally
   (lambda (ptree state return break throw continue)
     (mstate (final-block ptree)
@@ -486,12 +516,17 @@
 ;; Function:    (try-statement ptree state return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format
 ;;                         ((try try-block (catch (catch-arg) catch-block) (finally finally-block)) ...)
+;;                         or
+;;                         ((try try-block () (finally finally-block)) ...)
+;;                         or
+;;                         ((try try-block (catch (catch-arg) catch-block) ()) ...)
+;;                         or
 ;;              state    - binding list in the form defined in state.rkt
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
 ;;              continue - a continue continuation
-;; Description: calculate the new state after evaluating the while
+;; Description: calculate the new state after evaluating the try
 ;;              statement at the beginning of the parse tree
 (define try-statement
   (lambda (ptree state return break throw continue)
@@ -499,10 +534,13 @@
     (cond
       ((and (not (has-finally? ptree)) (not (has-catch? ptree)))
         (invalid-try-error ptree))
+
       ((and (not (has-finally? ptree)) (has-catch? ptree))
         (try-catch ptree state return break throw continue))
+
       ((and (has-finally? ptree) (not (has-catch? ptree)))
         (try-finally ptree state return break throw continue))
+
       (else
         (try-catch-finally ptree state return break throw continue))
     )
