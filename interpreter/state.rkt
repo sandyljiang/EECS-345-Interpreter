@@ -196,6 +196,9 @@
          (else                           (begin (set-box! box-found new-value) state))))
      (find-box name state))))
 
+;; Function:    (initial-state)
+;; Description: creates the initial state for the interpreter which has
+;;              undefined 'throw and 'return variables in it
 (define initial-state
   (lambda ()
     (add throw-var undefined-var (add return-var undefined-var empty-state))))
