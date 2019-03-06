@@ -38,6 +38,7 @@
 (define if-len 3)
 (define if-else-len 4)
 (define while-len 3)
+(define try-catch-len 4)
 
 ;;;; *********************************************************************************************************
 ;;;; expression/operator location definitions
@@ -80,11 +81,15 @@
 
 ;try catch body statement
 (define try-block cadar)
-(define catch-block caddar)
+(define catch-block
+  (lambda (ptree)
+    (cdr (cdr (caddar ptree)))))
 (define final-block
   (lambda (ptree)
-    (car (cdddar ptree))));caddar
-(define return-e caadar) ;returns e from catch
+    (cdr (car (cdddar ptree)))));caddar
+(define return-e
+   (lambda (ptree)
+    (car (cdr (caddar ptree)))))
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -343,6 +348,24 @@
         (else               (boolean-mismatch-error condition))))
      (mvalue (while-cond ptree) state))))
 
+;psuedo code try statement
+(define try-statement
+  (lambda (ptree state return break throw continue)
+    ;; evaluate the try statement based on the block
+      (cond
+        ((null? (final-block ptree)) state)
+        (else (mstate
+               ((final-block ptree)
+                      (call/cc
+                          (lambda (t)
+                              (mstate (try-block ptree) state
+                                                    (lambda (v) (return   (mstate (final-block (remove-top-layer v) return break throw continue))));return
+                                                    (lambda (v) (break    (mstate (final-block (remove-top-layer v) return break throw continue)))) ;break
+                                                    (lambda (v) (t        (mstate (catch-block (change-value throw-var (return-e ptree) v) return break throw continue)))) ;throw
+                                                    (lambda (v) (continue (mstate (final-block (remove-top-layer v) return break throw continue)))) ;continue
+                                                    ))) return break throw continue))))))
+
+
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
 ;;;; *********************************************************************************************************
@@ -364,6 +387,7 @@
       ((operator? ptree 'throw throw-len)        throw-statement)
       ((operator? ptree 'continue continue-len)  continue-statement)
       ((eq? (statement-op ptree) 'begin)         begin-statement)
+      ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try block catch block final block) ...)
       (else                                      (undefined-op-error ptree)))))
 
 ;; Function:    (mstate ptree state return break throw continue)
