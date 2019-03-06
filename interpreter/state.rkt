@@ -196,41 +196,6 @@
          (else                           (begin (set-box! box-found new-value) state))))
      (find-box name state))))
 
-(define change-name
-  (lambda (name new-name state)
-    (cond
-      ((null-state? state) ; reached an empty state, so the variable does not exist
-        state)
-
-      ((invalid-layer? state) ; state is corrupt
-        (invalid-state-error state))
-
-      ((null-layer? state) ; variable was not in this layer, so check the next
-        (cons (current-layer state) (change-name name new-name (next-layer state))))
-
-      ((and (exists-in-top-layer? new-name state) (exists-in-top-layer? name state))
-        (error "Error: Attempting to change variable to one already defined in this scope.\nname: " name ", new-name: " new-name)
-      )
-
-      ((eq? (current-name state) name) ; found the variable
-        (cons (cons (cons new-name (next-names state))
-                    (list (values state)))
-              (next-layer state))
-      )
-
-      (else ; recurse on the state without the current name and value
-        ((lambda (new-state)
-           (cons (cons (cons (current-name state) (names new-state))
-                       (list (cons (current-value state) (values new-state))))
-                 (next-layer new-state))
-         )
-         (change-name name new-name (next-state state))
-        )
-      )
-    )
-  )
-)
-
 (define initial-state
   (lambda ()
     (add throw-var undefined-var (add return-var undefined-var empty-state))))
