@@ -1,6 +1,7 @@
 #lang racket
 (provide len)
 (provide return-var)
+(provide throw-var)
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
@@ -11,6 +12,9 @@
 
 ;; define the name of the return variable that the interpreter will look for at the end of the program
 (define return-var 'return)
+
+;; define the value for the throw variable before it gets assigned
+(define throw-var 'throw)
 
 ;; Function:    (len-acc lis acc)
 ;; Parameters:  lis the list to find the length of

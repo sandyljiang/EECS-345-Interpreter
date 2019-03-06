@@ -20,9 +20,6 @@
 ;;;; constants
 ;;;; *********************************************************************************************************
 
-;; define the value for the throw variable before it gets assigned
-(define throw-var 'throw)
-
 ;; define the value for an undeclared variable
 (define undefined-var 'undefined)
 
@@ -80,16 +77,19 @@
 (define while-body caddar)
 
 ;try catch body statement
-(define try-block cadar)
+(define try-block
+  (lambda (ptree)
+    (list (cons 'begin (cadar ptree)))))
 (define catch-block
   (lambda (ptree)
-    (cdr (cdr (caddar ptree)))))
+    (list (cons 'begin (caddr (caddar ptree))))))
 (define final-block
   (lambda (ptree)
-    (cdr (car (cdddar ptree)))));caddar
+    (list (cons 'begin (cadar (cdddar ptree))))));caddar
 (define return-e
    (lambda (ptree)
-    (car (cdr (caddar ptree)))))
+    (caadr (caddar ptree))))
+
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -192,7 +192,7 @@
 ;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
 (define throw-statement
   (lambda (ptree state return break throw continue)
-    (throw (add throw-var (mvalue (throw-expr ptree)) (push-layer (remove-top-layer state))))))
+    (throw (change-value throw-var (mvalue (throw-expr ptree) state) state))))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
@@ -352,18 +352,30 @@
 (define try-statement
   (lambda (ptree state return break throw continue)
     ;; evaluate the try statement based on the block
-      (cond
-        ((null? (final-block ptree)) state)
-        (else (mstate
-               ((final-block ptree)
-                      (call/cc
-                          (lambda (t)
-                              (mstate (try-block ptree) state
-                                                    (lambda (v) (return   (mstate (final-block (remove-top-layer v) return break throw continue))));return
-                                                    (lambda (v) (break    (mstate (final-block (remove-top-layer v) return break throw continue)))) ;break
-                                                    (lambda (v) (t        (mstate (catch-block (change-value throw-var (return-e ptree) v) return break throw continue)))) ;throw
-                                                    (lambda (v) (continue (mstate (final-block (remove-top-layer v) return break throw continue)))) ;continue
-                                                    ))) return break throw continue))))))
+    (cond
+      ((null? (final-block ptree)) state)
+      (else
+        (mstate (final-block ptree)
+                (call/cc
+                  (lambda (t)
+                    (mstate (try-block ptree)
+                            state
+                            (lambda (v) (return   (mstate (final-block ptree) (remove-top-layer v) return break throw continue)));return
+                            (lambda (v) (break    (mstate (final-block ptree) (remove-top-layer v) return break throw continue))) ;break
+                            (lambda (v) (t        (mstate (catch-block ptree) (add (return-e ptree) (find throw-var v) v) return break throw continue))) ;throw
+                            (lambda (v) (continue (mstate (final-block ptree) (remove-top-layer v) return break throw continue))) ;continue
+                    )
+                  )
+                )
+                return
+                break
+                throw
+                continue
+          )
+      )
+    )
+  )
+)
 
 
 ;;;; *********************************************************************************************************
@@ -404,3 +416,5 @@
       (else
         ((lambda (func) (mstate (next-statement ptree) (func ptree state return break throw continue) return break throw continue))
          (operator_switch ptree))))))
+
+'((var x) (try ((= x 20) (if (< x 0) (throw 10)) (= x (+ x 5))) (catch (e) ((= x e))) (finally ((= x (+ x 100))))) (return x))
