@@ -5,6 +5,8 @@
 (provide assign-error)
 (provide boolean-mismatch-error)
 (provide undefined-op-error)
+(provide has-finally?)
+(provide has-catch?)
 (require "state.rkt")
 (require "mvalue.rkt")
 (require "helper.rkt")
@@ -76,6 +78,10 @@
 (define while-cond cadar)
 (define while-body caddar)
 
+(define catch-section caddar)
+(define finally-section
+  (lambda (ptree)
+    (car (cdddar ptree))))
 ;try catch body statement
 (define try-block
   (lambda (ptree)
@@ -105,6 +111,14 @@
   (lambda (ptree op statement-len)
     (and (eq? (statement-op ptree) op)
          (eq? (len (current-statement ptree)) statement-len))))
+
+(define has-catch?
+  (lambda (ptree)
+    (not (null? (catch-section ptree)))))
+
+(define has-finally?
+  (lambda (ptree)
+    (not (null? (finally-section ptree)))))
 
 ;;;; *********************************************************************************************************
 ;;;; error functions
@@ -353,17 +367,47 @@
   (lambda (ptree state return break throw continue)
     ;; evaluate the try statement based on the block
     (cond
-      ((null? (final-block ptree)) state)
+      ((and (not (has-finally? ptree)) (not (has-catch? ptree)))
+        (error "Error: try without catch or finally. ptree: " ptree)
+      )
+      ((and (not (has-finally? ptree)) (has-catch? ptree))
+        (call/cc
+          (lambda (t)
+            (mstate (try-block ptree)
+                    state
+                    return
+                    break
+                    (lambda (v) (t (mstate (catch-block ptree) (add (return-e ptree) (find throw-var v) v) return break throw continue))) ;throw
+                    continue
+            )
+          )
+        )
+      )
+      ((and (has-finally? ptree) (not (has-catch? ptree)))
+        (mstate (final-block ptree)
+                (mstate (try-block ptree)
+                        state
+                        (lambda (v) (return   (mstate (final-block ptree) v return break throw continue)));return
+                        (lambda (v) (break    (mstate (final-block ptree) v return break throw continue))) ;break
+                        (lambda (v) (throw    (mstate (final-block ptree) v return break throw continue))) ;throw
+                        (lambda (v) (continue (mstate (final-block ptree) v return break throw continue))) ;continue
+                )
+                return
+                break
+                throw
+                continue
+          )
+      )
       (else
         (mstate (final-block ptree)
                 (call/cc
                   (lambda (t)
                     (mstate (try-block ptree)
                             state
-                            (lambda (v) (return   (mstate (final-block ptree) (remove-top-layer v) return break throw continue)));return
-                            (lambda (v) (break    (mstate (final-block ptree) (remove-top-layer v) return break throw continue))) ;break
+                            (lambda (v) (return   (mstate (final-block ptree) v return break throw continue)));return
+                            (lambda (v) (break    (mstate (final-block ptree) v return break throw continue))) ;break
                             (lambda (v) (t        (mstate (catch-block ptree) (add (return-e ptree) (find throw-var v) v) return break throw continue))) ;throw
-                            (lambda (v) (continue (mstate (final-block ptree) (remove-top-layer v) return break throw continue))) ;continue
+                            (lambda (v) (continue (mstate (final-block ptree) v return break throw continue))) ;continue
                     )
                   )
                 )

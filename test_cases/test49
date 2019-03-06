@@ -1,0 +1,8 @@
+while (true) {
+    try {
+        break;
+    }
+    finally {
+        return 10;
+    }
+}

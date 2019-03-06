@@ -41,7 +41,7 @@
 (error_test_case (lambda () (interpret "test_cases/test36")) (lambda () (undeclared-error 'y)))
 (error_test_case (lambda () (interpret "test_cases/test37")) (lambda () (undeclared-error 'a)))
 (error_test_case (lambda () (interpret "test_cases/test38")) (lambda () (break-error 'todo)))
-;(error_test_case (lambda () (interpret "test_cases/test44")) (lambda () (undefined-op-error 'todo)))
+(error_test_case (lambda () (interpret "test_cases/test44")) (lambda () (throw-error 'todo)))
 
 (test_case (interpret "test_cases/test1")
            150)
