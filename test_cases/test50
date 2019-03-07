@@ -1,0 +1,5 @@
+while (true) {
+    if (true)
+        break;
+}
+return 1;

@@ -7,10 +7,17 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 1
+;;;; Interpreter Part 2
 ;;;; *********************************************************************************************************
 
-(define initial-state '(() ()))
+(define break-error
+  (lambda (state) (error "Error: break outside of loop.\nstate: " state)))
+
+(define throw-error
+  (lambda (state) (error "Error: throw outside of try.\nstate: " state)))
+
+(define continue-error
+  (lambda (state) (error "Error: continue outside of loop.\nstate: " state)))
 
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
@@ -20,8 +27,19 @@
       (cond
         ((eq? v #t) 'true)
         ((eq? v #f) 'false)
-        (else       v)))
+        (else       v)
+      )
+     )
      ;; interpret the code and get the return value
      (find return-var
-           (mstate (parser filename)
-                   initial-state)))))
+           (call/cc (lambda (return)
+                      (mstate (parser filename)
+                      (initial-state)
+                      return
+                      break-error
+                      throw-error
+                      continue-error)
+           )))
+    )
+  )
+)
