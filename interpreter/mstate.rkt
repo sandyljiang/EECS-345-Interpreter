@@ -327,13 +327,12 @@
 ;;              variables and bindings are added, but not visible outside of the block
 (define begin-statement
   (lambda (ptree state return break throw continue)
-    (remove-top-layer
-      (mstate (stmt-list ptree)
-              (push-layer state)
-              return
-              (lambda (v) (break (remove-top-layer v)))
-              (lambda (v) (throw (remove-top-layer v)))
-              (lambda (v) (continue (remove-top-layer v)))))
+    (remove-top-layer (mstate (stmt-list ptree)
+                              (push-layer state)
+                              return
+                              (lambda (v) (break (remove-top-layer v)))
+                              (lambda (v) (throw (remove-top-layer v)))
+                              (lambda (v) (continue (remove-top-layer v)))))
    )
  )
 
