@@ -30,7 +30,9 @@
 ;;              Returns true if it matches, false if not.
 (define operator?
   (lambda (statement operator)
-    (eq? (statement-op statement) operator)))
+    (eq? (statement-op statement) operator)
+  )
+)
 
 ;; Function:    (2_op_switch expr)
 ;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
