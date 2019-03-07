@@ -2,6 +2,7 @@
 (provide len)
 (provide return-var)
 (provide throw-var)
+(provide undefined-var)
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
@@ -15,6 +16,9 @@
 
 ;; define the value for the throw variable before it gets assigned
 (define throw-var 'throw)
+
+;; define the value for an undeclared variable
+(define undefined-var 'undefined)
 
 ;; Function:    (len-acc lis acc)
 ;; Parameters:  lis the list to find the length of
