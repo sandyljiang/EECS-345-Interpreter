@@ -187,7 +187,10 @@
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
       (return (change-value return-var (mvalue (catch-argxpr ptree) state) state)) ; return a new state with the return value changed
-      (multiple-returns-error))))
+      (multiple-returns-error)
+    )
+  )
+)
 
 ;;;; *********************************************************************************************************
 ;;; break operator
