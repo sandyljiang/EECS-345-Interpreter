@@ -275,7 +275,9 @@
     ;; extract the name and value from the ptree and add the to the state
     (add (var-name ptree)
          (mvalue (var-value ptree) state)
-         state)))
+         state)
+      )
+    )
 
 ;;;; *********************************************************************************************************
 ;;;; assignment operator
