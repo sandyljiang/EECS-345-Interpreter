@@ -7,7 +7,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 1
+;;;; Interpreter Part 2
 ;;;; *********************************************************************************************************
 
 (define break-error
@@ -27,21 +27,19 @@
       (cond
         ((eq? v #t) 'true)
         ((eq? v #f) 'false)
-        (else       v)))
+        (else       v)
+      )
+     )
      ;; interpret the code and get the return value
      (find return-var
-       (call/cc
-         (lambda (return)
-           (mstate (parser filename)
-                   (initial-state)
-                   return
-                   break-error
-                   throw-error
-                   continue-error
-           )
-         )
-       )
-     )
+           (call/cc (lambda (return)
+                      (mstate (parser filename)
+                      (initial-state)
+                      return
+                      break-error
+                      throw-error
+                      continue-error)
+           )))
     )
   )
 )

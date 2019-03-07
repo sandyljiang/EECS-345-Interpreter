@@ -2,7 +2,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 1
+;;;; Interpreter Part 2
 ;;;; Mvalue calculation functions
 ;;;; *********************************************************************************************************
 ; This file provides

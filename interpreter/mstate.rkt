@@ -5,8 +5,6 @@
 (provide assign-error)
 (provide boolean-mismatch-error)
 (provide undefined-op-error)
-(provide has-finally?)
-(provide has-catch?)
 (require "state.rkt")
 (require "mvalue.rkt")
 (require "helper.rkt")
@@ -14,7 +12,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 1
+;;;; Interpreter Part 2
 ;;;; Mstate calculation functions
 ;;;; *********************************************************************************************************
 
@@ -50,7 +48,7 @@
 (define next-statement cdr)
 
 ;; expression passed to the return operator
-(define catch-argxpr cadar)
+(define return-expr cadar)
 
 ;; expression passed to the throw operator
 (define throw-expr cadar)
@@ -90,7 +88,7 @@
 ;; try catch body statement
 (define try-block
   (lambda (ptree)
-    (list (cons 'begin (cadar ptree))) 
+    (list (cons 'begin (cadar ptree)))
   )
 )
 ;; catch block body
@@ -131,7 +129,7 @@
 )
 
 ;; Function:    (has-catch? ptree)
-;; Parameters:  ptree         - parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: checks if there is a catch block associated with the try
 (define has-catch?
   (lambda (ptree)
@@ -140,7 +138,7 @@
 )
 
 ;; Function:    (has-finally? ptree)
-;; Parameters:  ptree         - parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: checks if there is a finally block associated with the try
 (define has-finally?
   (lambda (ptree)
@@ -172,7 +170,7 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (return-statement ptree state break throw continue)
-;; Parameters:  ptree    - parse tree in the format ((return catch-argxpr) ...)
+;; Parameters:  ptree    - parse tree in the format ((return return-expr) ...)
 ;;              state    - state binding list in the form defined in state.rkt
 ;;              return   - the return continuation to call in this function
 ;;              break    - a break continuation
@@ -186,7 +184,7 @@
     ;; make sure the return variable doesn't exist
     ;; (otherwise there are multiple return statements)
     (if (exists? return-var state)
-      (return (change-value return-var (mvalue (catch-argxpr ptree) state) state)) ; return a new state with the return value changed
+      (return (change-value return-var (mvalue (return-expr ptree) state) state)) ; return a new state with the return value changed
       (multiple-returns-error)
     )
   )
@@ -262,7 +260,9 @@
 ;; Description: adds a new undefined variable variable to the state
 (define declare-statement
   (lambda (ptree state return break throw continue)
-    (add (var-name ptree) undefined-var state)))
+    (add (var-name ptree) undefined-var state)
+  )
+)
 
 ;;;; *********************************************************************************************************
 ;;;; declaration/assignment operator
@@ -307,7 +307,8 @@
                 (mvalue (var-value ptree) state)
                 state)
         (assign-error name)))
-     (var-name ptree))
+     (var-name ptree)
+    )
    )
  )
 
@@ -356,8 +357,11 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state return break throw continue))
         ((eq? condition #f) state) ; condition was false, so don't change the state
-        (else               (boolean-mismatch-error condition))))
-     (mvalue (if-cond ptree) state))
+        (else               (boolean-mismatch-error condition))
+      )
+     )
+     (mvalue (if-cond ptree) state)
+    )
    )
 )
 
@@ -382,8 +386,11 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) state return break throw continue)) ; cond true, so evaluate the if-body
         ((eq? condition #f) (mstate (list (else-body ptree)) state return break throw continue)) ; cond false, so evaluate the else body
-        (else               (boolean-mismatch-error condition))))
-     (mvalue (if-cond ptree) state))
+        (else               (boolean-mismatch-error condition))
+      )
+     )
+     (mvalue (if-cond ptree) state)
+    )
    )
 )
 
@@ -403,13 +410,14 @@
       (cond
         ((eq? condition #t)
           (while-statement ptree
-                           (call/cc (lambda (continue-state) 
-                                      (mstate (list (while-body ptree)) 
-                                              state 
-                                              return 
-                                              break 
-                                              throw 
-                                              continue-state)))
+                           (call/cc (lambda (continue-state)
+                                      (mstate (list (while-body ptree))
+                                              state
+                                              return
+                                              break
+                                              throw
+                                              continue-state)
+                            ))
                             return
                             break
                             throw
@@ -593,13 +601,13 @@
       ((and (not (has-finally? ptree)) (not (has-catch? ptree)))
         (invalid-try-error ptree))
 
-      ((and (not (has-finally? ptree)) (has-catch? ptree))
+      ((and (not (has-finally? ptree)) (has-catch? ptree)) ; if try-catch
         (try-catch ptree state return break throw continue))
 
-      ((and (has-finally? ptree) (not (has-catch? ptree)))
+      ((and (has-finally? ptree) (not (has-catch? ptree))) ; if try-finally
         (try-finally ptree state return break throw continue))
 
-      (else
+      (else                                                ; if try-catch-finally
         (try-catch-finally ptree state return break throw continue))
     )
   )
@@ -617,7 +625,6 @@
   (lambda (ptree)
     (cond
       ((operator? ptree 'return return-len)      return-statement) ; ptree == (((return value) ...)
-      ;((operator? ptree 'while while-len)        while-statement) ; ptree == ((while cond body) ...)
       ((operator? ptree '= assign-len)           assign-statement) ; ptree == ((= name newvalue) ...)
       ((operator? ptree 'var declare-len)        declare-statement) ; ptree == ((var name) ...)
       ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
@@ -664,8 +671,8 @@
                    break
                    throw
                    continue))
-         (operator_switch ptree))
-        )
+         (operator_switch ptree)
+        ))
     )
   )
 )
