@@ -9,10 +9,14 @@
 ;;;; State handling functions
 ;;;; *********************************************************************************************************
 
+;; definition for a layer with no values in it
 (define null-layer '(() ()))
+
+;; definition for the starting state with one null alyer in it
 (define empty-state (list null-layer))
+
+;; definition for the return value for find when the variable is not found
 (define undeclared-var 'undeclared)
-(define undefined-var 'undefined)
 
 ;;;; *********************************************************************************************************
 ;;;; error functions
@@ -32,8 +36,8 @@
 ;;;; *********************************************************************************************************
 ;;;; State format
 ;;;;
-;;;; The state will be stored in a binding list with the following format:
-;;;; ((name1 name2 ...) (value1 value2 ...))
+;;;; The state will be stored in a binding list with layers with the following format:
+;;;; (((name1 name2 ...) (value1 value2 ...)) ((namea nameb ...) (valuea valueb ...)) ...)
 ;;;;
 ;;;; The (name1 name2 ...) sublist is the names list
 ;;;; the (value1 value2 ...) sublist is the values list
@@ -48,13 +52,24 @@
 (define current-layer car)
 (define next-layer cdr)
 
+;; Function:    (initial-state)
+;; Description: creates the initial state for the interpreter which has
+;;              undefined 'throw and 'return variables in it
+(define initial-state
+  (lambda ()
+    (add throw-var undefined-var (add return-var undefined-var empty-state))
+  )
+)
+
 ;; Function:    (null-layer? state)
 ;; Parameters:  state the binding list to check if the top layer is empty
 ;; Description: the top layer is null if the names and values lists inside it are null
 ;;              ie layer == '(() ())
 (define null-layer?
   (lambda (state)
-    (and (null? (names state)) (null? (values state)))))
+    (and (null? (names state)) (null? (values state)))
+  )
+)
 
 ;; Function:    (null-state? state)
 ;; Parameters:  state the binding list to check if it is an empty state
@@ -64,10 +79,15 @@
     (cond
       ((null? state) ; all layers in state were empty
         #t)
+
       ((null-layer? state) ; top layer is empty, so check the next one
         (null-state? (next-layer state)))
+
       (else ; layer/state was not empty
-        #f))))
+        #f)
+    )
+  )
+)
 
 ;; Function:    (invalid-state? state)
 ;; Parameters:  state the binding list to check if top layer is valid
@@ -75,7 +95,9 @@
 (define invalid-layer?
   (lambda (state)
     (or (and (null? (names state)) (not (null? (values state))))
-        (and (not (null? (names state))) (null? (values state))))))
+        (and (not (null? (names state))) (null? (values state))))
+  )
+)
 
 ;; Function:    (next-state state)
 ;; Parameters:  state the binding list to find the next state from
@@ -85,21 +107,27 @@
   (lambda (state)
     (cons (cons (next-names state)
                 (list (next-values state)))
-          (next-layer state))))
+          (next-layer state))
+  )
+)
 
 ;; Function:    (push-layer state)
 ;; Parameters:  state the binding list to add a new empty layer to
 ;; Description: Adds a new empty layer to the state
 (define push-layer
   (lambda (state)
-    (cons null-layer state)))
+    (cons null-layer state)
+  )
+)
 
 ;; Function:    (remove-top-layer state)
 ;; Parameters:  state the binding list to remove the top layer from
 ;; Description: Removes the top layer in the state
 (define remove-top-layer
   (lambda (state)
-    (next-layer state)))
+    (next-layer state)
+  )
+)
 
 ;; Function:    (find-box name state)
 ;; Parameters:  name  the name of the variable to find in the state
@@ -121,7 +149,10 @@
         (current-value state))
 
       (else ; recurse on the state without the current name and value
-        (find-box name (next-state state))))))
+        (find-box name (next-state state)))
+    )
+  )
+)
 
 ;; Function:    (find name state)
 ;; Parameters:  name  the name of the variable to find in the state
@@ -136,8 +167,13 @@
                 ((eq? (unbox box-found) undefined-var)
                   (undefined-error name))
                 (else
-                  box-found)))
-            (find-box name state)))))
+                  box-found)
+              )
+            )
+            (find-box name state)
+           ))
+  )
+)
 
 ;; Function:    (add name value state)
 ;; Parameters:  name  the name of the variable to add to the state
@@ -151,7 +187,10 @@
       (double-declare-error name)
       (cons (cons (cons name (names state))
                   (list (cons (box value) (values state))))
-            (next-layer state)))))
+            (next-layer state))
+    )
+  )
+)
 
 ;; Function:    (exists-in-top-layer? name state)
 ;; Parameters:  name  the name of the variable to check if it is in the top
@@ -165,7 +204,10 @@
       ((null-state? state)             #f)
       ((null-layer? state)             #f)
       ((eq? name (current-name state)) #t)
-      (else                            (exists-in-top-layer? name (next-state state))))))
+      (else                            (exists-in-top-layer? name (next-state state)))
+    )
+  )
+)
 
 ;; Function:    (exists? name state)
 ;; Parameters:  name  is the name of the binding to check for
@@ -177,7 +219,10 @@
     (cond
       ((null-state? state)               #f)
       ((exists-in-top-layer? name state) #t)
-      (else                              (exists? name (next-layer state))))))
+      (else                              (exists? name (next-layer state)))
+    )
+  )
+)
 
 
 
@@ -193,12 +238,10 @@
     ((lambda (box-found)
        (cond
          ((eq? box-found undeclared-var) state)
-         (else                           (begin (set-box! box-found new-value) state))))
-     (find-box name state))))
-
-;; Function:    (initial-state)
-;; Description: creates the initial state for the interpreter which has
-;;              undefined 'throw and 'return variables in it
-(define initial-state
-  (lambda ()
-    (add throw-var undefined-var (add return-var undefined-var empty-state))))
+         (else                           (begin (set-box! box-found new-value) state))
+       )
+     )
+     (find-box name state)
+    )
+  )
+)

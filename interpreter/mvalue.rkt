@@ -57,7 +57,10 @@
       ((operator? expr '||) (lambda (op1 op2) (or op1 op2)))
 
       ; Operator not recognized
-      (else                 (error "Error: Executing invalid expression.\nExpression: " expr)))))
+      (else                 (error "Error: Executing invalid expression.\nExpression: " expr))
+    )
+  )
+)
 
 ;; Function:    (1_op_switch expr)
 ;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
@@ -68,7 +71,10 @@
     (cond
       ((operator? expr '-) (lambda (op1) (* -1 op1)))
       ((operator? expr '!) (lambda (op1) (not op1)))
-      (else                (error "Error: Executing invalid expression.\nExpression: " expr)))))
+      (else                (error "Error: Executing invalid expression.\nExpression: " expr))
+    )
+  )
+)
 
 ;; Function:    (mvalue expr state)
 ;; Parameters:  expr is list representing the parse tree
@@ -97,7 +103,11 @@
 
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
         ((lambda (func) (func (mvalue (operand1 expr) state) (mvalue (operand2 expr) state)))
-         (2_op_switch expr)))
+         (2_op_switch expr)
+        ))
 
       (else
-        (error "Error: Executing invalid expression.\nExpression: " expr)))))
+        (error "Error: Executing invalid expression.\nExpression: " expr))
+    )
+  )
+)
