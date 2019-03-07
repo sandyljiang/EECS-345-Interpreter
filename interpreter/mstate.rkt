@@ -73,29 +73,44 @@
   )
 )
 
-;; while condition and budy statement
+;; while condition and body statement
 (define while-cond cadar)
 (define while-body caddar)
 
+;; catch parse tree
 (define catch-section caddar)
+;; finally parse tree
 (define finally-section
   (lambda (ptree)
     (car (cdddar ptree))
   )
 )
-;try catch body statement
+
+;; These functions add a 'begin to the parse tree to create a new block for the try body
+;; try catch body statement
 (define try-block
   (lambda (ptree)
-    (list (cons 'begin (cadar ptree)))))
+    (list (cons 'begin (cadar ptree))) 
+  )
+)
+;; catch block body
 (define catch-block
   (lambda (ptree)
-    (list (cons 'begin (caddr (caddar ptree))))))
+    (list (cons 'begin (caddr (caddar ptree))))
+  )
+)
+;; finally block body
 (define final-block
   (lambda (ptree)
-    (list (cons 'begin (cadar (cdddar ptree))))));caddar
+    (list (cons 'begin (cadar (cdddar ptree)))) ; caddar
+  )
+)
+;; value of the expression passed to the throw operator
 (define catch-arg
-   (lambda (ptree)
-    (caadr (caddar ptree))))
+  (lambda (ptree)
+    (caadr (caddar ptree))
+  )
+)
 
 
 ;;;; *********************************************************************************************************
@@ -111,15 +126,27 @@
 (define operator?
   (lambda (ptree op statement-len)
     (and (eq? (statement-op ptree) op)
-         (eq? (len (current-statement ptree)) statement-len))))
+         (eq? (len (current-statement ptree)) statement-len))
+  )
+)
 
+;; Function:    (has-catch? ptree)
+;; Parameters:  ptree         parse tree in the format ((statement-op args...) ...)
+;; Description: checks if there is a catch block associated with the try
 (define has-catch?
   (lambda (ptree)
-    (not (null? (catch-section ptree)))))
+    (not (null? (catch-section ptree)))
+  )
+)
 
+;; Function:    (has-finally? ptree)
+;; Parameters:  ptree         parse tree in the format ((statement-op args...) ...)
+;; Description: checks if there is a finally block associated with the try
 (define has-finally?
   (lambda (ptree)
-    (not (null? (finally-section ptree)))))
+    (not (null? (finally-section ptree)))
+  )
+)
 
 ;;;; *********************************************************************************************************
 ;;;; error functions
