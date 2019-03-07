@@ -22,9 +22,6 @@
 ;;;; constants
 ;;;; *********************************************************************************************************
 
-;; define the value for an undeclared variable
-(define undefined-var 'undefined)
-
 ;; define the length of each statement
 (define return-len 2)
 (define break-len 1)
