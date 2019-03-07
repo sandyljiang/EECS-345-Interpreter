@@ -619,7 +619,7 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (operator_switch ptree)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
+;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: determines the state function to use based on the statement-op in ptree
 (define operator_switch
   (lambda (ptree)
@@ -641,8 +641,8 @@
 )
 
 ;; Function:    (mstate ptree state return break throw continue)
-;; Parameters:  ptree parse tree in the format ((statement-op args...) ...)
-;;              state binding list in the form defined in state.rkt
+;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
+;;              state - binding list in the form defined in state.rkt
 ;; Description: Performs the the operations in the parse tree based on the state to return the new state
 (define mstate
   (lambda (ptree state return break throw continue)
