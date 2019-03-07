@@ -22,9 +22,6 @@
 ;;;; constants
 ;;;; *********************************************************************************************************
 
-;; define the value for an undeclared variable
-(define undefined-var 'undefined)
-
 ;; define the length of each statement
 (define return-len 2)
 (define break-len 1)
@@ -52,13 +49,13 @@
 ;; the rest of the statements int eh parse tree after the currently selected one
 (define next-statement cdr)
 
-;; expression for return operator
+;; expression passed to the return operator
 (define catch-argxpr cadar)
 
-;; expression for throw operator
+;; expression passed to the throw operator
 (define throw-expr cadar)
 
-;; expression for statement list in begin block
+;; the statement list in begin block
 (define stmt-list cdar)
 
 ;; name of variable being declared/assigned
@@ -72,7 +69,9 @@
 (define if-body caddar)
 (define else-body
   (lambda (ptree)
-    (car (cdddar ptree)))) ; cadddar
+    (car (cdddar ptree)) ; cadddar
+  )
+)
 
 ;; while condition and budy statement
 (define while-cond cadar)
@@ -81,7 +80,9 @@
 (define catch-section caddar)
 (define finally-section
   (lambda (ptree)
-    (car (cdddar ptree))))
+    (car (cdddar ptree))
+  )
+)
 ;try catch body statement
 (define try-block
   (lambda (ptree)
