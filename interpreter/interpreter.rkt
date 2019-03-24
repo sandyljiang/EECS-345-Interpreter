@@ -1,7 +1,7 @@
 #lang racket
 (provide (all-defined-out))
 (require "simpleParser.rkt")
-(require "state.rkt")
+(require "env.rkt")
 (require "mstate.rkt")
 
 ;;;; *********************************************************************************************************
@@ -11,13 +11,13 @@
 ;;;; *********************************************************************************************************
 
 (define break-error
-  (lambda (state) (error "Error: break outside of loop.\nstate: " state)))
+  (lambda (env) (error "Error: break outside of loop.\nenv: " env)))
 
 (define throw-error
-  (lambda (state) (error "Error: throw outside of try.\nstate: " state)))
+  (lambda (env) (error "Error: throw outside of try.\nenv: " env)))
 
 (define continue-error
-  (lambda (state) (error "Error: continue outside of loop.\nstate: " state)))
+  (lambda (env) (error "Error: continue outside of loop.\nenv: " env)))
 
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
@@ -31,7 +31,6 @@
       )
      )
      ;; interpret the code and get the return value
-     ;(find return-var
      ((lambda (v)
         (if (not (list? v))
           v
@@ -39,15 +38,13 @@
         )
       )
       (call/cc (lambda (return)
-                          (mstate (parser filename)
-                                  (initial-state)
-                                  (lambda (return-state return-value) (return return-value))
-                                  break-error
-                                  throw-error
-                                  continue-error)))
+                 (mstate (parser filename)
+                         (initial-env)
+                         (lambda (return-env return-value) (return return-value))
+                         break-error
+                         throw-error
+                         continue-error)))
      )
-
-        ;)
     )
   )
 )
