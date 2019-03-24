@@ -181,12 +181,7 @@
 ;;              return is in a finally block).
 (define return-statement
   (lambda (ptree state return break throw continue)
-    ;; make sure the return variable doesn't exist
-    ;; (otherwise there are multiple return statements)
-    (if (exists? return-var state)
-      (return (change-value return-var (mvalue (return-expr ptree) state) state)) ; return a new state with the return value changed
-      (multiple-returns-error)
-    )
+    (return state (mvalue (return-expr ptree) state)) ; pass the return value up
   )
 )
 
@@ -481,13 +476,14 @@
     (mstate (final-block ptree)
             (mstate (try-block ptree)
                     state
-                    (lambda (return-state)
-                      (return (mstate (final-block ptree)
-                                      return-state
-                                      return
-                                      break
-                                      throw
-                                      continue))
+                    (lambda (return-state return-value)
+                      (begin (mstate (final-block ptree)
+                                     return-state
+                                     return
+                                     break
+                                     throw
+                                     continue)
+                             (return return-value))
                     )
                     (lambda (break-state)
                       (break (mstate (final-block ptree)
@@ -536,13 +532,14 @@
             (call/cc (lambda (exit-catch)
                         (mstate (try-block ptree)
                                 state
-                                (lambda (return-state)
-                                  (return (mstate (final-block ptree)
-                                                  return-state
-                                                  return
-                                                  break
-                                                  throw
-                                                  continue))
+                                (lambda (return-state return-value)
+                                  (begin (mstate (final-block ptree)
+                                                 return-state
+                                                 return
+                                                 break
+                                                 throw
+                                                 continue)
+                                         (return return-value))
                                 )
                                 (lambda (break-state)
                                   (break (mstate (final-block ptree)

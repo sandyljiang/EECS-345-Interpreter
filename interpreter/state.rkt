@@ -57,7 +57,7 @@
 ;;              undefined 'throw and 'return variables in it
 (define initial-state
   (lambda ()
-    (add throw-var undefined-var (add return-var undefined-var empty-state))
+    (add throw-var undefined-var empty-state)
   )
 )
 
