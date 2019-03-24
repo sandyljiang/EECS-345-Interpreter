@@ -31,15 +31,23 @@
       )
      )
      ;; interpret the code and get the return value
-     (find return-var
-           (call/cc (lambda (return)
-                      (mstate (parser filename)
-                      (initial-state)
-                      return
-                      break-error
-                      throw-error
-                      continue-error)
-           )))
+     ;(find return-var
+     ((lambda (v)
+        (if (not (list? v))
+          v
+          (error "no return")
+        )
+      )
+      (call/cc (lambda (return)
+                          (mstate (parser filename)
+                                  (initial-state)
+                                  (lambda (return-state return-value) (return return-value))
+                                  break-error
+                                  throw-error
+                                  continue-error)))
+     )
+
+        ;)
     )
   )
 )
