@@ -10,7 +10,7 @@
 
 ; Dependencies
 (require "simpleParser.rkt")
-(require "state.rkt")
+(require "env.rkt")
 (require "helper.rkt")
 
 ; The abstracted functions
@@ -78,12 +78,12 @@
   )
 )
 
-;; Function:    (mvalue expr state)
+;; Function:    (mvalue expr env)
 ;; Parameters:  expr is list representing the parse tree
-;;              s is the list representing state, which contains the name-value bindings
-;; Description: Evaluates the given expression using the given state.
+;;              s is the list representing env, which contains the name-value bindings
+;; Description: Evaluates the given expression using the given env.
 (define mvalue
-  (lambda (expr state)
+  (lambda (expr env)
     (cond
       ((null? expr) (error "Error: Evaluating null statement"))
 
@@ -98,13 +98,13 @@
         #f)
 
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
-        (find expr state))
+        (find expr env))
 
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
-        ((lambda (func) (func (mvalue (operand1 expr) state))) (1_op_switch expr)))
+        ((lambda (func) (func (mvalue (operand1 expr) env))) (1_op_switch expr)))
 
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) state) (mvalue (operand2 expr) state)))
+        ((lambda (func) (func (mvalue (operand1 expr) env) (mvalue (operand2 expr) env)))
          (2_op_switch expr)
         ))
 

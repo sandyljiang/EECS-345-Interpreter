@@ -1,7 +1,7 @@
 #lang racket
 (require "interpreter/interpreter.rkt")
 (require "interpreter/simpleParser.rkt")
-(require "interpreter/state.rkt")
+(require "interpreter/env.rkt")
 (require "interpreter/mstate.rkt")
 
 (define error_test_case

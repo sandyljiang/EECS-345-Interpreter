@@ -1,6 +1,6 @@
-with open("p2tests.txt", "r") as f:
+with open("p3tests.txt", "r") as f:
     lines = f.readlines()
-    case = 25
+    case = 51
 
     for line in lines:
         if (line.startswith("Test")):
