@@ -1,5 +1,7 @@
-while (true) {
-    if (true)
-        break;
+function main() {
+    while (true) {
+        if (true)
+            break;
+    }
+    return 1;
 }
-return 1;

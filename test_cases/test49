@@ -1,8 +1,10 @@
-while (true) {
-    try {
-        break;
-    }
-    finally {
-        return 10;
+function main() {
+    while (true) {
+        try {
+            break;
+        }
+        finally {
+            return 10;
+        }
     }
 }

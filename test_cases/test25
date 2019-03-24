@@ -1,3 +1,5 @@
-var x = 10;
-if (false)
-    return x;
+function main() {
+    var x = 10;
+    if (false)
+        return x;
+}

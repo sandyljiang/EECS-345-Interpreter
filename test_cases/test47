@@ -1,16 +1,18 @@
-while (true) {
-    var x = 10;
-    {
-        var y = 2;
+function main() {
+    while (true) {
+        var x = 10;
         {
+            var y = 2;
             {
                 {
                     {
-                        break;
+                        {
+                            break;
+                        }
                     }
                 }
             }
         }
     }
+    return x;
 }
-return x;

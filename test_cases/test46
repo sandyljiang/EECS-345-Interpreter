@@ -1,7 +1,10 @@
-try {
-    break;
+function main() {
+    try {
+        break;
+    }
+    finally {
+        return 10;
+    }
+    return 2;
+
 }
-finally {
-    return 10;
-}
-return 2;

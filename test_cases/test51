@@ -1,6 +1,8 @@
-try {
-
-}
-finally {
-    return 1;
+function main() {
+    try {
+    
+    }
+    finally {
+        return 1;
+    }
 }

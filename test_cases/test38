@@ -1,4 +1,7 @@
+function main() {
+    
+    var x = 1;
+    break;
+    return x;
 
-var x = 1;
-break;
-return x;
+}

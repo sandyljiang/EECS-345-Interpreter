@@ -592,7 +592,7 @@
 ;;                         or
 ;;                         ((try try-block (catch (catch-arg) catch-block) ()) ...)
 ;;                         or
-;;              env    - binding list in the form defined in env.rkt
+;;              env      - binding list in the form defined in env.rkt
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
@@ -622,6 +622,16 @@
 ;;;; function definition operator
 ;;;; *********************************************************************************************************
 
+;; Function:    (function-def-statement ptree env return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         (function func-name func-param-list func-body)
+;;              env      - binding list in the form defined in env.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: calculate the new env after evaluating function definition
+;;              statement at the beginning of the parse tree
 (define function-def-statement
   (lambda (ptree env return break throw continue)
     (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) env)
@@ -629,7 +639,7 @@
 )
 
 ;;;; *********************************************************************************************************
-;;;; env Calculation
+;;;; State Calculation
 ;;;; *********************************************************************************************************
 
 ;; Function:    (operator_switch ptree)
