@@ -638,6 +638,44 @@
   )
 )
 
+
+;;;; *********************************************************************************************************
+;;;; function definition operator
+;;;; *********************************************************************************************************
+
+;; Function:    (function-call-statement ptree env return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         (function func-name func-param-list func-body)
+;;              env      - binding list in the form defined in env.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: Calculate the new environment after evaluating the function body in the closure
+;;              bound to the function being called at the beginning of the parse tree.
+(define function-call-statement
+  (lambda (ptree env return break throw continue)
+    ((lambda (post-func-state) env)
+     ; Getting the func-env from the closure
+     ((lambda (closure)
+        (call/cc
+         (lambda (return-cont)
+           (mstate (closure-body closure)
+                   (add-multiple-vars (closure-params closure (mvalue-list params env throw) (push-layer closure)))
+                   return-cont
+                   (lambda () error)
+                   throw
+                   (lambda () error)
+           )
+         )
+        )
+      )
+      (find func-name)
+     )
+   )
+  )
+)
+
 ;;;; *********************************************************************************************************
 ;;;; State Calculation
 ;;;; *********************************************************************************************************
