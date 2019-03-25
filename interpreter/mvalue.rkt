@@ -113,3 +113,30 @@
     )
   )
 )
+
+;; Function:    (mvalue-list param-exprs env throw)
+;; Parameters:  exprs - list containing parse tree expressions to be evaluated
+;;              env   - the environment to use to evaluate expressions
+;;              throw - a throw continuation to pass to the mvalue function evaluating the expressions
+;; Description: Evaluates a list of expressions using the mvalue function, the given environment, and
+;;              the given throw continuation. Returns a list of the values the expressions evaluate to.
+(define mvalue-list
+  (lambda (exprs env throw)
+    (if (null? exprs)
+        '()
+        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env throw)))))
+
+;; Function:    (mvalue-list-cps param-exprs env throw)
+;; Description: Same as mvalue-list above, but uses tail recursion and continuation passing style instead.
+(define mvalue-list-cps
+  (lambda (exprs env throw)
+    ((lambda (cps-func)
+      (cps-func exprs env throw (lambda (v) v)))
+     (lambda (exprs env throw cps-cont)
+       (if (null? exprs)
+           (cps-cont '())
+           (mvalue-list-cps (cdr exprs) env throw (lambda (v) (cps-cont (cons (mvalue (car exprs) env throw) v)))))
+     )
+    )
+  )
+)
