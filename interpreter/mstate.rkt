@@ -119,15 +119,6 @@
   )
 )
 
-;; The function's parameter list in the closure
-(define closure-params cadr)
-
-;; The function's body in the closure
-(define closure-body caddr)
-
-;; The function's environment in the closure
-(define closure-env cadddr)
-
 ;; The function call's name
 (define func-call-name cadar)
 
@@ -680,7 +671,7 @@
            (mstate (closure-body closure)
                    (add-multiple-vars (closure-params closure)
                                       (mvalue-list (func-call-params ptree) env throw)
-                                      (push-layer (closure-env closure)))
+                                      (push-layer ((closure-env closure))))
                    return-cont
                    (lambda () error)
                    throw

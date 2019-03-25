@@ -7,6 +7,7 @@
 ;;;; *********************************************************************************************************
 ; This file provides
 (provide mvalue)
+(provide mvalue-list)
 
 ; Dependencies
 (require "simpleParser.rkt")
@@ -131,8 +132,8 @@
 (define mvalue-list-cps
   (lambda (exprs env throw)
     ((lambda (cps-func)
-      (cps-func exprs env throw (lambda (v) v)))
-     (lambda (exprs env throw cps-cont)
+      (cps-func exprs env throw (lambda (v) v))) ; This acts as the wrapper and creates the initial continuation
+     (lambda (exprs env throw cps-cont)          ; The definition of the actual cps function
        (if (null? exprs)
            (cps-cont '())
            (mvalue-list-cps (cdr exprs) env throw (lambda (v) (cps-cont (cons (mvalue (car exprs) env throw) v)))))
