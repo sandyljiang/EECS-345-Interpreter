@@ -708,6 +708,7 @@
       ((eq? (statement-op ptree) 'begin)         begin-statement)
       ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try block catch block final block) ...)
       ((operator? ptree 'function func-def-len)  function-def-statement)
+      ((eq? (statement-op ptree) 'funcall)       function-call-statement)
       (else                                      (undefined-op-error ptree))
     )
   )
