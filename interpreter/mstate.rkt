@@ -119,6 +119,23 @@
   )
 )
 
+;; The function's parameter list in the closure
+(define closure-params cadr)
+
+;; The function's body in the closure
+(define closure-body caddr)
+
+;; The function's environment in the closure
+(define closure-env cadddr)
+
+;; The function call's name
+(define func-call-name cadar)
+
+;; The function call's parameter list
+(define func-call-params cddar)
+
+
+
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -661,7 +678,9 @@
         (call/cc
          (lambda (return-cont)
            (mstate (closure-body closure)
-                   (add-multiple-vars (closure-params closure (mvalue-list params env throw) (push-layer closure)))
+                   (add-multiple-vars (closure-params closure)
+                                      (mvalue-list (func-call-params ptree) env throw)
+                                      (push-layer (closure-env closure)))
                    return-cont
                    (lambda () error)
                    throw
@@ -670,7 +689,7 @@
          )
         )
       )
-      (find func-name)
+      (find (func-call-name ptree)) ; Finds the closure bound to the given function's name, passes into closure param above
      )
    )
   )
