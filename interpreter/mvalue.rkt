@@ -125,7 +125,7 @@
   (lambda (exprs env throw)
     (if (null? exprs)
         '()
-        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env throw)))))
+        (cons (mvalue (car exprs) env) (mvalue-list (cdr exprs) env throw)))))
 
 ;; Function:    (mvalue-list-cps param-exprs env throw)
 ;; Description: Same as mvalue-list above, but uses tail recursion and continuation passing style instead.

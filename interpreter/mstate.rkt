@@ -672,7 +672,7 @@
                    (add-multiple-vars (closure-params closure)
                                       (mvalue-list (func-call-params ptree) env throw)
                                       (push-layer ((closure-env closure))))
-                   return-cont
+                   (lambda (e v) (return-cont e))
                    (lambda () error)
                    throw
                    (lambda () error)
@@ -680,14 +680,14 @@
          )
         )
       )
-      (find (func-call-name ptree)) ; Finds the closure bound to the given function's name, passes into closure param above
+      (find (func-call-name ptree) env) ; Finds the closure bound to the given function's name, passes into closure param above
      )
    )
   )
 )
 
 ;;;; *********************************************************************************************************
-;;;; State Calculation
+;;;; Env Calculation
 ;;;; *********************************************************************************************************
 
 ;; Function:    (operator_switch ptree)
