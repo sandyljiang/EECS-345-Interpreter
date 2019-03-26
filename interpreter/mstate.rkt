@@ -198,7 +198,7 @@
 ;;              return is in a finally block).
 (define return-statement
   (lambda (ptree env return break throw continue)
-    (return env (mvalue (return-expr ptree) env)) ; pass the return value up
+    (return env (mvalue (return-expr ptree) env throw)) ; pass the return value up
   )
 )
 
@@ -750,3 +750,104 @@
     )
   )
 )
+
+;; Function:    (mvalue expr env)
+;; Parameters:  expr is list representing the parse tree
+;;              s is the list representing env, which contains the name-value bindings
+;; Description: Evaluates the given expression using the given env.
+(define mvalue
+  (lambda (expr env throw)
+    (cond
+      ((null? expr) (error "Error: Evaluating null statement"))
+
+      ; Base cases
+      ((number? expr)
+        expr)
+
+      ((eq? expr 'true)
+        #t)
+
+      ((eq? expr 'false)
+        #f)
+
+      ((not (list? expr)) ; if the expression is a variable, lookup the variable
+        (find expr env))
+
+      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
+        ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
+
+      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
+        ((lambda (func) (func (mvalue (operand1 expr) env throw) (mvalue (operand2 expr) env throw)))
+         (2_op_switch expr)
+        ))
+
+      ((eq? (statement-op expr) 'funcall)
+        ((lambda (closure) ; Getting the func-env from the closure
+           (call/cc
+            (lambda (return-cont)
+              (mstate (closure-body closure)
+                      (add-multiple-vars (closure-params closure)
+                                         (mvalue-list (func-call-params expr) env throw)
+                                         (push-layer ((closure-env closure))))
+                      (lambda (e v) (list e v))
+                      (lambda () error)
+                      throw
+                      (lambda () error)
+                      )
+              )
+            )
+           )
+         (find (func-call-name expr) env) ; Finds the closure bound to the given function's name, passes into closure param above
+         )
+        )
+
+      (else
+        (error "Error: Executing invalid expression.\nExpression: " expr))
+    )
+  )
+)
+
+;; Function:    (mvalue-list param-exprs env throw)
+;; Parameters:  exprs - list containing parse tree expressions to be evaluated
+;;              env   - the environment to use to evaluate expressions
+;;              throw - a throw continuation to pass to the mvalue function evaluating the expressions
+;; Description: Evaluates a list of expressions using the mvalue function, the given environment, and
+;;              the given throw continuation. Returns a list of the values the expressions evaluate to.
+(define mvalue-list
+  (lambda (exprs env throw)
+    (if (null? exprs)
+        '()
+        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env throw)))))
+
+;; Function:    (mvalue-list-cps param-exprs env throw)
+;; Description: Same as mvalue-list above, but uses tail recursion and continuation passing style instead.
+(define mvalue-list-cps
+  (lambda (exprs env throw)
+    ((lambda (cps-func)
+      (cps-func exprs env throw (lambda (v) v))) ; This acts as the wrapper and creates the initial continuation
+     (lambda (exprs env throw cps-cont)          ; The definition of the actual cps function
+       (if (null? exprs)
+           (cps-cont '())
+           (mvalue-list-cps (cdr exprs) env throw (lambda (v) (cps-cont (cons (mvalue (car exprs) env throw) v)))))
+     )
+    )
+  )
+)
+
+; For playing around only REMOVE LATER
+(define test-ptree '((funcall gcd x y)))
+(define test-throw (lambda () error))
+(define test-env empty-env)
+(set! test-env (add-function 'gcd '(x y) '((= x 25) (return (+ x y))) (add 'y 15 (add 'x 10 empty-env))))
+test-env
+(display "mvalue")
+(newline)
+(mvalue test-ptree test-env test-throw)
+(newline)
+(display "function-call-statement")
+(newline)
+(function-call-statement test-ptree test-env (lambda (v) v) test-throw test-throw test-throw)
+(newline)
+(display "mstate")
+(newline)
+(mstate test-ptree test-env (lambda (v) v) test-throw test-throw test-throw)
