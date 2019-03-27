@@ -1,17 +1,18 @@
 #lang racket
+(provide mvalue)
+(require "simpleParser.rkt")
+(require "env.rkt")
+(require "helper.rkt")
+
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 2
+;;;; Interpreter Part 3
 ;;;; Mvalue calculation functions
 ;;;; *********************************************************************************************************
 ; This file provides
 (provide (all-defined-out))
 
-; Dependencies
-(require "simpleParser.rkt")
-(require "env.rkt")
-(require "helper.rkt")
 
 ; The abstracted functions
 (define statement-op car)

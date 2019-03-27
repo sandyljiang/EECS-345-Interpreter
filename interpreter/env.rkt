@@ -5,14 +5,14 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 2
+;;;; Interpreter Part 3
 ;;;; env handling functions
 ;;;; *********************************************************************************************************
 
 ;; definition for a layer with no values in it
 (define null-layer '(() ()))
 
-;; definition for the starting env with one null alyer in it
+;; definition for the starting env with one null layer in it
 (define empty-env (list null-layer))
 
 ;; definition for the return value for find when the variable is not found
@@ -290,8 +290,6 @@
     )
   )
 )
-
-
 
 ;; Function:    (change-value name new-value env)
 ;; Parameters:  name      the name of the variable to change in the env
