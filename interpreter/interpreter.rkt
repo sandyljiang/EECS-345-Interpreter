@@ -38,13 +38,11 @@
         )
       )
       (call/cc (lambda (return)
-                 (mstate (parser filename)
-                         (initial-env)
-                         (lambda (return-env return-value) (return return-value))
-                         break-error
-                         throw-error
-                         continue-error)))
+                 (mvalue '((function-call main))
+                 (mstate-outer (parser filename)
+                         (initial-env))))
+               )
+      )
      )
     )
   )
-)

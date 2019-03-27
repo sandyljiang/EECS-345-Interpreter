@@ -12,7 +12,7 @@
 ;; definition for a layer with no values in it
 (define null-layer '(() ()))
 
-;; definition for the starting env with one null alyer in it
+;; definition for the starting env with one null layer in it
 (define empty-env (list null-layer))
 
 ;; definition for the return value for find when the variable is not found
@@ -290,8 +290,6 @@
     )
   )
 )
-
-
 
 ;; Function:    (change-value name new-value env)
 ;; Parameters:  name      the name of the variable to change in the env
