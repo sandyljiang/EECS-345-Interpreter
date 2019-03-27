@@ -316,7 +316,7 @@
       ;; make sure the variable has been declared
       (if (exists? name env)
         (change-value name
-                (mvalue (var-value ptree) env)
+                (mvalue (var-value ptree) env throw)
                 env)
         (assign-error name)))
      (var-name ptree)
@@ -789,7 +789,7 @@
                       (add-multiple-vars (closure-params closure)
                                          (mvalue-list (func-call-params expr) env throw)
                                          (push-layer ((closure-env closure))))
-                      (lambda (e v) (list e v))
+                      (lambda (e v) (return-cont v))
                       (lambda () error)
                       throw
                       (lambda () error)
@@ -833,21 +833,3 @@
     )
   )
 )
-
-; For playing around only REMOVE LATER
-(define test-ptree '((funcall gcd x y)))
-(define test-throw (lambda () error))
-(define test-env empty-env)
-(set! test-env (add-function 'gcd '(x y) '((= x 25) (return (+ x y))) (add 'y 15 (add 'x 10 empty-env))))
-test-env
-(display "mvalue")
-(newline)
-(mvalue test-ptree test-env test-throw)
-(newline)
-(display "function-call-statement")
-(newline)
-(function-call-statement test-ptree test-env (lambda (v) v) test-throw test-throw test-throw)
-(newline)
-(display "mstate")
-(newline)
-(mstate test-ptree test-env (lambda (v) v) test-throw test-throw test-throw)
