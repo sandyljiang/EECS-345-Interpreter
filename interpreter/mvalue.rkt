@@ -6,7 +6,7 @@
 ;;;; Mvalue calculation functions
 ;;;; *********************************************************************************************************
 ; This file provides
-(provide mvalue)
+(provide (all-defined-out))
 
 ; Dependencies
 (require "simpleParser.rkt")
@@ -74,42 +74,6 @@
       ((operator? expr '-) (lambda (op1) (* -1 op1)))
       ((operator? expr '!) (lambda (op1) (not op1)))
       (else                (error "Error: Executing invalid expression.\nExpression: " expr))
-    )
-  )
-)
-
-;; Function:    (mvalue expr env)
-;; Parameters:  expr is list representing the parse tree
-;;              s is the list representing env, which contains the name-value bindings
-;; Description: Evaluates the given expression using the given env.
-(define mvalue
-  (lambda (expr env)
-    (cond
-      ((null? expr) (error "Error: Evaluating null statement"))
-
-      ; Base cases
-      ((number? expr)
-        expr)
-
-      ((eq? expr 'true)
-        #t)
-
-      ((eq? expr 'false)
-        #f)
-
-      ((not (list? expr)) ; if the expression is a variable, lookup the variable
-        (find expr env))
-
-      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
-        ((lambda (func) (func (mvalue (operand1 expr) env))) (1_op_switch expr)))
-
-      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) env) (mvalue (operand2 expr) env)))
-         (2_op_switch expr)
-        ))
-
-      (else
-        (error "Error: Executing invalid expression.\nExpression: " expr))
     )
   )
 )

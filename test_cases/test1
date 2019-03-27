@@ -1,1 +1,4 @@
-return 150;
+function main() {
+    return 150;
+
+}

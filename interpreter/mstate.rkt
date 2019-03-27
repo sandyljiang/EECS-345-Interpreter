@@ -119,6 +119,14 @@
   )
 )
 
+;; The function call's name
+(define func-call-name cadar)
+
+;; The function call's parameter list
+(define func-call-params cddar)
+
+
+
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -190,7 +198,7 @@
 ;;              return is in a finally block).
 (define return-statement
   (lambda (ptree env return break throw continue)
-    (return env (mvalue (return-expr ptree) env)) ; pass the return value up
+    (return env (mvalue (return-expr ptree) env throw)) ; pass the return value up
   )
 )
 
@@ -308,7 +316,7 @@
       ;; make sure the variable has been declared
       (if (exists? name env)
         (change-value name
-                (mvalue (var-value ptree) env)
+                (mvalue (var-value ptree) env throw)
                 env)
         (assign-error name)))
      (var-name ptree)
@@ -592,7 +600,7 @@
 ;;                         or
 ;;                         ((try try-block (catch (catch-arg) catch-block) ()) ...)
 ;;                         or
-;;              env    - binding list in the form defined in env.rkt
+;;              env      - binding list in the form defined in env.rkt
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
@@ -622,14 +630,64 @@
 ;;;; function definition operator
 ;;;; *********************************************************************************************************
 
+;; Function:    (function-def-statement ptree env return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         (function func-name func-param-list func-body)
+;;              env      - binding list in the form defined in env.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: calculate the new env after evaluating function definition
+;;              statement at the beginning of the parse tree
 (define function-def-statement
   (lambda (ptree env return break throw continue)
     (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) env)
   )
 )
 
+
 ;;;; *********************************************************************************************************
-;;;; env Calculation
+;;;; function definition operator
+;;;; *********************************************************************************************************
+
+;; Function:    (function-call-statement ptree env return break throw continue)
+;; Parameters:  ptree    - parse tree in the format
+;;                         (function func-name func-param-list func-body)
+;;              env      - binding list in the form defined in env.rkt
+;;              return   - a return continuation
+;;              break    - a break continuation
+;;              throw    - a throw continuation
+;;              continue - a continue continuation
+;; Description: Calculate the new environment after evaluating the function body in the closure
+;;              bound to the function being called at the beginning of the parse tree.
+(define function-call-statement
+  (lambda (ptree env return break throw continue)
+    ((lambda (post-func-state) env)
+     ; Getting the func-env from the closure
+     ((lambda (closure)
+        (call/cc
+         (lambda (return-cont)
+           (mstate (closure-body closure)
+                   (add-multiple-vars (closure-params closure)
+                                      (mvalue-list (func-call-params ptree) env throw)
+                                      (push-layer ((closure-env closure))))
+                   (lambda (e v) (return-cont e))
+                   (lambda () error)
+                   throw
+                   (lambda () error)
+           )
+         )
+        )
+      )
+      (find (func-call-name ptree) env) ; Finds the closure bound to the given function's name, passes into closure param above
+     )
+   )
+  )
+)
+
+;;;; *********************************************************************************************************
+;;;; Env Calculation
 ;;;; *********************************************************************************************************
 
 ;; Function:    (operator_switch ptree)
@@ -650,6 +708,7 @@
       ((eq? (statement-op ptree) 'begin)         begin-statement)
       ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try block catch block final block) ...)
       ((operator? ptree 'function func-def-len)  function-def-statement)
+      ((eq? (statement-op ptree) 'funcall)       function-call-statement)
       (else                                      (undefined-op-error ptree))
     )
   )
@@ -688,6 +747,89 @@
                    continue))
          (operator_switch ptree)
         ))
+    )
+  )
+)
+
+;; Function:    (mvalue expr env)
+;; Parameters:  expr is list representing the parse tree
+;;              s is the list representing env, which contains the name-value bindings
+;; Description: Evaluates the given expression using the given env.
+(define mvalue
+  (lambda (expr env throw)
+    (cond
+      ((null? expr) (error "Error: Evaluating null statement"))
+
+      ; Base cases
+      ((number? expr)
+        expr)
+
+      ((eq? expr 'true)
+        #t)
+
+      ((eq? expr 'false)
+        #f)
+
+      ((not (list? expr)) ; if the expression is a variable, lookup the variable
+        (find expr env))
+
+      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
+        ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
+
+      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
+        ((lambda (func) (func (mvalue (operand1 expr) env throw) (mvalue (operand2 expr) env throw)))
+         (2_op_switch expr)
+        ))
+
+      ((eq? (statement-op expr) 'funcall)
+        ((lambda (closure) ; Getting the func-env from the closure
+           (call/cc
+            (lambda (return-cont)
+              (mstate (closure-body closure)
+                      (add-multiple-vars (closure-params closure)
+                                         (mvalue-list (func-call-params expr) env throw)
+                                         (push-layer ((closure-env closure))))
+                      (lambda (e v) (return-cont v))
+                      (lambda () error)
+                      throw
+                      (lambda () error)
+                      )
+              )
+            )
+           )
+         (find (func-call-name expr) env) ; Finds the closure bound to the given function's name, passes into closure param above
+         )
+        )
+
+      (else
+        (error "Error: Executing invalid expression.\nExpression: " expr))
+    )
+  )
+)
+
+;; Function:    (mvalue-list param-exprs env throw)
+;; Parameters:  exprs - list containing parse tree expressions to be evaluated
+;;              env   - the environment to use to evaluate expressions
+;;              throw - a throw continuation to pass to the mvalue function evaluating the expressions
+;; Description: Evaluates a list of expressions using the mvalue function, the given environment, and
+;;              the given throw continuation. Returns a list of the values the expressions evaluate to.
+(define mvalue-list
+  (lambda (exprs env throw)
+    (if (null? exprs)
+        '()
+        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env throw)))))
+
+;; Function:    (mvalue-list-cps param-exprs env throw)
+;; Description: Same as mvalue-list above, but uses tail recursion and continuation passing style instead.
+(define mvalue-list-cps
+  (lambda (exprs env throw)
+    ((lambda (cps-func)
+      (cps-func exprs env throw (lambda (v) v))) ; This acts as the wrapper and creates the initial continuation
+     (lambda (exprs env throw cps-cont)          ; The definition of the actual cps function
+       (if (null? exprs)
+           (cps-cont '())
+           (mvalue-list-cps (cdr exprs) env throw (lambda (v) (cps-cont (cons (mvalue (car exprs) env throw) v)))))
+     )
     )
   )
 )

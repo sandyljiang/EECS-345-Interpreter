@@ -1,14 +1,17 @@
-var x = 10;
-try {
-    return x;
-}
-finally {
+function main() {
+    var x = 10;
     try {
-        x = x + 1;
         return x;
     }
     finally {
-        x = x + 1;
-        return x;
+        try {
+            x = x + 1;
+            return x;
+        }
+        finally {
+            x = x + 1;
+            return x;
+        }
     }
+
 }
