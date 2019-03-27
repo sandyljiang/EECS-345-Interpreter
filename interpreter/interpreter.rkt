@@ -2,22 +2,14 @@
 (provide (all-defined-out))
 (require "simpleParser.rkt")
 (require "env.rkt")
-(require "mstate.rkt")
+(require "mstate-outer.rkt")
+(require "mvalue.rkt")
 
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 2
+;;;; Interpreter Part 3
 ;;;; *********************************************************************************************************
-
-(define break-error
-  (lambda (env) (error "Error: break outside of loop.\nenv: " env)))
-
-(define throw-error
-  (lambda (env) (error "Error: throw outside of try.\nenv: " env)))
-
-(define continue-error
-  (lambda (env) (error "Error: continue outside of loop.\nenv: " env)))
 
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret

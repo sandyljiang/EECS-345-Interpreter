@@ -5,6 +5,7 @@
 (provide assign-error)
 (provide boolean-mismatch-error)
 (provide undefined-op-error)
+(provide (all-defined-out))
 (require "env.rkt")
 (require "mvalue.rkt")
 (require "helper.rkt")
@@ -12,7 +13,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 2
+;;;; Interpreter Part 3
 ;;;; mstate calculation functions
 ;;;; *********************************************************************************************************
 
@@ -173,6 +174,18 @@
 
 (define invalid-try-error
   (lambda (ptree) (error "Error: try without catch or finally. ptree: " ptree)))
+
+(define break-error
+  (lambda (env) (error "Error: break outside of loop.\nenv: " env)))
+
+(define throw-error
+  (lambda (env) (error "Error: throw outside of try.\nenv: " env)))
+
+(define continue-error
+  (lambda (env) (error "Error: continue outside of loop.\nenv: " env)))
+
+(define return-error
+  (lambda (env) (error "Error: Invalid use of return. \nenv: " env)))
 
 ;;;; *********************************************************************************************************
 ;;;; return operator
