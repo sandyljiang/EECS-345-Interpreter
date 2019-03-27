@@ -126,6 +126,12 @@
 ;; The function call's parameter list
 (define func-call-params cddar)
 
+;; The function call's name
+(define mvalue-func-call-name cadr)
+
+;; The function call's parameter list
+(define mvalue-func-call-params cddr)
+
 
 
 
@@ -267,7 +273,7 @@
 ;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
 (define throw-statement
   (lambda (ptree env return break throw continue)
-    (throw (change-value throw-var (mvalue (throw-expr ptree) env) env))
+    (throw (change-value throw-var (mvalue (throw-expr ptree) env throw) env))
   )
 )
 
@@ -305,7 +311,7 @@
   (lambda (ptree env return break throw continue)
     ;; extract the name and value from the ptree and add the to the env
     (add (var-name ptree)
-         (mvalue (var-value ptree) env)
+         (mvalue (var-value ptree) env throw)
          env)
   )
 )
@@ -384,7 +390,7 @@
         (else               (boolean-mismatch-error condition))
       )
      )
-     (mvalue (if-cond ptree) env)
+     (mvalue (if-cond ptree) env throw)
     )
    )
 )
@@ -413,7 +419,7 @@
         (else               (boolean-mismatch-error condition))
       )
      )
-     (mvalue (if-cond ptree) env)
+     (mvalue (if-cond ptree) env throw)
     )
    )
 )
@@ -450,7 +456,7 @@
         (else               (boolean-mismatch-error condition))
       )
      )
-     (mvalue (while-cond ptree) env)
+     (mvalue (while-cond ptree) env throw)
     )
   )
 )
@@ -786,21 +792,13 @@
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
         (find expr env))
 
-      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
-        ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
-
-      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) env throw) (mvalue (operand2 expr) env throw)))
-         (2_op_switch expr)
-        ))
-
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc
             (lambda (return-cont)
               (mstate (closure-body closure)
                       (add-multiple-vars (closure-params closure)
-                                         (mvalue-list (func-call-params expr) env throw)
+                                         (mvalue-list (mvalue-func-call-params expr) env throw)
                                          (push-layer ((closure-env closure))))
                       (lambda (e v) (return-cont v))
                       (lambda () error)
@@ -810,9 +808,19 @@
               )
             )
            )
-         (find (func-call-name expr) env) ; Finds the closure bound to the given function's name, passes into closure param above
+         (find (mvalue-func-call-name expr) env) ; Finds the closure bound to the given function's name, passes into closure param above
          )
         )
+
+      ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
+        ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
+
+      ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
+        ((lambda (func) (func (mvalue (operand1 expr) env throw) (mvalue (operand2 expr) env throw)))
+         (2_op_switch expr)
+        ))
+
+
 
       (else
         (error "Error: Executing invalid expression.\nExpression: " expr))

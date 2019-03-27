@@ -60,7 +60,7 @@
       ((mvalue-operator? expr '||) (lambda (op1 op2) (or op1 op2)))
 
       ; Operator not recognized
-      ;(else                 (error "Error: Executing invalid expression.\nExpression: " expr))
+      (else                 (error "Error: Executing invalid expression.\nExpression: " expr))
     )
   )
 )
@@ -74,7 +74,7 @@
     (cond
       ((mvalue-operator? expr '-) (lambda (op1) (* -1 op1)))
       ((mvalue-operator? expr '!) (lambda (op1) (not op1)))
-      ;(else                (error "Error: Executing invalid expression.\nExpression: " expr))
+      (else                (error "Error: Executing invalid expression.\nExpression: " expr))
     )
   )
 )
