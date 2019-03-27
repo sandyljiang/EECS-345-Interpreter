@@ -14,28 +14,14 @@
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename)
-    ;; convert boolean values from the return value to the correct format
-    ((lambda (v)
+    ((lambda (retval)
       (cond
-        ((eq? v #t) 'true)
-        ((eq? v #f) 'false)
-        (else       v)
-      )
-     )
-     ;; interpret the code and get the return value
-     ((lambda (v)
-        (if (not (list? v))
-          v
-          (error "Error: No return in main function")
-        )
-      )
-      (call/cc (lambda (return)
-                 (mvalue '(funcall main)
-                         (mstate-outer (parser filename)
-                                       (initial-env))
-                         throw-error))
-               )
-      )
-     )
-    )
-  )
+        ((list? retval)  (error "Error: No return in main function"))
+        ((eq? retval #t) 'true)
+        ((eq? retval #f) 'false)
+        (else            retval)))
+     (call/cc (lambda (return)
+                (mvalue '(funcall main)
+                        (mstate-outer (parser filename)
+                                      (initial-env))
+                        throw-error))))))

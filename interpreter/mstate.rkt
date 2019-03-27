@@ -740,13 +740,6 @@
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
 (define mstate
   (lambda (ptree env return break throw continue)
-    ;(display "msate")
-    ;(newline)
-    ;(display env)
-    ;(newline)
-    ;(display ptree)
-    ;(newline)
-    ;(newline)
     (cond
       ((null? ptree)
         env)
@@ -801,13 +794,6 @@
         (find expr env))
 
       ((eq? (mvalue-statement-op expr) 'funcall)
-        ;(display "mvalue")
-        ;(newline)
-        ;(display env)
-        ;(newline)
-        ;(display expr)
-        ;(newline)
-        ;(newline)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc
             (lambda (return-cont)
