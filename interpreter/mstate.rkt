@@ -46,7 +46,7 @@
 ;; the statement currently being evaluated
 (define current-statement car)
 
-;; the rest of the statements int eh parse tree after the currently selected one
+;; the rest of the statements in the parse tree after the currently selected one
 (define next-statement cdr)
 
 ;; expression passed to the return operator
