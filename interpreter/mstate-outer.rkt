@@ -40,13 +40,15 @@
     (cond
       ((null? ptree)
         env)
+      (else
         ((lambda (func)
            (mstate-outer (next-statement ptree)
                    (func ptree env return-error break-error throw-error continue-error)
                    )
-           )
+         )
          (outer-operator_switch ptree)
         )
+      )
     )
   )
 )

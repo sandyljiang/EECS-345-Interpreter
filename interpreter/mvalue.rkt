@@ -1,5 +1,5 @@
 #lang racket
-(provide mvalue)
+;(provide mvalue)
 (require "simpleParser.rkt")
 (require "env.rkt")
 (require "helper.rkt")
@@ -15,13 +15,13 @@
 
 
 ; The abstracted functions
-(define statement-op car)
+(define mvalue-statement-op car)
 (define operand1 cadr)
 (define operand2 caddr)
 (define 2-operand 3)
 (define 1-operand 2)
 
-;; Function:    (operator? statement operator)
+;; Function:    (mvalue-operator? statement operator)
 ;; Parameters:  statement is the parsed statement to evaluate. First element should be
 ;;                the operator represented by an atom
 ;;              operator is the operator to check for.
@@ -29,9 +29,9 @@
 ;;                and operands)
 ;; Description: Helper function that compares operator of given list to given operator.
 ;;              Returns true if it matches, false if not.
-(define operator?
+(define mvalue-operator?
   (lambda (statement operator)
-    (eq? (statement-op statement) operator)
+    (eq? (mvalue-statement-op statement) operator)
   )
 )
 
@@ -43,24 +43,24 @@
   (lambda (expr)
     (cond
       ;; cases with arithmetic operators
-      ((operator? expr '+) +)
-      ((operator? expr '-) -)
-      ((operator? expr '*) *)
-      ((operator? expr '/) quotient)
-      ((operator? expr '%) remainder)
+      ((mvalue-operator? expr '+) +)
+      ((mvalue-operator? expr '-) -)
+      ((mvalue-operator? expr '*) *)
+      ((mvalue-operator? expr '/) quotient)
+      ((mvalue-operator? expr '%) remainder)
 
       ; Cases with comparison operators
-      ((operator? expr '==) eq?)
-      ((operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
-      ((operator? expr '< ) <)
-      ((operator? expr '> ) >)
-      ((operator? expr '<=) <=)
-      ((operator? expr '>=) >=)
-      ((operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
-      ((operator? expr '||) (lambda (op1 op2) (or op1 op2)))
+      ((mvalue-operator? expr '==) eq?)
+      ((mvalue-operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
+      ((mvalue-operator? expr '< ) <)
+      ((mvalue-operator? expr '> ) >)
+      ((mvalue-operator? expr '<=) <=)
+      ((mvalue-operator? expr '>=) >=)
+      ((mvalue-operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
+      ((mvalue-operator? expr '||) (lambda (op1 op2) (or op1 op2)))
 
       ; Operator not recognized
-      (else                 (error "Error: Executing invalid expression.\nExpression: " expr))
+      ;(else                 (error "Error: Executing invalid expression.\nExpression: " expr))
     )
   )
 )
@@ -72,9 +72,9 @@
 (define 1_op_switch
   (lambda (expr)
     (cond
-      ((operator? expr '-) (lambda (op1) (* -1 op1)))
-      ((operator? expr '!) (lambda (op1) (not op1)))
-      (else                (error "Error: Executing invalid expression.\nExpression: " expr))
+      ((mvalue-operator? expr '-) (lambda (op1) (* -1 op1)))
+      ((mvalue-operator? expr '!) (lambda (op1) (not op1)))
+      ;(else                (error "Error: Executing invalid expression.\nExpression: " expr))
     )
   )
 )

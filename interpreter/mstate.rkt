@@ -794,7 +794,7 @@
          (2_op_switch expr)
         ))
 
-      ((eq? (statement-op expr) 'funcall)
+      ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc
             (lambda (return-cont)
