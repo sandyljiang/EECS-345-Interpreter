@@ -414,8 +414,8 @@
     ;; evaluate the if/else statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) env return break throw continue)) ; cond true, so evaluate the if-body
-        ((eq? condition #f) (mstate (list (else-body ptree)) env return break throw continue)) ; cond false, so evaluate the else body
+        ((eq? condition #t) (mstate (list (if-body ptree)) env return break throw continue)) 
+        ((eq? condition #f) (mstate (list (else-body ptree)) env return break throw continue)) 
         (else               (boolean-mismatch-error condition))
       )
      )
@@ -698,8 +698,8 @@
            )
          )
         )
-      )
-      (find (func-call-name ptree) env) ; Finds the closure bound to the given function's name, passes into closure param above
+      ); Finds the closure bound to the given function's name, passes into closure param above
+      (find (func-call-name ptree) env) 
      )
      env
    )
@@ -726,7 +726,7 @@
       ((operator? ptree 'throw throw-len)        throw-statement)
       ((operator? ptree 'continue continue-len)  continue-statement)
       ((eq? (statement-op ptree) 'begin)         begin-statement)
-      ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try block catch block final block) ...)
+      ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try catch final block)...)
       ((operator? ptree 'function func-def-len)  function-def-statement)
       ((eq? (statement-op ptree) 'funcall)       function-call-statement)
       (else                                      (undefined-op-error ptree))
@@ -823,7 +823,7 @@
               )
             )
            )
-         (find (mvalue-func-call-name expr) env) ; Finds the closure bound to the given function's name, passes into closure param above
+         (find (mvalue-func-call-name expr) env) 
          )
         )
 
@@ -854,18 +854,3 @@
     (if (null? exprs)
         '()
         (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env throw)))))
-
-;; Function:    (mvalue-list-cps param-exprs env throw)
-;; Description: Same as mvalue-list above, but uses tail recursion and continuation passing style instead.
-(define mvalue-list-cps
-  (lambda (exprs env throw)
-    ((lambda (cps-func)
-      (cps-func exprs env throw (lambda (v) v))) ; This acts as the wrapper and creates the initial continuation
-     (lambda (exprs env throw cps-cont)          ; The definition of the actual cps function
-       (if (null? exprs)
-           (cps-cont '())
-           (mvalue-list-cps (cdr exprs) env throw (lambda (v) (cps-cont (cons (mvalue (car exprs) env throw) v)))))
-     )
-    )
-  )
-)
