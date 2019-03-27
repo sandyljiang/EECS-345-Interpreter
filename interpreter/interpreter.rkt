@@ -26,7 +26,7 @@
      ((lambda (v)
         (if (not (list? v))
           v
-          (error "no return")
+          (error "Error: No return in main function")
         )
       )
       (call/cc (lambda (return)

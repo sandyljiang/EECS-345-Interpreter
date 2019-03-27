@@ -1,0 +1,10 @@
+function and(a, b) {
+    return a && b;
+}
+
+function main() {
+    var l = true;
+    var p = false;
+
+    return and(l,and(l,p));
+}

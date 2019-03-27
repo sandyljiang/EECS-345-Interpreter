@@ -682,7 +682,7 @@
 ;;              bound to the function being called at the beginning of the parse tree.
 (define function-call-statement
   (lambda (ptree env return break throw continue)
-    ((lambda (post-func-state) env)
+    (begin
      ; Getting the func-env from the closure
      ((lambda (closure)
         (call/cc
@@ -692,15 +692,16 @@
                                       (mvalue-list (func-call-params ptree) env throw)
                                       (push-layer ((closure-env closure))))
                    (lambda (e v) (return-cont e))
-                   (lambda () error)
-                   throw
-                   (lambda () error)
+                   break-error
+                   (lambda (e) (throw env))
+                   continue-error
            )
          )
         )
       )
       (find (func-call-name ptree) env) ; Finds the closure bound to the given function's name, passes into closure param above
      )
+     env
    )
   )
 )
@@ -739,6 +740,13 @@
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
 (define mstate
   (lambda (ptree env return break throw continue)
+    ;(display "msate")
+    ;(newline)
+    ;(display env)
+    ;(newline)
+    ;(display ptree)
+    ;(newline)
+    ;(newline)
     (cond
       ((null? ptree)
         env)
@@ -793,6 +801,13 @@
         (find expr env))
 
       ((eq? (mvalue-statement-op expr) 'funcall)
+        ;(display "mvalue")
+        ;(newline)
+        ;(display env)
+        ;(newline)
+        ;(display expr)
+        ;(newline)
+        ;(newline)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc
             (lambda (return-cont)
@@ -801,9 +816,9 @@
                                          (mvalue-list (mvalue-func-call-params expr) env throw)
                                          (push-layer ((closure-env closure))))
                       (lambda (e v) (return-cont v))
-                      (lambda () error)
-                      throw
-                      (lambda () error)
+                      break-error
+                      (lambda (e) (throw env))
+                      continue-error
                       )
               )
             )

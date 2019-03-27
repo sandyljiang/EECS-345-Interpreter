@@ -1,0 +1,22 @@
+function factorial(n) {
+    if (n == 0) {
+        return 1;
+    }
+    else if (n == true) {
+        throw false;
+    }
+    else {
+        return n * factorial(n-1);
+    }
+}
+
+var y = 5;
+
+function main() {
+    try {
+        return factorial(true);
+    }
+    catch(yeet) {
+        return yeet;
+    }
+}

@@ -1,0 +1,10 @@
+function and(a, b) {
+    return a > b;
+}
+
+function main() {
+    var l = 1;
+    var p = 2;
+
+    return and(p,l);
+}

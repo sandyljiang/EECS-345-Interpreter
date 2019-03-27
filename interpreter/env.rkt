@@ -254,7 +254,7 @@
              (car value-list)
              (add-multiple-vars (cdr name-list) (cdr value-list) env)))
       (else
-        (name-value-length-error))
+        (name-value-length-error name-list value-list))
     )
   )
 )

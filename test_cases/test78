@@ -1,0 +1,22 @@
+var l = 0;
+
+function f(a, b) {
+    if (a == 10) {
+        throw l;
+    }
+    else {
+        l = a + b;
+    }
+
+    return l;
+}
+
+function main() {
+    try {
+        f(11, 23);
+    }
+    catch(e) {
+        return e;
+    }
+    return l;
+}

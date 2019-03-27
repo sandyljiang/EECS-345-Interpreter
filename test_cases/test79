@@ -1,0 +1,10 @@
+var x = 0;
+
+function f(a) {
+    x = true;
+}
+
+function main() {
+    f(1);
+    return x;
+}
