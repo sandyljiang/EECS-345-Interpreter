@@ -69,9 +69,7 @@
 (define if-body caddar)
 (define else-body
   (lambda (ptree)
-    (car (cdddar ptree)) ; cadddar
-  )
-)
+    (car (cdddar ptree)))) ; cadddar
 
 ;; while condition and body statement
 (define while-cond cadar)
@@ -82,43 +80,32 @@
 ;; finally parse tree
 (define finally-section
   (lambda (ptree)
-    (car (cdddar ptree))
-  )
-)
+    (car (cdddar ptree))))
 
 ;; These functions add a 'begin to the parse tree to create a new block for the try body
 ;; try catch body statement
 (define try-block
   (lambda (ptree)
-    (list (cons 'begin (cadar ptree)))
-  )
-)
+    (list (cons 'begin (cadar ptree)))))
 ;; catch block body
 (define catch-block
   (lambda (ptree)
-    (list (cons 'begin (caddr (caddar ptree))))
-  )
-)
+    (list (cons 'begin (caddr (caddar ptree))))))
 ;; finally block body
 (define final-block
   (lambda (ptree)
-    (list (cons 'begin (cadar (cdddar ptree)))) ; caddar
-  )
-)
+    (list (cons 'begin (cadar (cdddar ptree)))))) ; caddar
+    
 ;; value of the expression passed to the throw operator
 (define catch-arg
   (lambda (ptree)
-    (caadr (caddar ptree))
-  )
-)
+    (caadr (caddar ptree))))
 
 (define func-def-name cadar)
 (define func-def-params caddar)
 (define func-def-body
   (lambda (ptree)
-    (car (cdddar ptree)) ; cadddar
-  )
-)
+    (car (cdddar ptree)))) ; cadddar
 
 ;; The function call's name
 (define func-call-name cadar)
@@ -131,9 +118,6 @@
 
 ;; The function call's parameter list
 (define mvalue-func-call-params cddr)
-
-
-
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -148,27 +132,21 @@
 (define operator?
   (lambda (ptree op statement-len)
     (and (eq? (statement-op ptree) op)
-         (eq? (len (current-statement ptree)) statement-len))
-  )
-)
+         (eq? (len (current-statement ptree)) statement-len))))
 
 ;; Function:    (has-catch? ptree)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: checks if there is a catch block associated with the try
 (define has-catch?
   (lambda (ptree)
-    (not (null? (catch-section ptree)))
-  )
-)
+    (not (null? (catch-section ptree)))))
 
 ;; Function:    (has-finally? ptree)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: checks if there is a finally block associated with the try
 (define has-finally?
   (lambda (ptree)
-    (not (null? (finally-section ptree)))
-  )
-)
+    (not (null? (finally-section ptree)))))
 
 ;;;; *********************************************************************************************************
 ;;;; error functions
@@ -217,9 +195,7 @@
 ;;              return is in a finally block).
 (define return-statement
   (lambda (ptree env return break throw continue)
-    (return env (mvalue (return-expr ptree) env throw)) ; pass the return value up
-  )
-)
+    (return env (mvalue (return-expr ptree) env throw)))) ; pass the return value up
 
 ;;;; *********************************************************************************************************
 ;;; break operator
@@ -236,9 +212,7 @@
 ;;              Used to break out of execution of a loop.
 (define break-statement
   (lambda (ptree env return break throw continue)
-    (break env)
-  )
-)
+    (break env)))
 
 ;;;; *********************************************************************************************************
 ;;; continue operator
@@ -255,9 +229,7 @@
 ;;              Used to return to the condition of a loop.
 (define continue-statement
   (lambda (ptree env return break throw continue)
-    (continue env)
-  )
-)
+    (continue env)))
 
 ;;;; *********************************************************************************************************
 ;;;; throw operator
@@ -273,9 +245,7 @@
 ;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
 (define throw-statement
   (lambda (ptree env return break throw continue)
-    (throw (change-value throw-var (mvalue (throw-expr ptree) env throw) env))
-  )
-)
+    (throw (change-value throw-var (mvalue (throw-expr ptree) env throw) env))))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
@@ -291,9 +261,7 @@
 ;; Description: adds a new undefined variable variable to the env
 (define declare-statement
   (lambda (ptree env return break throw continue)
-    (add (var-name ptree) undefined-var env)
-  )
-)
+    (add (var-name ptree) undefined-var env)))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration/assignment operator
@@ -312,9 +280,7 @@
     ;; extract the name and value from the ptree and add the to the env
     (add (var-name ptree)
          (mvalue (var-value ptree) env throw)
-         env)
-  )
-)
+         env)))
 
 ;;;; *********************************************************************************************************
 ;;;; assignment operator
@@ -338,10 +304,7 @@
                 (mvalue (var-value ptree) env throw)
                 env)
         (assign-error name)))
-     (var-name ptree)
-    )
-   )
- )
+     (var-name ptree))))
 
 ;;;; *********************************************************************************************************
 ;;;; block/begin function
@@ -363,9 +326,7 @@
                               return
                               (lambda (v) (break (remove-top-layer v)))
                               (lambda (v) (throw (remove-top-layer v)))
-                              (lambda (v) (continue (remove-top-layer v)))))
-   )
- )
+                              (lambda (v) (continue (remove-top-layer v)))))))
 
 ;;;; *********************************************************************************************************
 ;;;; if operator
@@ -387,13 +348,8 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) env return break throw continue))
         ((eq? condition #f) env) ; condition was false, so don't change the env
-        (else               (boolean-mismatch-error condition))
-      )
-     )
-     (mvalue (if-cond ptree) env throw)
-    )
-   )
-)
+        (else               (boolean-mismatch-error condition))))
+     (mvalue (if-cond ptree) env throw))))
 
 ;;;; *********************************************************************************************************
 ;;;; if/else operator
@@ -416,13 +372,8 @@
       (cond
         ((eq? condition #t) (mstate (list (if-body ptree)) env return break throw continue)) 
         ((eq? condition #f) (mstate (list (else-body ptree)) env return break throw continue)) 
-        (else               (boolean-mismatch-error condition))
-      )
-     )
-     (mvalue (if-cond ptree) env throw)
-    )
-   )
-)
+        (else               (boolean-mismatch-error condition))))
+     (mvalue (if-cond ptree) env throw))))
 
 ;;;; *********************************************************************************************************
 ;;;; while operator
@@ -446,20 +397,14 @@
                                               return
                                               break
                                               throw
-                                              continue-env)
-                            ))
+                                              continue-env)))
                             return
                             break
                             throw
                             continue)) ; evaluate the body again
         ((eq? condition #f) env) ; done evaluating the while loop
-        (else               (boolean-mismatch-error condition))
-      )
-     )
-     (mvalue (while-cond ptree) env throw)
-    )
-  )
-)
+        (else               (boolean-mismatch-error condition))))
+     (mvalue (while-cond ptree) env throw))))
 
 ;;;; *********************************************************************************************************
 ;;;; try operator
@@ -490,12 +435,8 @@
                                              return
                                              break
                                              throw
-                                             continue))
-                       )
-                       continue)
-    ))
-  )
-)
+                                             continue)))
+                       continue)))))
 
 ;; Function:    (try-finally ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format
@@ -519,38 +460,32 @@
                                      break
                                      throw
                                      continue)
-                             (return return-value))
-                    )
+                             (return return-value)))
                     (lambda (break-env)
                       (break (mstate (final-block ptree)
                                      break-env
                                      return
                                      break
                                      throw
-                                     continue))
-                    )
+                                     continue)))
                     (lambda (throw-env)
                       (throw (mstate (final-block ptree)
                                      throw-env
                                      return
                                      break
                                      throw
-                                     continue))
-                    )
+                                     continue)))
                     (lambda (continue-env)
                       (continue (mstate (final-block ptree)
                                         continue-env
                                         return
                                         break
                                         throw
-                                        continue))
-                    ))
+                                        continue))))
             return
             break
             throw
-            continue)
-  )
-)
+            continue)))
 
 ;; Function:    (try-catch-finally ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format
@@ -575,16 +510,14 @@
                                                  break
                                                  throw
                                                  continue)
-                                         (return return-value))
-                                )
+                                         (return return-value)))
                                 (lambda (break-env)
                                   (break (mstate (final-block ptree)
                                                  break-env
                                                  return
                                                  break
                                                  throw
-                                                 continue))
-                                )
+                                                 continue)))
                                 (lambda (throw-env)
                                   (exit-catch (mstate (catch-block ptree)
                                                       (add (catch-arg ptree)
@@ -593,23 +526,18 @@
                                                       return
                                                       break
                                                       throw
-                                                      continue))
-                                )
+                                                      continue)))
                                 (lambda (continue-env)
                                   (continue (mstate (final-block ptree)
                                                     continue-env
                                                     return
                                                     break
                                                     throw
-                                                    continue))
-                                ))
-            ))
+                                                    continue))))))
             return
             break
             throw
-            continue)
-  )
-)
+            continue)))
 
 ;; Function:    (try-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format
@@ -632,18 +560,12 @@
     (cond
       ((and (not (has-finally? ptree)) (not (has-catch? ptree)))
         (invalid-try-error ptree))
-
       ((and (not (has-finally? ptree)) (has-catch? ptree)) ; if try-catch
         (try-catch ptree env return break throw continue))
-
       ((and (has-finally? ptree) (not (has-catch? ptree))) ; if try-finally
         (try-finally ptree env return break throw continue))
-
       (else                                                ; if try-catch-finally
-        (try-catch-finally ptree env return break throw continue))
-    )
-  )
-)
+        (try-catch-finally ptree env return break throw continue)))))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
@@ -661,10 +583,7 @@
 ;;              statement at the beginning of the parse tree
 (define function-def-statement
   (lambda (ptree env return break throw continue)
-    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) env)
-  )
-)
-
+    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) env)))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
@@ -694,17 +613,10 @@
                    (lambda (e v) (return-cont e))
                    break-error
                    (lambda (e) (throw env))
-                   continue-error
-           )
-         )
-        )
-      ); Finds the closure bound to the given function's name, passes into closure param above
-      (find (func-call-name ptree) env) 
-     )
-     env
-   )
-  )
-)
+                   continue-error))))
+      ; Finds the closure bound to the given function's name, passes into closure param above
+      (find (func-call-name ptree) env) )
+     env)))
 
 ;;;; *********************************************************************************************************
 ;;;; Env Calculation
@@ -729,10 +641,7 @@
       ((operator? ptree 'try try-catch-len)      try-statement) ; ptree == ((try catch final block)...)
       ((operator? ptree 'function func-def-len)  function-def-statement)
       ((eq? (statement-op ptree) 'funcall)       function-call-statement)
-      (else                                      (undefined-op-error ptree))
-    )
-  )
-)
+      (else                                      (undefined-op-error ptree)))))
 
 ;; Function:    (mstate ptree env return break throw continue)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
@@ -751,8 +660,7 @@
                                             return
                                             while-break
                                             throw
-                                            continue)
-                ))
+                                            continue)))
                 return
                 break
                 throw
@@ -765,11 +673,7 @@
                    break
                    throw
                    continue))
-         (operator_switch ptree)
-        ))
-    )
-  )
-)
+         (operator_switch ptree))))))
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr is list representing the parse tree
@@ -779,20 +683,15 @@
   (lambda (expr env throw)
     (cond
       ((null? expr) (error "Error: Evaluating null statement"))
-
       ; Base cases
       ((number? expr)
         expr)
-
       ((eq? expr 'true)
         #t)
-
       ((eq? expr 'false)
         #f)
-
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
         (find expr env))
-
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc
@@ -804,30 +703,16 @@
                       (lambda (e v) (return-cont v))
                       break-error
                       (lambda (e) (throw env))
-                      continue-error
-                      )
-              )
-            )
-           )
-         (find (mvalue-func-call-name expr) env) 
-         )
-        )
-
+                      continue-error))))
+         (find (mvalue-func-call-name expr) env)))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
 
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
         ((lambda (func) (func (mvalue (operand1 expr) env throw) (mvalue (operand2 expr) env throw)))
-         (2_op_switch expr)
-        ))
-
-
-
+         (2_op_switch expr)))
       (else
-        (error "Error: Executing invalid expression.\nExpression: " expr))
-    )
-  )
-)
+        (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
 ;; Function:    (mvalue-list param-exprs env throw)
 ;; Parameters:  exprs - list containing parse tree expressions to be evaluated
