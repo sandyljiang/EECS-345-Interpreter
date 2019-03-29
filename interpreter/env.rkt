@@ -35,9 +35,7 @@
 
 (define name-value-length-error
   (lambda (names values)
-    (error "Error: names list does not map 1-1 with values list.\nNames:" names 'Values: values)
-  )
-)
+    (error "Error: names list does not map 1-1 with values list.\nNames:" names 'Values: values)))
 
 ;;;; *********************************************************************************************************
 ;;;; env format
@@ -81,9 +79,7 @@
 ;;              undefined 'throw and 'return variables in it
 (define initial-env
   (lambda ()
-    (add throw-var undefined-var empty-env)
-  )
-)
+    (add throw-var undefined-var empty-env)))
 
 ;; Function:    (null-layer? env)
 ;; Parameters:  env the binding list to check if the top layer is empty
@@ -91,9 +87,7 @@
 ;;              ie layer == '(() ())
 (define null-layer?
   (lambda (env)
-    (and (null? (names env)) (null? (values env)))
-  )
-)
+    (and (null? (names env)) (null? (values env)))))
 
 ;; Function:    (null-env? env)
 ;; Parameters:  env the binding list to check if it is an empty env
@@ -103,15 +97,10 @@
     (cond
       ((null? env) ; all layers in env were empty
         #t)
-
       ((null-layer? env) ; top layer is empty, so check the next one
         (null-env? (next-layer env)))
-
       (else ; layer/env was not empty
-        #f)
-    )
-  )
-)
+        #f))))
 
 ;; Function:    (invalid-env? env)
 ;; Parameters:  env the binding list to check if top layer is valid
@@ -119,9 +108,7 @@
 (define invalid-layer?
   (lambda (env)
     (or (and (null? (names env)) (not (null? (values env))))
-        (and (not (null? (names env))) (null? (values env))))
-  )
-)
+        (and (not (null? (names env))) (null? (values env))))))
 
 ;; Function:    (next-env env)
 ;; Parameters:  env the binding list to find the next env from
@@ -131,27 +118,21 @@
   (lambda (env)
     (cons (cons (next-names env)
                 (list (next-values env)))
-          (next-layer env))
-  )
-)
+          (next-layer env))))
 
 ;; Function:    (push-layer env)
 ;; Parameters:  env the binding list to add a new empty layer to
 ;; Description: Adds a new empty layer to the env
 (define push-layer
   (lambda (env)
-    (cons null-layer env)
-  )
-)
+    (cons null-layer env)))
 
 ;; Function:    (remove-top-layer env)
 ;; Parameters:  env the binding list to remove the top layer from
 ;; Description: Removes the top layer in the env
 (define remove-top-layer
   (lambda (env)
-    (next-layer env)
-  )
-)
+    (next-layer env)))
 
 ;; Function:    (find-box name env)
 ;; Parameters:  name  the name of the variable to find in the env
@@ -162,21 +143,14 @@
     (cond
       ((null-env? env) ; reached an empty env, so the variable does not exist
         undeclared-var)
-
       ((invalid-layer? env) ; env is corrupt
         (invalid-env-error env))
-
       ((null-layer? env) ; variable was not in this layer, so check the next
         (find-box name (next-layer env)))
-
       ((eq? (current-name env) name) ; found the variable
         (current-value env))
-
       (else ; recurse on the env without the current name and value
-        (find-box name (next-env env)))
-    )
-  )
-)
+        (find-box name (next-env env))))))
 
 ;; Function:    (find name env)
 ;; Parameters:  name  the name of the variable to find in the env
@@ -191,13 +165,8 @@
                 ((eq? (unbox box-found) undefined-var)
                   (undefined-error name))
                 (else
-                  box-found)
-              )
-            )
-            (find-box name env)
-           ))
-  )
-)
+                  box-found)))
+            (find-box name env)))))
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
@@ -211,10 +180,7 @@
       (double-declare-error name)
       (cons (cons (cons name (names env))
                   (list (cons (box value) (values env))))
-            (next-layer env))
-    )
-  )
-)
+            (next-layer env)))))
 
 ;; Function:    (add-function name param-list func-body env)
 ;; Parameters:  name       - the name of the function to add to the env
@@ -230,11 +196,8 @@
          (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name param-list func-body env)
-               ))
-         env)
-  )
-)
+                 (add-function name param-list func-body env)))
+         env)))
 
 ;; Function:    (add-multiple-vars names values env)
 ;; Parameters:  names  - A list of names of the variables to add to the evironment/env
@@ -254,10 +217,7 @@
              (car value-list)
              (add-multiple-vars (cdr name-list) (cdr value-list) env)))
       (else
-        (name-value-length-error name-list value-list))
-    )
-  )
-)
+        (name-value-length-error name-list value-list)))))
 
 ;; Function:    (exists-in-top-layer? name env)
 ;; Parameters:  name  the name of the variable to check if it is in the top
@@ -268,13 +228,10 @@
 (define exists-in-top-layer?
   (lambda (name env)
     (cond
-      ((null-env? env)             #f)
+      ((null-env? env)               #f)
       ((null-layer? env)             #f)
       ((eq? name (current-name env)) #t)
-      (else                            (exists-in-top-layer? name (next-env env)))
-    )
-  )
-)
+      (else                          (exists-in-top-layer? name (next-env env))))))
 
 ;; Function:    (exists? name env)
 ;; Parameters:  name  is the name of the binding to check for
@@ -284,12 +241,9 @@
 (define exists?
   (lambda (name env)
     (cond
-      ((null-env? env)               #f)
+      ((null-env? env)                 #f)
       ((exists-in-top-layer? name env) #t)
-      (else                              (exists? name (next-layer env)))
-    )
-  )
-)
+      (else                            (exists? name (next-layer env))))))
 
 ;; Function:    (change-value name new-value env)
 ;; Parameters:  name      the name of the variable to change in the env
@@ -303,10 +257,5 @@
     ((lambda (box-found)
        (cond
          ((eq? box-found undeclared-var) env)
-         (else                           (begin (set-box! box-found new-value) env))
-       )
-     )
-     (find-box name env)
-    )
-  )
-)
+         (else                           (begin (set-box! box-found new-value) env))))
+     (find-box name env))))
