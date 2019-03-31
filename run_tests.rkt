@@ -3,7 +3,6 @@
 (require "interpreter/functionParser.rkt")
 (require "interpreter/env.rkt")
 (require "interpreter/mstate.rkt")
-(require "interpreter/mvalue.rkt")
 (require "interpreter/mstate-outer.rkt")
 
 (define error_test_case

@@ -7,7 +7,6 @@
 (provide undefined-op-error)
 (provide (all-defined-out))
 (require "env.rkt")
-(require "mvalue.rkt")
 (require "helper.rkt")
 
 ;;;; *********************************************************************************************************

@@ -2,7 +2,6 @@
 (provide mstate-outer)
 (provide undefined-op-error)
 (require "env.rkt")
-(require "mvalue.rkt")
 (require "helper.rkt")
 (require "mstate.rkt")
 
