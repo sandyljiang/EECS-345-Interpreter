@@ -238,7 +238,7 @@
 ;;              env is the binding list
 ;; Description: Checks if a binding with the given name exists anywhere in the env.
 ;;              Returns #t if it does, #f if not
-(define exists?
+(define exists? 
   (lambda (name env)
     (cond
       ((null-env? env)                 #f)
