@@ -460,42 +460,33 @@
 ;;              statement at the beginning of the parse tree
 (define try-finally
   (lambda (ptree env return break throw continue)
+    (let ([new-cont (lambda (f)
+                      (lambda (env2)
+                        (f (mstate (final-block ptree)
+                                   env2
+                                   return
+                                   break
+                                   throw
+                                   continue))))]
+          [new-return (lambda (f)
+                   (lambda (env3 return-value)
+                     (f (mstate (final-block ptree)
+                                env3
+                                return
+                                break
+                                throw
+                                continue))))])
     (mstate (final-block ptree)
             (mstate (try-block ptree)
                     env
-                    (lambda (return-env return-value)
-                      (begin (mstate (final-block ptree)
-                                     return-env
-                                     return
-                                     break
-                                     throw
-                                     continue)
-                             (return return-value)))
-                    (lambda (break-env)
-                      (break (mstate (final-block ptree)
-                                     break-env
-                                     return
-                                     break
-                                     throw
-                                     continue)))
-                    (lambda (throw-env)
-                      (throw (mstate (final-block ptree)
-                                     throw-env
-                                     return
-                                     break
-                                     throw
-                                     continue)))
-                    (lambda (continue-env)
-                      (continue (mstate (final-block ptree)
-                                        continue-env
-                                        return
-                                        break
-                                        throw
-                                        continue))))
+                    (new-return return)
+                    (new-cont break)
+                    (new-cont throw)
+                    (new-cont continue))
             return
             break
             throw
-            continue)))
+            continue))))
 
 ;; Function:    (try-catch-finally ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format
@@ -507,6 +498,9 @@
 ;;              continue - a continue continuation
 ;; Description: calculate the new env after evaluating the try-catch-finally
 ;;              statement at the beginning of the parse tree
+;; Note:        We considered using 'let' while implementing this function but since the return now
+;;              returns both the environment and the value and the throw continuation requires an
+;;              additional step, it would not have reduced the number of lines by a significant margin.
 (define try-catch-finally
   (lambda (ptree env return break throw continue)
     (mstate (final-block ptree)
