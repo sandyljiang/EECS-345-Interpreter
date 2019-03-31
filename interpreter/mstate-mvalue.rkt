@@ -79,6 +79,7 @@
 
 ;; catch parse tree
 (define catch-section caddar)
+
 ;; finally parse tree
 (define finally-section
   (lambda (ptree)
@@ -89,10 +90,12 @@
 (define try-block
   (lambda (ptree)
     (list (cons 'begin (cadar ptree)))))
+
 ;; catch block body
 (define catch-block
   (lambda (ptree)
     (list (cons 'begin (caddr (caddar ptree))))))
+
 ;; finally block body
 (define final-block
   (lambda (ptree)
@@ -103,8 +106,13 @@
   (lambda (ptree)
     (caadr (caddar ptree))))
 
+;; The function definition's name
 (define func-def-name cadar)
+
+;; The function definition's params
 (define func-def-params caddar)
+
+;; The function definition's body
 (define func-def-body
   (lambda (ptree)
     (car (cdddar ptree)))) ; cadddar
@@ -160,8 +168,8 @@
   (lambda (name) (error "Error: assigning value before declaration\nVariable: " name)))
 
 (define boolean-mismatch-error
-  (lambda (condition) (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: "
-                             condition)))
+  (lambda (condition)
+    (error "Error: Invalid condition. Does not evaluate to a boolean.\nCondition: " condition)))
 
 (define undefined-op-error
   (lambda (ptree) (error "Error: Undefined operation.\nParse tree: " ptree)))
@@ -193,8 +201,8 @@
 ;;              throw    - a throw continuation
 ;;              continue - a continue continuation
 ;; Description: adds a variable with the name in return-var to the env with the value of the
-;;              return expression. If one already exists, previous value is overwritten (For cases where
-;;              return is in a finally block).
+;;              return expression. If one already exists, previous value is overwritten
+;;              (For cases where return is in a finally block).
 (define return-statement
   (lambda (ptree env return break throw continue)
     (return env (mvalue (return-expr ptree) env throw)))) ; pass the return value up
@@ -319,8 +327,8 @@
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
 ;;              continue - a continue continuation
-;; Description: Creates a "code block" of statements where a new layer is added to the env for locally scoped
-;;              variables and bindings are added, but not visible outside of the block
+;; Description: Creates a "code block" of statements where a new layer is added to the env for locally 
+;;              scoped variables and bindings are added, but not visible outside of the block.
 (define begin-statement
   (lambda (ptree env return break throw continue)
     (remove-top-layer (mstate (stmt-list ptree)
