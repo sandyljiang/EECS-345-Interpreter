@@ -601,7 +601,7 @@
 
 ;; Function:    (function-call-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format
-;;                         (function func-name func-param-list func-body)
+;;                         (funcall func-call-name func-call-params)
 ;;              env      - binding list in the form defined in env.rkt
 ;;              return   - a return continuation
 ;;              break    - a break continuation
