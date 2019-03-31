@@ -1,10 +1,4 @@
 #lang racket
-(provide mstate)
-(provide return-var)
-(provide multiple-returns-error)
-(provide assign-error)
-(provide boolean-mismatch-error)
-(provide undefined-op-error)
 (provide (all-defined-out))
 (require "env.rkt")
 (require "helper.rkt")

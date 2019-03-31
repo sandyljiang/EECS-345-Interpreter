@@ -1,6 +1,5 @@
 #lang racket
 (provide mstate-outer)
-(provide undefined-op-error)
 (require "env.rkt")
 (require "helper.rkt")
 (require "mstate.rkt")
@@ -10,10 +9,6 @@
 ;;;; EECS 345 Spring 2019
 ;;;; Interpreter Part 3
 ;;;; mstate-out function declaratons and variable declarations
-;;;; *********************************************************************************************************
-
-;;;; *********************************************************************************************************
-;;;; env Calculation
 ;;;; *********************************************************************************************************
 
 ;; Function:    (outer-operator_switch ptree)
