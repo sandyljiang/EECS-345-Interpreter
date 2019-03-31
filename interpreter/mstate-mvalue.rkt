@@ -321,7 +321,7 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (begin-statement ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...) )
+;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...))
 ;;              env      - env binding list in the form defined in env.rkt
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -708,11 +708,11 @@
   (lambda (expr)
     (cond
       ;; cases with arithmetic operators
-      ((mvalue-operator? expr '+) +)
-      ((mvalue-operator? expr '-) -)
-      ((mvalue-operator? expr '*) *)
-      ((mvalue-operator? expr '/) quotient)
-      ((mvalue-operator? expr '%) remainder)
+      ((mvalue-operator? expr '+)  +)
+      ((mvalue-operator? expr '-)  -)
+      ((mvalue-operator? expr '*)  *)
+      ((mvalue-operator? expr '/)  quotient)
+      ((mvalue-operator? expr '%)  remainder)
 
       ;; Cases with comparison operators
       ((mvalue-operator? expr '==) eq?)
@@ -725,7 +725,7 @@
       ((mvalue-operator? expr '||) (lambda (op1 op2) (or op1 op2)))
 
       ;; Operator not recognized
-      (else                   (error "Error: Executing invalid expression.\nExpression: " expr)))))
+      (else                        (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
 ;; Function:    (1_op_switch expr)
 ;; Parameters:  expr - the list that represents the parse tree. Must contain an operator
@@ -736,7 +736,7 @@
     (cond
       ((mvalue-operator? expr '-) (lambda (op1) (* -1 op1)))
       ((mvalue-operator? expr '!) (lambda (op1) (not op1)))
-      (else                   (error "Error: Executing invalid expression.\nExpression: " expr)))))
+      (else                       (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
 ;;;; ********************************************************************************************************
 ;;;; Mvalue
@@ -749,8 +749,8 @@
 (define mvalue
   (lambda (expr env throw)
     (cond
-      ((null? expr) (error "Error: Evaluating null statement"))
-      ;; Base cases
+      ((null? expr)
+        (error "Error: Evaluating null statement"))
       ((number? expr)
         expr)
       ((eq? expr 'true)
