@@ -500,7 +500,8 @@
 ;;              statement at the beginning of the parse tree
 ;; Note:        We considered using 'let' while implementing this function but since the return now
 ;;              returns both the environment and the value and the throw continuation requires an
-;;              additional step, it would not have reduced the number of lines by a significant margin.
+;;              additional step, it would not have reduced the number of lines by a significant margin
+;;              or that much less repetitive.
 (define try-catch-finally
   (lambda (ptree env return break throw continue)
     (mstate (final-block ptree)
@@ -608,18 +609,17 @@
     (begin
      ; Getting the func-env from the closure
      ((lambda (closure)
-        (call/cc
-         (lambda (return-cont)
-           (mstate (closure-body closure)
-                   (add-multiple-vars (closure-params closure)
-                                      (mvalue-list (func-call-params ptree) env throw)
-                                      (push-layer ((closure-env closure))))
-                   (lambda (e v) (return-cont e))
-                   break-error
-                   (lambda (e) (throw env))
-                   continue-error))))
+        (call/cc (lambda (return-cont)
+                   (mstate (closure-body closure)
+                           (add-multiple-vars (closure-params closure)
+                                              (mvalue-list (func-call-params ptree) env throw)
+                                              (push-layer ((closure-env closure))))
+                           (lambda (e v) (return-cont e))
+                           break-error
+                           (lambda (e) (throw env))
+                           continue-error))))
       ; Finds the closure bound to the given function's name, passes into closure param above
-      (find (func-call-name ptree) env) )
+      (find (func-call-name ptree) env))
      env)))
 
 ;;;; *********************************************************************************************************
@@ -649,7 +649,7 @@
 
 ;; Function:    (mstate ptree env return break throw continue)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
-;;              env - binding list in the form defined in env.rkt
+;;              env   - binding list in the form defined in env.rkt
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
 (define mstate
   (lambda (ptree env return break throw continue)
@@ -679,17 +679,16 @@
                    continue))
          (operator_switch ptree))))))
 
-
 ;;;; ********************************************************************************************************
 ;;;; Mvalue Helper functions
 ;;;; ********************************************************************************************************
 
 ;; Function:    (mvalue-operator? statement operator)
-;; Parameters:  statement is the parsed statement to evaluate. First element should be
-;;                the operator represented by an atom
-;;              operator is the operator to check for.
-;;              len is the number of expected elements in the list (including operator
-;;                and operands)
+;; Parameters:  statement - the parsed statement to evaluate. First element should be
+;;                          the operator represented by an atom
+;;              operator  - the operator to check for.
+;;              len       - the number of expected elements in the list (including operator
+;;                          and operands)
 ;; Description: Helper function that compares operator of given list to given operator.
 ;;              Returns true if it matches, false if not.
 (define mvalue-operator?
@@ -697,8 +696,8 @@
     (eq? (mvalue-statement-op statement) operator)))
 
 ;; Function:    (2_op_switch expr)
-;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
-;;                as the first element, then two operands as the subsequent elemnts.
+;; Parameters:  expr - the list that represents the parse tree. Must contain an operator
+;;                     as the first element, then two operands as the subsequent elemnts.
 ;; Description: Returns the correct function to use for the given operation.
 (define 2_op_switch
   (lambda (expr)
@@ -710,7 +709,7 @@
       ((mvalue-operator? expr '/) quotient)
       ((mvalue-operator? expr '%) remainder)
 
-      ; Cases with comparison operators
+      ;; Cases with comparison operators
       ((mvalue-operator? expr '==) eq?)
       ((mvalue-operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
       ((mvalue-operator? expr '< ) <)
@@ -720,34 +719,33 @@
       ((mvalue-operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
       ((mvalue-operator? expr '||) (lambda (op1 op2) (or op1 op2)))
 
-      ; Operator not recognized
-      (else                 (error "Error: Executing invalid expression.\nExpression: " expr)))))
+      ;; Operator not recognized
+      (else                   (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
 ;; Function:    (1_op_switch expr)
-;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
-;;                as the first element, then one operands as the subsequent elemnt.
+;; Parameters:  expr - the list that represents the parse tree. Must contain an operator
+;;                     as the first element, then one operands as the subsequent elemnt.
 ;; Description: Returns the correct function to use for the given operation.
 (define 1_op_switch
   (lambda (expr)
     (cond
       ((mvalue-operator? expr '-) (lambda (op1) (* -1 op1)))
       ((mvalue-operator? expr '!) (lambda (op1) (not op1)))
-      (else                (error "Error: Executing invalid expression.\nExpression: " expr)))))
-
+      (else                   (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
 ;;;; ********************************************************************************************************
 ;;;; Mvalue
 ;;;; ********************************************************************************************************
 
 ;; Function:    (mvalue expr env)
-;; Parameters:  expr is list representing the parse tree
-;;              s is the list representing env, which contains the name-value bindings
+;; Parameters:  expr - list representing the parse tree
+;;              s    - the list representing env, which contains the name-value bindings
 ;; Description: Evaluates the given expression using the given env.
 (define mvalue
   (lambda (expr env throw)
     (cond
       ((null? expr) (error "Error: Evaluating null statement"))
-      ; Base cases
+      ;; Base cases
       ((number? expr)
         expr)
       ((eq? expr 'true)
@@ -758,16 +756,15 @@
         (find expr env))
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
-           (call/cc
-            (lambda (return-cont)
-              (mstate (closure-body closure)
-                      (add-multiple-vars (closure-params closure)
-                                         (mvalue-list (mvalue-func-call-params expr) env throw)
-                                         (push-layer ((closure-env closure))))
-                      (lambda (e v) (return-cont v))
-                      break-error
-                      (lambda (e) (throw env))
-                      continue-error))))
+           (call/cc (lambda (return-cont)
+                      (mstate (closure-body closure)
+                              (add-multiple-vars (closure-params closure)
+                                                 (mvalue-list (mvalue-func-call-params expr) env throw)
+                                                 (push-layer ((closure-env closure))))
+                              (lambda (e v) (return-cont v))
+                              break-error
+                              (lambda (e) (throw env))
+                              continue-error))))
          (find (mvalue-func-call-name expr) env)))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
