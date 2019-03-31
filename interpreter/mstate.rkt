@@ -36,9 +36,18 @@
 (define try-catch-len 4)
 (define func-def-len 4)
 
+; length of statements passed to mvalue
+(define operand1 cadr)
+(define operand2 caddr)
+(define 2-operand 3)
+(define 1-operand 2)
+
 ;;;; *********************************************************************************************************
 ;;;; expression/operator location definitions
 ;;;; *********************************************************************************************************
+
+;; operator for mvalue operators
+(define mvalue-statement-op car)
 
 ;; operator for any type of statement
 (define statement-op caar)
@@ -674,6 +683,66 @@
                    throw
                    continue))
          (operator_switch ptree))))))
+
+
+;;;; ********************************************************************************************************
+;;;; Mvalue Helper functions
+;;;; ********************************************************************************************************
+
+;; Function:    (mvalue-operator? statement operator)
+;; Parameters:  statement is the parsed statement to evaluate. First element should be
+;;                the operator represented by an atom
+;;              operator is the operator to check for.
+;;              len is the number of expected elements in the list (including operator
+;;                and operands)
+;; Description: Helper function that compares operator of given list to given operator.
+;;              Returns true if it matches, false if not.
+(define mvalue-operator?
+  (lambda (statement operator)
+    (eq? (mvalue-statement-op statement) operator)))
+
+;; Function:    (2_op_switch expr)
+;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
+;;                as the first element, then two operands as the subsequent elemnts.
+;; Description: Returns the correct function to use for the given operation.
+(define 2_op_switch
+  (lambda (expr)
+    (cond
+      ;; cases with arithmetic operators
+      ((mvalue-operator? expr '+) +)
+      ((mvalue-operator? expr '-) -)
+      ((mvalue-operator? expr '*) *)
+      ((mvalue-operator? expr '/) quotient)
+      ((mvalue-operator? expr '%) remainder)
+
+      ; Cases with comparison operators
+      ((mvalue-operator? expr '==) eq?)
+      ((mvalue-operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
+      ((mvalue-operator? expr '< ) <)
+      ((mvalue-operator? expr '> ) >)
+      ((mvalue-operator? expr '<=) <=)
+      ((mvalue-operator? expr '>=) >=)
+      ((mvalue-operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
+      ((mvalue-operator? expr '||) (lambda (op1 op2) (or op1 op2)))
+
+      ; Operator not recognized
+      (else                 (error "Error: Executing invalid expression.\nExpression: " expr)))))
+
+;; Function:    (1_op_switch expr)
+;; Parameters:  expr is the list that represents the parse tree. Must contain an operator
+;;                as the first element, then one operands as the subsequent elemnt.
+;; Description: Returns the correct function to use for the given operation.
+(define 1_op_switch
+  (lambda (expr)
+    (cond
+      ((mvalue-operator? expr '-) (lambda (op1) (* -1 op1)))
+      ((mvalue-operator? expr '!) (lambda (op1) (not op1)))
+      (else                (error "Error: Executing invalid expression.\nExpression: " expr)))))
+
+
+;;;; ********************************************************************************************************
+;;;; Mvalue
+;;;; ********************************************************************************************************
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr is list representing the parse tree
