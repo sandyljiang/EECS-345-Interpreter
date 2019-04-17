@@ -188,7 +188,7 @@
 ;;              func-body  - a parse tree used to evaluate the function
 ;;              env        - the environment when the function is declared to keep track of
 ;;                           what is in the function's scope
-;; Description: Adds a new function closure to the top layer of the env
+;; Description:  Adds a new function closure to the top layer of the env
 ;; Note:        This function throws an error if the name of the function exists in the env
 (define add-function
   (lambda (name param-list func-body env)
@@ -238,7 +238,7 @@
 ;;              env is the binding list
 ;; Description: Checks if a binding with the given name exists anywhere in the env.
 ;;              Returns #t if it does, #f if not
-(define exists? 
+(define exists?
   (lambda (name env)
     (cond
       ((null-env? env)                 #f)
