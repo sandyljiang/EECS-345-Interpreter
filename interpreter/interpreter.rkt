@@ -1,6 +1,6 @@
 #lang racket
 (provide (all-defined-out))
-(require "functionParser.rkt")
+(require "classParser.rkt")
 (require "env.rkt")
 (require "mstate-outer.rkt")
 (require "mstate-mvalue.rkt")
@@ -13,15 +13,14 @@
 
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
-  (lambda (filename)
+  (lambda (filename classname)
     ((lambda (retval)
       (cond
         ((list? retval)  (error "Error: No return in main function"))
         ((eq? retval #t) 'true)
         ((eq? retval #f) 'false)
         (else            retval)))
-     (call/cc (lambda (return)
-                (mvalue '(funcall main)
-                        (mstate-outer (parser filename)
-                                      (initial-env))
-                        throw-error))))))
+     (mvalue '(funcall main)
+             (mstate-class-def (initial-state) (parser filename))
+             classname
+             throw-error))))

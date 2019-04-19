@@ -747,7 +747,7 @@
 ;;              s    - the list representing env, which contains the name-value bindings
 ;; Description: Evaluates the given expression using the given env.
 (define mvalue
-  (lambda (expr env throw)
+  (lambda (expr env class-name throw)
     (cond
       ((null? expr)
         (error "Error: Evaluating null statement"))
@@ -758,7 +758,7 @@
       ((eq? expr 'false)
         #f)
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
-        (find expr env))
+        (find expr env)) ;; TODO: change to call lookup function
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc (lambda (return-cont)
@@ -770,7 +770,7 @@
                               break-error
                               (lambda (e) (throw env))
                               continue-error))))
-         (find (mvalue-func-call-name expr) env)))
+         (lookup-function-closure (mvalue-func-call-expr expr) env class-name)))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
 

@@ -26,7 +26,7 @@
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;;              env - binding list in the form defined in env.rkt
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
-(define mstate-outer
+(define mstate-class-body
   (lambda (ptree env)
     (cond
       ((null? ptree)
@@ -36,3 +36,24 @@
            (mstate-outer (next-statement ptree)
                    (func ptree env return-error break-error throw-error continue-error)))
          (outer-operator_switch ptree))))))
+
+(define mstate-class-def
+  (lambda (ptree env)
+    (if ((not (null? ptree)))
+      ((lambda (body-env)
+        (mstate-class-def (next-statement ptree)
+                          (add-class-closure env
+                                             (class-def-name ptree)
+                                             (class-def-super ptree)
+                                             (method-names body-env)
+                                             (method-closures body-env)
+                                             (static-method-names body-env)
+                                             (static-method-closures body-env)
+                                             (instance-field-names body-env)))
+
+       )
+       (mstate-class-body (initial-body-env) body)
+      )
+    )
+  )
+)
