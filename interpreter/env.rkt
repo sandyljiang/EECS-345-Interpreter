@@ -277,6 +277,29 @@
                  (add-function name param-list func-body env)))
          env)))
 
+;; Function:    (add-class-closure env name super method-names method-closures smn smc ifn)
+;; Parameters:  env              - the environment to search in
+;;              name             - the name of the class that is being added to the closure
+;;              super            - the name of the parent of the class
+;;              method-names     - the method names in the class
+;;              method-closures  - the closures of the class
+;;              smn              - the static method names list (name shortened to keep
+;;                                 param declarations on one line)
+;;              smc              - the static method closures list (name shortened to keep
+;;                                 param declarations on one line)
+;;              ifn              - the instance field names list (name shortened to keep
+;;                                 param declarations on one line)
+;; Description: adds a class closure to the environment
+(define add-class-closure
+  (lambda (env name super method-names method-closures smn smc ifn)
+    (add name
+         (list super
+               method-names
+               method-closures
+               smn
+               smb
+               ifn))))
+
 ;; Function:    (add-multiple-vars names values env)
 ;; Parameters:  names  - A list of names of the variables to add to the evironment/env
 ;;              values - A list of values that maps 1-1 with the names list

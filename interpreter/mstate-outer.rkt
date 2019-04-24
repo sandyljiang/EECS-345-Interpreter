@@ -84,25 +84,3 @@
                                              (instance-field-names body-env))))
        (mstate-class-body (initial-body-env) body)))))
 
-;; Function:    ( add-class-closure env name super method-names method-closures smn smb ifn)
-;; Parameters:  env              - the environment to search in
-;;              name             - the name of the class that is being added to the closure
-;;              super            - the name of the parent of the class
-;;              method-names     - the method names in the class
-;;              method-closures  - the closures of the class
-;;              smn              - the static method closure
-;;              smb              -
-;;              ifn              -
-;; Description:
-;; Note:
-
-(define add-class-closure
-  (lambda (env name super method-names method-closures smn smc ifn)
-    (add name
-         (list super
-               method-names
-               method-closures
-               smn
-               smb
-               ifn))))
-
