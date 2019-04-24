@@ -74,6 +74,44 @@
 (define closure-body cadr)  ; returns the function body parse tree
 (define closure-env caddr)  ; returns a function to get the environment
 
+;;;; *********************************************************************************************************
+;;;; Class Closure format
+;;;;
+;;;; The closure for a function will be stored in a list with the following format
+;;;; (super method-names method-closures static-method-names static-method-closures instance-field-names)
+;;;;
+;;;; super                   - a symbol that represents the class
+;;;; method-names            - a list of symbols that represent the non-static functions in the class
+;;;; method-closures         - a list of function closures that correspond to the method names
+;;;; static-method-names     - a list of symbols that represent the static functions in the class
+;;;; static-method-closures  - a list of function closures that correspond to the static method names
+;;;; instance-field-names    - a list of symbols that represents the instance variables in the class
+;;;; *********************************************************************************************************
+
+(define super car)
+(define method-names cadr)
+(define method-closures caddr)
+(define static-method-names cadddr)
+(define static-method-closures
+  (lambda (ptree)
+    (car (cddddr ptree))))
+(define instance-field-names
+  (lambda (ptree)
+    (cadr (cddddr ptree))))
+
+;; Function:    (find name env)
+;; Parameters:  class-closure - the closure to extract the functions from
+;; Description: extracts the functions from the class closure and returns them in the
+;;              following format:
+;;
+;; (((method-names) (method-closures)) ((static-method-names) (static-method-closures)))
+(define get-class-functions
+  (lambda (class-closure)
+    (list (list (method-names class-closure)
+                (method-closures class-closure))
+          (list (static-method-names class-closure)
+                (static-method-closures class-closure)))))
+
 ;; Function:    (initial-env)
 ;; Description: creates the initial env for the interpreter which has
 ;;              undefined 'throw and 'return variables in it
@@ -152,21 +190,59 @@
       (else ; recurse on the env without the current name and value
         (find-box name (next-env env))))))
 
-;; Function:    (find name env)
-;; Parameters:  name  the name of the variable to find in the env
+;; Function:    (find-with-undeclared-handler name env)
+;; Parameters:  name    - the name of the variable to find in the env
+;;              env     - the environment to search in
+;;              handler - the function that takes no arguments to handle an undeclared variable
 ;; Description: Searches the env for the name and returns the associated value
-;; Note:        The function throws an error is the variable was not found or is undefined
-(define find
-  (lambda (name env)
+;;              if the variable is not found, then call the handler
+(define find-with-undeclared-handler
+  (lambda (name env handler)
     (unbox ((lambda (box-found)
               (cond
                 ((eq? box-found undeclared-var)
-                  (undeclared-error name))
+                  (handler name))
                 ((eq? (unbox box-found) undefined-var)
                   (undefined-error name))
                 (else
                   box-found)))
             (find-box name env)))))
+
+;; Function:    (find name env)
+;; Parameters:  name - the name of the variable to find in the env
+;;              env  - the environment to search in
+;; Description: Searches the env for the name and returns the associated value
+;; Note:        The function throws an error if the variable was not found or is undefined
+(define find
+  (lambda (name env)
+    (find-with-undeclared-handler name env (lambda () (undeclared-error-name)))))
+
+;; Function:    (lookup-non-local-function name env)
+;; Parameters:  name       - the name of the function to find in the class-closure of class-name
+;;              env        - the environment to search in
+;;              class-name - the name of the class to find the function in
+;; Description: Searches the env for the class-name and find the function name in it
+;; Note:        The function throws an error if the function or class was
+;;              not found or was undefined
+(define lookup-non-local-function
+    (lambda (name env class-name)
+      ;; find the class closure, get its function and  find the requested function
+      (find name (get-class-functions (find class-name env)))))
+
+;; Function:    (lookup-function-closure name env)
+;; Parameters:  name       - the name of the function to find in the class-closure of class-name
+;;              env        - the environment to search in
+;;              class-name - the name of the class to find the function in
+;; Description: Searches the env for the function and returns its closure if found locally.
+;;              otherwise, it searches the class-closure of class-name for the function closure
+;; Note:        The function throws an error if the function or class was
+;;              not found or was undefined
+(define lookup-function-closure
+  (lambda (name env class-name)
+    (find-with-undeclared-handler name
+                                  env
+                                  (lambda ()
+                                    (lookup-non-local-function name env class-name)))))
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
