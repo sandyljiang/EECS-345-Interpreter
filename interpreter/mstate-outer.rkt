@@ -49,11 +49,47 @@
                                              (method-closures body-env)
                                              (static-method-names body-env)
                                              (static-method-closures body-env)
-                                             (instance-field-names body-env)))
+                                             (instance-field-names body-env))))
+       (mstate-class-body (initial-body-env) body)))))
 
-       )
-       (mstate-class-body (initial-body-env) body)
-      )
-    )
-  )
-)
+(define add-class-closure
+  (lambda (env name super method-names method-closures smn smb ifn)
+    (add name
+         (list super
+               method-names
+               method-closures
+               smn
+               smb
+               ifn))))
+
+(define class-def-name
+  (lambda (ptree)
+    (cadr ptree)))
+
+(define class-def-super
+  (lambda (ptree)
+    (caddr ptree))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+
+(define method-names
+  (lambda (env)
+    (cadr (env)))
+
+(define method-closures
+  (lambda (env)
+    (caddr env)))
+
+(define static-method-names
+  (lambda (env)
+    (cadr env)))
+
+(define static-method-closures
+  (lambda (env)
+    (caddr env)))
+
+(define instance-field-names
+  (lambda (env)
+    (cadr env)))
+
+(define next-statement
+  (lambda (ptree)
+    (cdr ptree))) ; still confused on this one
