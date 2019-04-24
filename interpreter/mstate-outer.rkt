@@ -42,7 +42,7 @@
 (define next-statement
   (lambda (ptree)
     (cdr ptree))) ; still confused on this one
-  
+
 ;; Function:    (outer-operator_switch ptree)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: determines the env function to use based on the statement-op in ptree
@@ -87,17 +87,17 @@
 ;; Function:    ( add-class-closure env name super method-names method-closures smn smb ifn)
 ;; Parameters:  env              - the environment to search in
 ;;              name             - the name of the class that is being added to the closure
-;;              super            - the name of the parent of the class 
+;;              super            - the name of the parent of the class
 ;;              method-names     - the method names in the class
 ;;              method-closures  - the closures of the class
-;;              smn              - 
-;;              smb              - 
-;;              ifn              - 
-;; Description: 
-;; Note:        
+;;              smn              - the static method closure
+;;              smb              -
+;;              ifn              -
+;; Description:
+;; Note:
 
 (define add-class-closure
-  (lambda (env name super method-names method-closures smn smb ifn)
+  (lambda (env name super method-names method-closures smn smc ifn)
     (add name
          (list super
                method-names
