@@ -194,6 +194,7 @@
 ;; Parameters:  name    - the name of the variable to find in the env
 ;;              env     - the environment to search in
 ;;              handler - the function that takes no arguments to handle an undeclared variable
+;;                        and returns a box or throws an error
 ;; Description: Searches the env for the name and returns the associated value
 ;;              if the variable is not found, then call the handler
 (define find-with-undeclared-handler
@@ -201,7 +202,7 @@
     (unbox ((lambda (box-found)
               (cond
                 ((eq? box-found undeclared-var)
-                  (handler name))
+                  (handler))
                 ((eq? (unbox box-found) undefined-var)
                   (undefined-error name))
                 (else
@@ -215,7 +216,7 @@
 ;; Note:        The function throws an error if the variable was not found or is undefined
 (define find
   (lambda (name env)
-    (find-with-undeclared-handler name env (lambda () (undeclared-error-name)))))
+    (find-with-undeclared-handler name env (lambda () (undeclared-error name)))))
 
 ;; Function:    (lookup-non-local-function name env)
 ;; Parameters:  name       - the name of the function to find in the class-closure of class-name
@@ -237,12 +238,13 @@
 ;;              otherwise, it searches the class-closure of class-name for the function closure
 ;; Note:        The function throws an error if the function or class was
 ;;              not found or was undefined
+;; Note:        If there is a local variable with the same name as the function, this finds that
 (define lookup-function-closure
   (lambda (name env class-name)
     (find-with-undeclared-handler name
                                   env
                                   (lambda ()
-                                    (lookup-non-local-function name env class-name)))))
+                                    (box (lookup-non-local-function name env class-name))))))
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
