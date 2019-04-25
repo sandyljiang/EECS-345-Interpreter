@@ -19,23 +19,23 @@
   (lambda (ptree)
     (caddr ptree))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
 
-(define method-names
+(define method-names-def
   (lambda (env)
     (cadr (env)))
 
-(define method-closures
+(define method-closures-def
   (lambda (env)
     (caddr env)))
 
-(define static-method-names
+(define static-method-names-def
   (lambda (env)
     (cadr env)))
 
-(define static-method-closures
+(define static-method-closures-def
   (lambda (env)
     (caddr env)))
 
-(define instance-field-names
+(define instance-field-names-def
   (lambda (env)
     (cadr env)))
 
@@ -77,10 +77,10 @@
                           (add-class-closure env
                                              (class-def-name ptree)
                                              (class-def-super ptree)
-                                             (method-names body-env)
-                                             (method-closures body-env)
-                                             (static-method-names body-env)
-                                             (static-method-closures body-env)
-                                             (instance-field-names body-env))))
+                                             (method-names-def body-env)
+                                             (method-closures-def body-env)
+                                             (static-method-names-def body-env)
+                                             (static-method-closures-def body-env)
+                                             (instance-field-names-def body-env))))
        (mstate-class-body (initial-body-env) body)))))
 
