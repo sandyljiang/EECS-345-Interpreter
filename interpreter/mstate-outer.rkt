@@ -39,6 +39,9 @@
   (lambda (env)
     (cadr env)))
 
+;; defines the initial body environment for the mstate-class-body
+(define initial-body-env (push-layer (push-layer (empty-env))))
+
 (define next-statement
   (lambda (ptree)
     (cdr ptree))) ; still confused on this one

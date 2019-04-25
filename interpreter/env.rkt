@@ -172,9 +172,6 @@
   (lambda (env)
     (next-layer env)))
 
-;; defines the initial body environment for the mstate-class-body
-(define initial-body-env (push-layer (push-layer (empty-env))))
-
 ;; Function:    (find-box name env)
 ;; Parameters:  name  the name of the variable to find in the env
 ;;              env the binding list to search
@@ -248,6 +245,10 @@
                                   env
                                   (lambda ()
                                     (box (lookup-non-local-function name env class-name))))))
+
+(define lookup-instance-var
+  (lambda ())
+)
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
