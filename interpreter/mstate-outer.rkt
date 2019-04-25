@@ -33,7 +33,7 @@
   
 (define method-list
   (lambda (env)
-    (car (env))))
+    (current-layer (env))))
 
 (define static-method-names-def
   (lambda (env)
@@ -45,7 +45,7 @@
 
 (define static-method-list
   (lambda (env)
-    (cadr (env))))
+    (current-layer (remove-top-layer env))))
 
 (define instance-field-names-def
   (lambda (env)
