@@ -246,10 +246,6 @@
                                   (lambda ()
                                     (box (lookup-non-local-function name env class-name))))))
 
-(define lookup-instance-var
-  (lambda ())
-)
-
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
 ;;              value the value to associate with the name

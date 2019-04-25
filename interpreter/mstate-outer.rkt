@@ -30,7 +30,7 @@
 (define method-closures-def
   (lambda (env)
     (caddr env)))
-  
+
 (define method-list
   (lambda (env)
     (current-layer (env))))
@@ -114,5 +114,5 @@
 (define declare-static-function
   (lambda (env ptree)
     (cons (method-list env)
-          (add (method-name ptree) undefined-var (remove-top-layer env)))))
+          (add (method-names-def ptree) undefined-var (remove-top-layer env)))))
 
