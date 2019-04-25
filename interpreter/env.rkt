@@ -298,7 +298,8 @@
                method-closures
                smn
                smc
-               ifn))))
+               ifn)
+         env)))
 
 ;; Function:    (add-multiple-vars names values env)
 ;; Parameters:  names  - A list of names of the variables to add to the evironment/env

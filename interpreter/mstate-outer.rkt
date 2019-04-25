@@ -11,41 +11,54 @@
 ;;;; mstate-out function declaratons and variable declarations
 ;;;; *********************************************************************************************************
 
+(define-syntax debug
+  (lambda (syn)
+    (define slist (syntax->list syn))
+    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) x)))
+  )
+)
+
 (define class-def-name
   (lambda (ptree)
-    (cadr ptree)))
+    (cadar ptree)))
 
 (define class-def-super
   (lambda (ptree)
-    (cadr (caddr ptree)))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+    ((lambda (super-list)
+      (if (null? super-list)
+        super-list
+        (cadr super-list)
+      )
+    )
+    (caddar ptree))))
 
 (define class-def-body
   (lambda (ptree)
-    (cadddr ptree)))
+    (car (cdddar ptree))))
 
 (define method-name
   (lambda (ptree)
-    (cadr ptree)))
+    (cadar ptree)))
 
 (define method-names-def
   (lambda (env)
-    (cadr (env))))
+    (names env)))
 
 (define method-closures-def
   (lambda (env)
-    (caddr env)))
+    (values env)))
 
 (define method-list
   (lambda (env)
-    (current-layer (env))))
+    (current-layer env)))
 
 (define static-method-names-def
   (lambda (env)
-    (cadr env)))
+    (names (remove-top-layer env))))
 
 (define static-method-closures-def
   (lambda (env)
-    (caddr env)))
+    (values (remove-top-layer env))))
 
 (define static-method-list
   (lambda (env)
@@ -53,10 +66,12 @@
 
 (define instance-field-names-def
   (lambda (env)
-    (cadr env)))
+    (names (remove-top-layer (remove-top-layer env)))))
 
 ;; defines the initial body environment for the mstate-class-body
-(define initial-body-env (push-layer (push-layer empty-env)))
+(define initial-body-env
+  (lambda ()
+    (push-layer (push-layer empty-env))))
 
 ;; Function:    (outer-operator_switch ptree)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
@@ -86,20 +101,20 @@
 
 (define mstate-class-def
   (lambda (ptree env)
-    (if ((not (null? ptree)))
+    (if (not (null? ptree))
       ((lambda (body-env)
         (mstate-class-def (next-statement ptree)
                           (add-class-closure env
                                              (class-def-name ptree)
                                              (class-def-super ptree)
-                                             (method-names body-env)
-                                             (method-closures body-env)
-                                             (static-method-names body-env)
-                                             (static-method-closures body-env)
-                                             (instance-field-names body-env)))
+                                             (method-names-def body-env)
+                                             (method-closures-def body-env)
+                                             (static-method-names-def body-env)
+                                             (static-method-closures-def body-env)
+                                             (instance-field-names-def body-env)))
 
        )
-       (mstate-class-body (initial-body-env) (class-def-body ptree))
+       (mstate-class-body (class-def-body ptree) (initial-body-env))
       )
       env
     )
@@ -107,13 +122,13 @@
 )
 
 (define declare-var
-  (lambda (env ptree)
+  (lambda (ptree env return break throw continue)
     (cons (method-list env)
           (cons (static-method-list env)
                 (add (method-name ptree) undefined-var (remove-top-layer (remove-top-layer env)))))))
 
 (define declare-static-function
-  (lambda (env ptree)
+  (lambda (ptree env return break throw continue)
     (cons (method-list env)
-          (add (method-names-def ptree) undefined-var (remove-top-layer env)))))
+          (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (remove-top-layer env)))))
 
