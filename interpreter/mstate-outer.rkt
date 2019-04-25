@@ -17,7 +17,7 @@
 
 (define class-def-super
   (lambda (ptree)
-    (caddr ptree))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+    (cdr (caddr ptree)))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
 
 (define method-name
   (lambda (ptree)
