@@ -17,7 +17,11 @@
 
 (define class-def-super
   (lambda (ptree)
-    (caddr ptree))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+    (cdr (caddr ptree)))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+
+(define method-name
+  (lambda (ptree)
+    (cadr ptree)))
 
 (define method-names-def
   (lambda (env)
@@ -26,6 +30,10 @@
 (define method-closures-def
   (lambda (env)
     (caddr env)))
+  
+(define method-list
+  (lambda (env)
+    (current-layer (env))))
 
 (define static-method-names-def
   (lambda (env)
@@ -34,6 +42,10 @@
 (define static-method-closures-def
   (lambda (env)
     (caddr env)))
+
+(define static-method-list
+  (lambda (env)
+    (current-layer (remove-top-layer env))))
 
 (define instance-field-names-def
   (lambda (env)
@@ -52,9 +64,9 @@
 (define outer-operator_switch
   (lambda (ptree)
     (cond
-      ((operator? ptree 'var declare-len)        declare-statement) ; ptree == ((var name) ...)
-      ((operator? ptree 'var declare-assign-len) declare-assign-statement) ; ptree == ((var name value) ...)
+      ((operator? ptree 'var declare-len)        declare-var) ; ptree == ((var name) ...)
       ((operator? ptree 'function func-def-len)  function-def-statement)
+      ((operator? ptree 'static-function func-def-len) declare-static-function)
       (else                                      (undefined-op-error ptree)))))
 
 ;; Function:    (mstate-outer ptree env)
@@ -80,10 +92,27 @@
                           (add-class-closure env
                                              (class-def-name ptree)
                                              (class-def-super ptree)
-                                             (method-names-def body-env)
-                                             (method-closures-def body-env)
-                                             (static-method-names-def body-env)
-                                             (static-method-closures-def body-env)
-                                             (instance-field-names-def body-env))))
-       (mstate-class-body (initial-body-env) body)))))
+                                             (method-names body-env)
+                                             (method-closures body-env)
+                                             (static-method-names body-env)
+                                             (static-method-closures body-env)
+                                             (instance-field-names body-env)))
+
+       )
+       (mstate-class-body (initial-body-env) body)
+      )
+    )
+  )
+)
+
+(define declare-var
+  (lambda (env ptree)
+    (cons (method-list env)
+          (cons (static-method-list env)
+                (add (method-name ptree) undefined-var (remove-top-layer (remove-top-layer env)))))))
+
+(define declare-static-function
+  (lambda (env ptree)
+    (cons (method-list env)
+          (add (method-name ptree) undefined-var (remove-top-layer env)))))
 
