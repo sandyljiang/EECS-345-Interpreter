@@ -770,7 +770,7 @@
                               break-error
                               (lambda (e) (throw env))
                               continue-error))))
-         (lookup-function-closure (mvalue-func-call-expr expr) env class-name)))
+         (lookup-function-closure (func-call-name expr) env class-name)))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
 

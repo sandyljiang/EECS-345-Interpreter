@@ -1,5 +1,5 @@
 #lang racket
-(provide mstate-outer)
+(provide (all-defined-out))
 (require "env.rkt")
 (require "helper.rkt")
 (require "mstate-mvalue.rkt")
@@ -17,7 +17,11 @@
 
 (define class-def-super
   (lambda (ptree)
-    (cdr (caddr ptree)))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+    (cadr (caddr ptree)))); is it the (extends A) part that we want? or the A? if A then (cdr ((caddr))
+
+(define class-def-body
+  (lambda (ptree)
+    (cadddr ptree)))
 
 (define method-name
   (lambda (ptree)
@@ -25,7 +29,7 @@
 
 (define method-names-def
   (lambda (env)
-    (cadr (env)))
+    (cadr (env))))
 
 (define method-closures-def
   (lambda (env)
@@ -52,11 +56,7 @@
     (cadr env)))
 
 ;; defines the initial body environment for the mstate-class-body
-(define initial-body-env (push-layer (push-layer (empty-env))))
-
-(define next-statement
-  (lambda (ptree)
-    (cdr ptree))) ; still confused on this one
+(define initial-body-env (push-layer (push-layer empty-env)))
 
 ;; Function:    (outer-operator_switch ptree)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
@@ -80,7 +80,7 @@
         env)
       (else
         ((lambda (func)
-           (mstate-outer (next-statement ptree)
+           (mstate-class-body (next-statement ptree)
                    (func ptree env return-error break-error throw-error continue-error)))
          (outer-operator_switch ptree))))))
 
@@ -99,8 +99,9 @@
                                              (instance-field-names body-env)))
 
        )
-       (mstate-class-body (initial-body-env) body)
+       (mstate-class-body (initial-body-env) (class-def-body ptree))
       )
+      env
     )
   )
 )
