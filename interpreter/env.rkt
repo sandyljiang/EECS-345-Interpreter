@@ -172,6 +172,9 @@
   (lambda (env)
     (next-layer env)))
 
+;; defines the initial body environment for the mstate-class-body
+(define initial-body-env (push-layer (push-layer (empty-env))))
+
 ;; Function:    (find-box name env)
 ;; Parameters:  name  the name of the variable to find in the env
 ;;              env the binding list to search
@@ -297,7 +300,7 @@
                method-names
                method-closures
                smn
-               smb
+               smc
                ifn))))
 
 ;; Function:    (add-multiple-vars names values env)
