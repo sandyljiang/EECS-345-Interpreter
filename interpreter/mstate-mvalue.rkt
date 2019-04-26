@@ -856,6 +856,7 @@
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc (lambda (return-cont)
+            (if (list? (mvalue-statement-op (next-statement expr))))
            ; if there is a dot operator, then evaluate the LHS to get the object-closure
            ;    then get the function closure of the RHS from the object closure of the LHS
            ;    cons the object closure onto the params of the function call
