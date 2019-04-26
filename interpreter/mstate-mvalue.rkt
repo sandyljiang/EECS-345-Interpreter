@@ -132,6 +132,9 @@
 ;; The right hand side of the dot operator
 (define dot-rhs caddr)
 
+;; The left hand side of the dot operator
+(define dot-lhs cadr)
+
 ;;;; *********************************************************************************************************
 ;;;; helper functions
 ;;;; *********************************************************************************************************
@@ -878,12 +881,13 @@
                               break-error
                               (lambda (e) (throw env))
                               continue-error))))
-         (if (list? (mvalue-func-call-name expr))) ; If the function call is a dot operator
+         (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
              ((lambda (LHS)
                  (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) LHS))
-               (get-dot-LHS (mvalue-func-call-name expr) env class-closure instance throw))
-                
-        ))
+               (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
+         )
+        )
+      )
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
 
