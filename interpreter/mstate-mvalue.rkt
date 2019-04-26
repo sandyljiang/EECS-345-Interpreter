@@ -816,8 +816,8 @@
 ;; Description: Evaluates the dot expression using the given env.
 (define dot-value
   (lambda (expr env class-closure instance throw)
-    (lookup-instance-fields (RHS-dot-ptree expr)
-                            (get-dot-LHS (LHS-dot-ptree expr) env class-closure instance throw))))
+    (lookup-instance-fields (dot-rhs expr)
+                            (get-dot-LHS (dot-lhs expr) env class-closure instance throw))))
 
 (define new-op
   (lambda (expr env)
@@ -914,7 +914,7 @@
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) env class-closure throw) (mvalue (operand2 expr) env class-closure instance throw)))
+        ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw) (mvalue (operand2 expr) env class-closure instance throw)))
          (2_op_switch expr)))
       (else
         (error "Error: Executing invalid expression.\nExpression: " expr)))))
