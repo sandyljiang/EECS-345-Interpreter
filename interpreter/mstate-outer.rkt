@@ -128,14 +128,6 @@
        (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name ptree)))
       env)))
 
-;; Function:    (func-def-class-closure)
-;; Parameters:  class-name-to-declare - the name of the class used to lookup the class-closure
-;; Description: Returns a function that looks up the class-closure based on the class-name to declare
-;;              in an environment passed into the returned function
-(define func-def-class-closure
-  (lambda (class-name-to-declare)
-    (lambda (current-env) (find class-name-to-declare current-env))))
-
 ;; Function:    (declare-var-outer ptree env class-name-to-declare)
 ;; Parameters:  ptree                 - parse tree in the format ((var var-name) ...)
 ;;              env                   - env binding list in the form defined in env.rkt

@@ -73,6 +73,7 @@
 (define closure-params car) ; returns the param list of the function
 (define closure-body cadr)  ; returns the function body parse tree
 (define closure-env caddr)  ; returns a function to get the environment
+(define closure-class cadddr)
 
 ;;;; *********************************************************************************************************
 ;;;; Class Closure format
@@ -304,6 +305,14 @@
                   (list (cons (box value) (values env))))
             (next-layer env)))))
 
+;; Function:    (func-def-class-closure)
+;; Parameters:  class-name-to-declare - the name of the class used to lookup the class-closure
+;; Description: Returns a function that looks up the class-closure based on the class-name to declare
+;;              in an environment passed into the returned function
+(define func-def-class-closure
+  (lambda (class-name-to-declare)
+    (lambda (current-env) (find class-name-to-declare current-env))))
+
 ;; Function:    (add-function name param-list func-body env)
 ;; Parameters:  name       - the name of the function to add to the env
 ;;              param-list - a list of atoms that represent the parameter names for a functions
@@ -318,7 +327,7 @@
          (list (cons 'this param-list)
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name param-list func-body env))
+                 (add-function name param-list func-body class-closure-lookup env))
                class-closure-lookup)
          env)))
 

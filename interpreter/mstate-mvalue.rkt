@@ -791,38 +791,18 @@
                        continue-error)))))
 
 (define handle-function-call
-  (lambda (ptree env class-closure instance throw)
+  (lambda (expr env class-closure instance throw)
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
         (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
                (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) LHS)))
-              (mstate-function-call expr env class-closure instance LHS RHS throw)
-        )
-        ((lambda (closure) ; Getting the func-env from the closure
-          (call/cc (lambda (return-cont)
-          ; if there is a dot operator, then evaluate the LHS to get the object-closure
-          ;    then get the function closure of the RHS from the object closure of the LHS
-          ;    cons the object closure onto the params of the function call
-          ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
-          ; if there is not a dot operator, then look up the function closure in the env
-          ;    cons the containing instance onto the new param list to indicate that this DNE
-          ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
-
-          ;;; note that you now need the instance in everything. also the class-name must now be class-closure
-            (mstate (closure-body closure)
-                              (add-multiple-vars (cons 'this (closure-params closure))
-                                                  (cons instance (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
-                                                  (push-layer ((closure-env closure))))
+              (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
+        (mstate-function-call expr
+                              env
                               class-closure
                               instance
-                              (lambda (e v) (return-cont v))
-                              break-error
-                              (lambda (e) (throw env))
-                              continue-error))))
-
-        )
-    )
-  )
-)
+                              instance
+                              (lookup-function-closure (mvalue-func-call-name expr) env class-closure)
+                              throw))))
 
 ;; Function:    (dot-value expr env class-closure instance throw)
 ;; Parameters:  expr          - list representing the parse tree in the form ((dot LHS-dot RHS-dot) ...)
@@ -919,12 +899,11 @@
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
         (find expr env)) ;; TODO: change to call lookup function
       ((eq? (mvalue-statement-op expr) 'funcall)
-        ;; TODO:  fillin
+        (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
-        (dot-value expr env class-closure instance throw)
+        (dot-value expr env class-closure instance throw))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
-
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure throw) (mvalue (operand2 expr) env class-closure instance throw)))
          (2_op_switch expr)))
