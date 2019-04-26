@@ -129,6 +129,9 @@
 ;; The function call's parameter list
 (define mvalue-func-call-params cddr)
 
+;; The right hand side of the dot operator
+(define dot-rhs caddr)
+
 ;;;; *********************************************************************************************************
 ;;;; helper functions
 ;;;; *********************************************************************************************************
@@ -856,7 +859,6 @@
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc (lambda (return-cont)
-            (if (list? (mvalue-statement-op (next-statement expr))))
            ; if there is a dot operator, then evaluate the LHS to get the object-closure
            ;    then get the function closure of the RHS from the object closure of the LHS
            ;    cons the object closure onto the params of the function call
@@ -876,7 +878,12 @@
                               break-error
                               (lambda (e) (throw env))
                               continue-error))))
-         (lookup-function-closure (func-call-name expr) env class-closure)))
+         (if (list? (mvalue-func-call-name expr))) ; If the function call is a dot operator
+             ((lambda (LHS)
+                 (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) LHS))
+               (get-dot-LHS (mvalue-func-call-name expr) env class-closure instance throw))
+                
+        ))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
 
