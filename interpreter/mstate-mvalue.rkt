@@ -704,7 +704,7 @@
   (lambda (ptree env class-closure instance return break throw continue)
     (begin
       ;; run the function, but ignore its return value
-      (handle-function-call ptree env class-closure instance throw)
+      (handle-function-call (current-statement ptree) env class-closure instance throw)
       env))) ; return the updated environment
 
 ;;;; *********************************************************************************************************
@@ -796,7 +796,7 @@
   (lambda (expr env class-closure instance throw)
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
         (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
-               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) LHS)))
+               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) env LHS)))
               (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
         (mstate-function-call expr
                               env
@@ -821,7 +821,6 @@
 
 (define new-op
   (lambda (expr env)
-  (display env)
     (class-constructor (find (new-arg expr) env))))
 
 ;; Function:    (mvalue-operator? statement operator)
@@ -882,7 +881,7 @@
 
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
-    (mvalue (list LHS-of-dot) env class-closure instance throw)))
+    (mvalue LHS-of-dot env class-closure instance throw)))
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr - list representing the parse tree

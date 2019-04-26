@@ -11,14 +11,6 @@
 ;;;; Interpreter Part 3
 ;;;; *********************************************************************************************************
 
-
-(define-syntax debug
-  (lambda (syn)
-    (define slist (syntax->list syn))
-    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) x)))
-  )
-)
-
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename classname)
@@ -33,9 +25,6 @@
        (class-closure (find (string->symbol classname) class-env))
        (main-function-closure (lookup-non-local-function 'main class-closure)))
       (call/cc (lambda (return-cont)
-      (display class-env) (newline)
-      (display class-closure) (newline)
-      (display main-function-closure) (newline)
                  (parse-retval (mstate (closure-body main-function-closure) ; get the parse tree
                                        (push-layer (append ((closure-env main-function-closure)) class-env)) ; get the env
                                        class-closure

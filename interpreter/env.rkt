@@ -9,6 +9,13 @@
 ;;;; env handling functions
 ;;;; *********************************************************************************************************
 
+(define-syntax debug
+  (lambda (syn)
+    (define slist (syntax->list syn))
+    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) x)))
+  )
+)
+
 ;; definition for a layer with no values in it
 (define null-layer '(() ()))
 
