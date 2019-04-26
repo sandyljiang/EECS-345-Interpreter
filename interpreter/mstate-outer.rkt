@@ -27,7 +27,7 @@
     ((lambda (super-list)
       (if (null? super-list)
         super-list
-        (cadr super-list)
+        (cadr super-list) ; need to extract the name and throw out the "extends"
       )
     )
     (caddar ptree))))
@@ -83,15 +83,17 @@
 (define outer-operator_switch
   (lambda (ptree)
     (cond
-      ((operator? ptree 'var declare-len)        declare-var) ; ptree == ((var name) ...)
-      ((operator? ptree 'function func-def-len)  function-def-statement)
-      ((operator? ptree 'static-function func-def-len) declare-static-function)
+      ((operator? ptree 'var declare-len)        declare-var-outer) ; ptree == ((var name) ...)
+      ((operator? ptree 'var declare-assign-len) declare-assign-outer)
+      ((operator? ptree 'function func-def-len)  declare-function-outer)
+      ((operator? ptree 'static-function func-def-len) declare-static-function-outer)
       (else                                      (undefined-op-error ptree)))))
 
-;; Function:    (mstate-outer ptree env)
+;; Function:    (mstate-class-body ptree env)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;;              env - binding list in the form defined in env.rkt
-;; Description: Performs the the operations in the parse tree based on the env to return the new env
+;; Description: Parses through a ptree to create an environment with all the field necessary to
+;;              create a class closure
 (define mstate-class-body
   (lambda (ptree env class-name-to-declare)
     (cond
@@ -100,10 +102,15 @@
       (else
         ((lambda (func)
            (mstate-class-body (next-statement ptree)
-                              (func ptree env class-name-to-declare return-error break-error throw-error continue-error)
+                              (func ptree env class-name-to-declare)
                               class-name-to-declare))
          (outer-operator_switch ptree))))))
 
+;; Function:    (mstate-class-def ptree env)
+;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
+;;              env - binding list in the form defined in env.rkt
+;; Description: Parses through a ptree with only class definitions and creates an environment
+;;              with all of their closures
 (define mstate-class-def
   (lambda (ptree env)
     (if (not (null? ptree))
@@ -117,33 +124,70 @@
                                              (static-method-names-def body-env)
                                              (static-method-closures-def body-env)
                                              (instance-field-names-def body-env)
-                                             (instance-field-values-def body-env)))
+                                             (instance-field-values-def body-env))))
+       (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name ptree)))
+      env)))
 
-       )
-       (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name ptree))
-      )
-      env
-    )
-  )
-)
-
+;; Function:    (func-def-class-closure)
+;; Parameters:  class-name-to-declare - the name of the class used to lookup the class-closure
+;; Description: Returns a function that looks up the class-closure based on the class-name to declare
+;;              in an environment passed into the returned function
 (define func-def-class-closure
   (lambda (class-name-to-declare)
-    (lambda (current-env) (find class-name-to-declare current-env))
-  )
-)
+    (lambda (current-env) (find class-name-to-declare current-env))))
 
-(define declare-var
-  (lambda (ptree env class-name-to-declare return break throw continue)
+;; Function:    (declare-var-outer ptree env class-name-to-declare)
+;; Parameters:  ptree                 - parse tree in the format ((var var-name) ...)
+;;              env                   - env binding list in the form defined in env.rkt
+;;              class-name-to-declare - the name of the class being parsed
+;; Description: adds a new undefined variable variable to the instance fields layer of env
+(define declare-var-outer
+  (lambda (ptree env class-name-to-declare)
     (cons (method-list env)
           (cons (static-method-list env)
-                (add (method-name ptree) undefined-var (remove-top-layer (remove-top-layer env)))))))
+                (add (var-name ptree) undefined-var (remove-top-layer (remove-top-layer env)))))))
 
-(define declare-static-function
-  (lambda (ptree env class-name-to-declare return break throw continue)
+;; Function:    (declare-assign-outer ptree env class-name-to-declare)
+;; Parameters:  ptree                 - parse tree in the format ((var var-name var-value) ...)
+;;              env                   - env binding list in the form defined in env.rkt
+;;              class-name-to-declare - the name of the class being parsed
+;; Description: adds a new variable with value from ptree to the instance fields layer of env
+;; Note:        does NOT call mvalue on the variable, just puts it into the field - assuming
+;;              only numbers and booleans are valid values in class definition
+(define declare-assign-outer
+  (lambda (ptree env class-name-to-declare)
+    ;; extract the name and value from the ptree and add the to the env
     (cons (method-list env)
-          (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (func-def-class-closure class-name-to-declare) (remove-top-layer env)))))
+          (cons (static-method-list env)
+                (add (var-name ptree)
+                     (var-value ptree) ; assuming it can only be a number or bool and dont need to mvalue it
+                     (remove-top-layer (remove-top-layer env)))))))
 
-(define declare-function
-  (lambda (ptree env class-name-to-declare return break throw continue)
-    (add-function (func-def-name ptree) (cons 'this (func-def-params ptree)) (func-def-body ptree) (func-def-class-closure class-name-to-declare) env)))
+;; Function:    (declare-static-function-outer ptree env class-name-to-declare)
+;; Parameters:  ptree                 - parse tree in the format
+;;                                      ((static-function func-def-name func-def-params func-def-body) ...)
+;;              env                   - env binding list in the form defined in env.rkt
+;;              class-name-to-declare - the name of the class being parsed
+;; Description: adds a new static function closure to the static methods layer of env
+(define declare-static-function-outer
+  (lambda (ptree env class-name-to-declare)
+    (cons (method-list env)
+          (add-function (func-def-name ptree)
+                        (func-def-params ptree)
+                        (func-def-body ptree)
+                        (func-def-class-closure class-name-to-declare)
+                        (remove-top-layer env)))))
+
+;; Function:    (declare-function-outer ptree env class-name-to-declare)
+;; Parameters:  ptree                 - parse tree in the format
+;;                                      ((function func-def-name func-def-params func-def-body) ...)
+;;              env                   - env binding list in the form defined in env.rkt
+;;              class-name-to-declare - the name of the class being parsed
+;; Description: adds a new member function closure to the methods layer of env
+(define declare-function-outer
+  (lambda (ptree env class-name-to-declare)
+    (add-function (func-def-name ptree)
+                  (func-def-params ptree)
+                  (func-def-body ptree)
+                  (func-def-class-closure class-name-to-declare)
+                  env)))

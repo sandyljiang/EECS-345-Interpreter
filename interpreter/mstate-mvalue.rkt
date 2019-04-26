@@ -129,6 +129,9 @@
 ;; The function call's parameter list
 (define mvalue-func-call-params cddr)
 
+(define LHS-dot cadar)
+(define RHS-dot caddar)
+
 ;;;; *********************************************************************************************************
 ;;;; helper functions
 ;;;; *********************************************************************************************************
@@ -772,6 +775,18 @@
 ;;;; Mvalue Helper functions
 ;;;; ********************************************************************************************************
 
+;; Function:    (dot-value expr env class-closure instance throw)
+;; Parameters:  expr          - list representing the parse tree in the form ((dot LHS-dot RHS-dot) ...)
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation to pass to the mvalue function evaluating the
+;;                              expressions
+;; Description: Evaluates the dot expression using the given env.
+(define dot-value
+  (lambda (expr env class-closure instance throw)
+    (lookup-instance-fields (RHS-dot expr) (get-dot-LHS (LHS-dot expr) env class-closure instance throw))))
+
 ;; Function:    (mvalue-operator? statement operator)
 ;; Parameters:  statement - the parsed statement to evaluate. First element should be
 ;;                          the operator represented by an atom
@@ -799,14 +814,14 @@
       ((mvalue-operator? expr '%)  remainder)
 
       ;; Cases with comparison operators
-      ((mvalue-operator? expr '==) eq?)
-      ((mvalue-operator? expr '!=) (lambda (op1 op2) (not (eq? op1 op2))))
-      ((mvalue-operator? expr '< ) <)
-      ((mvalue-operator? expr '> ) >)
-      ((mvalue-operator? expr '<=) <=)
-      ((mvalue-operator? expr '>=) >=)
-      ((mvalue-operator? expr '&&) (lambda (op1 op2) (and op1 op2)))
-      ((mvalue-operator? expr '||) (lambda (op1 op2) (or op1 op2)))
+      ((mvalue-operator? expr '==)  eq?)
+      ((mvalue-operator? expr '!=)  (lambda (op1 op2) (not (eq? op1 op2))))
+      ((mvalue-operator? expr '< )  <)
+      ((mvalue-operator? expr '> )  >)
+      ((mvalue-operator? expr '<=)  <=)
+      ((mvalue-operator? expr '>=)  >=)
+      ((mvalue-operator? expr '&&)  (lambda (op1 op2) (and op1 op2)))
+      ((mvalue-operator? expr '||)  (lambda (op1 op2) (or op1 op2)))
 
       ;; Operator not recognized
       (else                        (error "Error: Executing invalid expression.\nExpression: " expr)))))
@@ -828,9 +843,7 @@
 
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
-    (mvalue (list LHS-of-dot) env class-closure instance throw)
-  )
-)
+    (mvalue (list LHS-of-dot) env class-closure instance throw)))
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr - list representing the parse tree
@@ -876,6 +889,8 @@
                               (lambda (e) (throw env))
                               continue-error))))
          (lookup-function-closure (func-call-name expr) env class-closure)))
+      ((eq? (mvalue-statement-op expr) 'dot)
+        (dot-value expr env class-closure instance throw)
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
 

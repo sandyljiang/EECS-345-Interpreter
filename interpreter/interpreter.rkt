@@ -14,13 +14,22 @@
 ;; Interprets the code in the file specified by filename and returns the value
 (define interpret
   (lambda (filename classname)
-    ((lambda (retval)
-      (cond
-        ((list? retval)  (error "Error: No return in main function"))
-        ((eq? retval #t) 'true)
-        ((eq? retval #f) 'false)
-        (else            retval)))
-     (mvalue '(funcall main)
-             (mstate-class-def (parser filename) (initial-env))
-             (string->symbol classname)
-             throw-error))))
+    (let* ; using let here since we would need 3-4 lambdas to handle all the values used more than once
+      ((parse-retval (lambda (retval)
+                       (cond
+                         ((list? retval)  (error "Error: No return in main function"))
+                         ((eq? retval #t) 'true)
+                         ((eq? retval #f) 'false)
+                         (else            retval))))
+       (class-env (mstate-class-def (parser filename) (initial-env)))
+       (class-closure (find (string->symbol classname) class-env))
+       (main-function-closure (lookup-non-local-function 'main class-closure)))
+      (call/cc (lambda (return-cont)
+                 (parse-retval (mstate (closure-body main-function-closure) ; get the parse tree
+                                       (push-layer ((closure-env main-function-closure))) ; get the env
+                                       class-closure
+                                       '() ; no "this" since main is a static function
+                                       (lambda (e v) (return-cont v))
+                                       break-error
+                                       throw-error
+                                       continue-error)))))))
