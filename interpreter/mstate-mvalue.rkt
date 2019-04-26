@@ -653,11 +653,17 @@
       (else                                      (undefined-op-error ptree)))))
 
 ;; Function:    (mstate ptree env return break throw continue)
-;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
-;;              env   - binding list in the form defined in env.rkt
+;; Parameters:  ptree         - parse tree in the format ((statement-op args...) ...)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
 (define mstate
-  (lambda (ptree env class-name return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (cond
       ((null? ptree)
         env)
@@ -666,6 +672,8 @@
                 (call/cc (lambda (while-break)
                            (while-statement ptree
                                             env
+                                            class-closure
+                                            instance
                                             return
                                             while-break
                                             throw
@@ -677,7 +685,9 @@
       (else
         ((lambda (func)
            (mstate (next-statement ptree)
-                   (func ptree env return break throw continue)
+                   (func ptree env class-closure instance return break throw continue)
+                   class-closure
+                   instance
                    return
                    break
                    throw
@@ -744,10 +754,14 @@
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr - list representing the parse tree
-;;              s    - the list representing env, which contains the name-value bindings
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation to pass to the mvalue function evaluating the
+;;                              expressions
 ;; Description: Evaluates the given expression using the given env.
 (define mvalue
-  (lambda (expr env class-closure throw)
+  (lambda (expr env class-closure instance throw)
     (cond
       ((null? expr)
         (error "Error: Evaluating null statement"))
@@ -773,28 +787,34 @@
            ;;; note that you now need the instance in everything. also the class-name must now be class-closure
                       (mstate (closure-body closure)
                               (add-multiple-vars (closure-params closure)
-                                                 (mvalue-list (mvalue-func-call-params expr) env throw)
+                                                 (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw)
                                                  (push-layer ((closure-env closure))))
+                              class-closure
+                              instance
                               (lambda (e v) (return-cont v))
                               break-error
                               (lambda (e) (throw env))
                               continue-error))))
-         (lookup-function-closure (func-call-name expr) env class-name)))
+         (lookup-function-closure (func-call-name expr) env class-closure)))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
-        ((lambda (func) (func (mvalue (operand1 expr) env throw))) (1_op_switch expr)))
+        ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
 
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) env throw) (mvalue (operand2 expr) env throw)))
+        ((lambda (func) (func (mvalue (operand1 expr) env class-closure throw) (mvalue (operand2 expr) env class-closure instance throw)))
          (2_op_switch expr)))
       (else
         (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
 ;; Function:    (mvalue-list param-exprs env throw)
-;; Parameters:  exprs - list containing parse tree expressions to be evaluated
-;;              env   - the environment to use to evaluate expressions
-;;              throw - a throw continuation to pass to the mvalue function evaluating the expressions
-;; Description: Evaluates a list of expressions using the mvalue function, the given environment, and
-;;              the given throw continuation. Returns a list of the values the expressions evaluate to.
+;; Parameters:  exprs         - list containing parse tree expressions to be evaluated
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation to pass to the mvalue function evaluating the
+;;                              expressions
+;; Description: Evaluates a list of expressions using the mvalue function, the given environment,
+;;              and the given throw continuation. Returns a list of the values the expressions
+;;              evaluate to.
 (define mvalue-list
   (lambda (exprs env class-closure instance throw)
     (if (null? exprs)
