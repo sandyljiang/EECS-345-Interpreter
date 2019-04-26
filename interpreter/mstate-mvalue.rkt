@@ -889,7 +889,7 @@
               ;;; note that you now need the instance in everything. also the class-name must now be class-closure
                 (mstate (closure-body closure)
                                   (add-multiple-vars (cons 'this (closure-params closure))
-                                                     (cons LHS (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
+                                                     (cons instance (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
                                                      (push-layer ((closure-env closure))))
                                   class-closure
                                   instance
@@ -897,7 +897,9 @@
                                   break-error
                                   (lambda (e) (throw env))
                                   continue-error))))
+              
             )
+        )
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
 
