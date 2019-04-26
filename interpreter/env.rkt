@@ -327,7 +327,7 @@
          (list (cons 'this param-list)
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name param-list func-body class-closure-lookup env))
+                 (add-function name (cons 'this param-list) func-body class-closure-lookup env))
                class-closure-lookup)
          env)))
 

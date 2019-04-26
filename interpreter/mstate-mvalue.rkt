@@ -138,7 +138,7 @@
 ;; The left hand side of the dot operator
 (define dot-lhs cadr)
 
-(define new-arg cadar)
+(define new-arg cadr)
 
 ;;;; *********************************************************************************************************
 ;;;; helper functions
@@ -784,7 +784,7 @@
                (mstate (closure-body function-closure)
                        (add-multiple-vars (closure-params function-closure)
                                           (cons LHS-dot (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
-                                          (push-layer ((closure-env function-closure))))
+                                          (push-layer (append ((closure-env function-closure)) env)))
                        class-closure
                        LHS-dot
                        (lambda (e v) (return-cont v))
@@ -821,6 +821,7 @@
 
 (define new-op
   (lambda (expr env)
+  (display env)
     (class-constructor (find (new-arg expr) env))))
 
 ;; Function:    (mvalue-operator? statement operator)

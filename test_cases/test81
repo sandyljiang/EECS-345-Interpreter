@@ -1,4 +1,9 @@
 
+class B {
+  function f() {
+    return true;
+  }
+}
 
 class A {
   var x = 5;

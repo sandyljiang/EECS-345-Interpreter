@@ -11,13 +11,6 @@
 ;;;; mstate-out function declaratons and variable declarations
 ;;;; *********************************************************************************************************
 
-(define-syntax debug
-  (lambda (syn)
-    (define slist (syntax->list syn))
-    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) x)))
-  )
-)
-
 (define class-def-name
   (lambda (ptree)
     (cadar ptree)))
