@@ -196,6 +196,8 @@
 ;; Function:    (return-statement ptree env break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((return return-expr) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - the return continuation to call in this function
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
@@ -204,8 +206,8 @@
 ;;              return expression. If one already exists, previous value is overwritten
 ;;              (For cases where return is in a finally block).
 (define return-statement
-  (lambda (ptree env return break throw continue)
-    (return env (mvalue (return-expr ptree) env throw)))) ; pass the return value up
+  (lambda (ptree env class-closure instance return break throw continue)
+    (return env (mvalue (return-expr ptree) env class-closure instance throw)))) ; pass the return value up
 
 ;;;; *********************************************************************************************************
 ;;; break operator
@@ -214,6 +216,8 @@
 ;; Function:    (break-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((break) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - the break continuation to call in this function
 ;;              throw    - a throw continuation
@@ -221,7 +225,7 @@
 ;; Description: Calls the break continuation and passes the given env as an argument.
 ;;              Used to break out of execution of a loop.
 (define break-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (break env)))
 
 ;;;; *********************************************************************************************************
@@ -231,6 +235,8 @@
 ;; Function:    (continue-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((continue) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
@@ -238,7 +244,7 @@
 ;; Description: Calls the continue continuation and passes the given env as an argument.
 ;;              Used to return to the condition of a loop.
 (define continue-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (continue env)))
 
 ;;;; *********************************************************************************************************
@@ -248,14 +254,16 @@
 ;; Function:    (throw-statement ptree env break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((throw throw-expr) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - the throw continuation to call in this function
 ;;              continue - a continue continuation
 ;; Description: Calls the throw continuation and passes the value of the throw expression as an argument.
 (define throw-statement
-  (lambda (ptree env return break throw continue)
-    (throw (change-value throw-var (mvalue (throw-expr ptree) env throw) env))))
+  (lambda (ptree env class-closure instance return break throw continue)
+    (throw (change-value throw-var (mvalue (throw-expr ptree) env class-closure instance throw) env))))
 
 ;;;; *********************************************************************************************************
 ;;;; declaration operator
@@ -264,13 +272,15 @@
 ;; Function:    (declare-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((var var-name) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
 ;;              continue - a continue continuation
 ;; Description: adds a new undefined variable variable to the env
 (define declare-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (add (var-name ptree) undefined-var env)))
 
 ;;;; *********************************************************************************************************
@@ -280,13 +290,15 @@
 ;; Function:    (declare-assign-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((var var-name var-value) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
 ;;              continue - a continue continuation
 ;; Description: adds a new variable to the env and assigns it the specified value from the parse tree
 (define declare-assign-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     ;; extract the name and value from the ptree and add the to the env
     (add (var-name ptree)
          (mvalue (var-value ptree) env throw)
@@ -299,19 +311,21 @@
 ;; Function:    (assign-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((= var-name var-value) ...)
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
 ;;              continue - a continue continuation
 ;; Description: changes the value of the specifed variable in the parse tree to the new value
 (define assign-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     ;; extract the name of the variable name and pass it into the following function
     ((lambda (name)
       ;; make sure the variable has been declared
       (if (exists? name env)
         (change-value name
-                (mvalue (var-value ptree) env throw)
+                (mvalue (var-value ptree) env class-closure instance throw)
                 env)
         (assign-error name)))
      (var-name ptree))))
@@ -323,6 +337,8 @@
 ;; Function:    (begin-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...))
 ;;              env      - env binding list in the form defined in env.rkt
+;;              class-closure - 
+;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
 ;;              throw    - a throw continuation
@@ -330,7 +346,7 @@
 ;; Description: Creates a "code block" of statements where a new layer is added to the env for locally
 ;;              scoped variables and bindings are added, but not visible outside of the block.
 (define begin-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (remove-top-layer (mstate (stmt-list ptree)
                               (push-layer env)
                               return
