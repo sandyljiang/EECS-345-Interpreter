@@ -147,7 +147,7 @@
 (define get-class-closure car)
 (define object-instance-field-values cadr)
 
-(define get-class-instance-fields
+(define get-object-instance-fields
   (lambda (object-closure)
     (list (list (method-names (get-class-closure object-closure))
                 (method-closures (get-class-closure object-closure)))
@@ -280,7 +280,7 @@
 ;;              not found or was undefined
 (define lookup-instance-fields
   (lambda (name object-closure)
-    (find name (get-class-instance-fields object-closure))))
+    (find name (get-object-instance-fields object-closure))))
 
 ;; Function:    (lookup-function-closure name env)
 ;; Parameters:  name       - the name of the function to find in the class-closure of class-name

@@ -796,7 +796,7 @@
   (lambda (expr env class-closure instance throw)
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
         (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
-               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) env LHS)))
+               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) env (get-class-closure LHS))))
               (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
         (mstate-function-call expr
                               env
@@ -932,4 +932,4 @@
   (lambda (exprs env class-closure instance throw)
     (if (null? exprs)
         '()
-        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env class-closure instance throw)))))
+        (cons (mvalue (car exprs) env class-closure instance throw) (mvalue-list (cdr exprs) env class-closure instance throw)))))
