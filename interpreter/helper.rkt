@@ -1,5 +1,6 @@
 #lang racket
 (provide len)
+(provide rebox)
 (provide return-var)
 (provide throw-var)
 (provide undefined-var)
@@ -40,3 +41,14 @@
     (len-acc lis 0)
   )
 )
+
+;; Function:    (rebox lis)
+;; Parameters:  lis - the list to rebox
+;; Description: unboxes each value in a list an puts it into a new box (basically copies
+;;              the list to create a new one that can be updated independently of the original)
+(define rebox
+  (lambda (lis)
+    (if (null? lis)
+      lis
+      (cons (box (unbox (car lis)))
+            (rebox (cdr lis))))))

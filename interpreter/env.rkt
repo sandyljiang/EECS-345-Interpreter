@@ -86,6 +86,7 @@
 ;;;; static-method-names     - a list of symbols that represent the static functions in the class
 ;;;; static-method-closures  - a list of function closures that correspond to the static method names
 ;;;; instance-field-names    - a list of symbols that represents the instance variables in the class
+;;;; instance-field-values   - a list of values that represents the default values for the instance variables
 ;;;; *********************************************************************************************************
 
 (define super car)
@@ -98,6 +99,9 @@
 (define instance-field-names
   (lambda (ptree)
     (cadr (cddddr ptree))))
+(define class-instance-field-values
+  (lambda (ptree)
+    (caddr (cddddr ptree))))
 
 ;; Function:    (find name env)
 ;; Parameters:  class-closure - the closure to extract the functions from
@@ -112,6 +116,16 @@
           (list (static-method-names class-closure)
                 (static-method-closures class-closure)))))
 
+;; Function:    (class-constructor class-closure)
+;; Parameters:  class-closure - the closure to extract the instance field names and values
+;;                              from
+;; Description: creates a new object closure (see below) with the default instance-field-values
+;;              in the instance-field-values of that object
+(define class-constructor
+  (lambda (class-closure)
+    (cons class-closure
+          (list (rebox (class-instance-field-values class-closure))))))
+
 ;;;; *********************************************************************************************************
 ;;;; Object/Instance Closure format
 ;;;;
@@ -123,14 +137,14 @@
 ;;;; *********************************************************************************************************
 
 (define get-class-closure car)
-(define instance-field-values cadr)
+(define object-instance-field-values cadr)
 
 (define get-class-instance-fields
   (lambda (object-closure)
     (list (list (method-names (get-class-closure object-closure))
                 (method-closures (get-class-closure object-closure)))
           (list (instance-field-names (get-class-closure object-closure))
-                (instance-field-values object-closure)))))
+                (object-instance-field-values object-closure)))))
 
 ;; Function:    (initial-env)
 ;; Description: creates the initial env for the interpreter which has
@@ -250,6 +264,12 @@
       ;; find the class closure, get its function and  find the requested function
       (find name (get-class-functions class-closure))))
 
+;; Function:    (lookup-instance-fields name object-closure)
+;; Parameters:  name           - the name of  variable/function to find in the object-closure
+;;              object-closure - the object closure to lookup values from
+;; Description: Searches the object-closure's instance fields for name and returns the value
+;; Note:        The function throws an error if the variable/function or class was
+;;              not found or was undefined
 (define lookup-instance-fields
   (lambda (name object-closure)
     (find name (get-class-instance-fields object-closure))))
@@ -264,7 +284,7 @@
 ;;              not found or was undefined
 ;; Note:        If there is a local variable with the same name as the function, this finds that
 (define lookup-function-closure
-  (lambda (name env class-name)
+  (lambda (name env class-closure)
     (find-with-undeclared-handler name
                                   env
                                   (lambda ()
@@ -293,14 +313,13 @@
 ;; Description:  Adds a new function closure to the top layer of the env
 ;; Note:        This function throws an error if the name of the function exists in the env
 (define add-function
-  (lambda (name param-list func-body func-class class-closure-lookup env)
+  (lambda (name param-list func-body class-closure-lookup env)
     (add name
          (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
                  (add-function name param-list func-body env))
-               class-closure-lookup
-         )
+               class-closure-lookup)
          env)))
 
 ;; Function:    (add-class-closure env name super method-names method-closures smn smc ifn)
@@ -315,16 +334,13 @@
 ;;                                 param declarations on one line)
 ;;              ifn              - the instance field names list (name shortened to keep
 ;;                                 param declarations on one line)
+;;              ifv              - the default values list assigned to instance-field names
+;;                                 (name shortened to keep param declarations on one line)
 ;; Description: adds a class closure to the environment
 (define add-class-closure
-  (lambda (env name super method-names method-closures smn smc ifn)
+  (lambda (env name super method-names method-closures smn smc ifn ifv)
     (add name
-         (list super
-               method-names
-               method-closures
-               smn
-               smc
-               ifn)
+         (list super method-names method-closures smn smc ifn ifv)
          env)))
 
 ;; Function:    (add-multiple-vars names values env)

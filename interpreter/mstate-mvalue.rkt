@@ -380,7 +380,7 @@
                              (list (if-body ptree)) env class-closure instance return break throw continue))
         ((eq? condition #f) env) ; condition was false, so don't change the env
         (else               (boolean-mismatch-error condition))))
-     (mvalue (if-cond ptree) env throw))))
+     (mvalue (if-cond ptree) env class-closure instance throw))))
 
 ;;;; *********************************************************************************************************
 ;;;; if/else operator
@@ -408,7 +408,7 @@
         ((eq? condition #f) (mstate
                              (list (else-body ptree)) env class-closure instance return break throw continue))
         (else               (boolean-mismatch-error condition))))
-     (mvalue (if-cond ptree) env throw))))
+     (mvalue (if-cond ptree) env class-closure instance throw))))
 
 ;;;; *********************************************************************************************************
 ;;;; while operator
@@ -441,13 +441,15 @@
                                               break
                                               throw
                                               continue-env)))
+                            class-closure
+                            instance
                             return
                             break
                             throw
                             continue)) ; evaluate the body again
         ((eq? condition #f) env) ; done evaluating the while loop
         (else               (boolean-mismatch-error condition))))
-     (mvalue (while-cond ptree) env throw))))
+     (mvalue (while-cond ptree) env class-closure instance throw))))
 
 ;;;; *********************************************************************************************************
 ;;;; try operator
@@ -470,6 +472,8 @@
     (call/cc (lambda (exit-catch)
                (mstate (try-block ptree)
                        env
+                       class-closure
+                       instance
                        return
                        break
                        (lambda (throw-env)
@@ -502,6 +506,8 @@
     (mstate (final-block ptree)
             (mstate (try-block ptree)
                     env
+                    class-closure
+                    instance
                     (lambda (return-env return-value)
                       (begin (mstate (final-block ptree)
                                      return-env
@@ -539,6 +545,8 @@
                                         break
                                         throw
                                         continue))))
+            class-closure
+            instance
             return
             break
             throw
@@ -562,6 +570,8 @@
             (call/cc (lambda (exit-catch)
                         (mstate (try-block ptree)
                                 env
+                                class-closure
+                                instance
                                 (lambda (return-env return-value)
                                   (begin (mstate (final-block ptree)
                                                  return-env
@@ -687,7 +697,7 @@
         (call/cc (lambda (return-cont)
                    (mstate (closure-body closure)
                            (add-multiple-vars (closure-params closure)
-                                              (mvalue-list (func-call-params ptree) env throw)
+                                              (mvalue-list (func-call-params ptree) env class-closure instance throw)
                                               (push-layer ((closure-env closure))))
                            class-closure
                            instance
@@ -823,6 +833,12 @@
 ;;;; ********************************************************************************************************
 ;;;; Mvalue
 ;;;; ********************************************************************************************************
+
+(define get-dot-LHS
+  (lambda (LHS-of-dot env class-closure instance throw)
+    (mvalue (list LHS-of-dot) env class-closure instance throw)
+  )
+)
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr - list representing the parse tree
