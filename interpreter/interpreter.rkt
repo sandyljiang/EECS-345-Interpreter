@@ -22,5 +22,5 @@
         (else            retval)))
      (mvalue '(funcall main)
              (mstate-class-def (initial-env) (parser filename))
-             classname
+             (string->symbol classname)
              throw-error))))

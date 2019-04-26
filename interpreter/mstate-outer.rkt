@@ -89,14 +89,14 @@
 ;;              env - binding list in the form defined in env.rkt
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
 (define mstate-class-body
-  (lambda (ptree env)
+  (lambda (ptree env class-name)
     (cond
       ((null? ptree)
         env)
       (else
         ((lambda (func)
            (mstate-class-body (next-statement ptree)
-                   (func ptree env return-error break-error throw-error continue-error)))
+                   (func ptree env class-name return-error break-error throw-error continue-error)))
          (outer-operator_switch ptree))))))
 
 (define mstate-class-def
@@ -114,7 +114,7 @@
                                              (instance-field-names-def body-env)))
 
        )
-       (mstate-class-body (class-def-body ptree) (initial-body-env))
+       (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name))
       )
       env
     )
@@ -122,13 +122,16 @@
 )
 
 (define declare-var
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-name return break throw continue)
     (cons (method-list env)
           (cons (static-method-list env)
                 (add (method-name ptree) undefined-var (remove-top-layer (remove-top-layer env)))))))
 
 (define declare-static-function
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-name return break throw continue)
     (cons (method-list env)
-          (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (remove-top-layer env)))))
+          (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) class-name (remove-top-layer env)))))
 
+(define declare-function
+  (lambda (ptree env class-name return break throw continue)
+    (add-function (func-def-name ptree) (cons 'this (func-def-params ptree)) (func-def-body ptree) (class-name closure) class-name env)))

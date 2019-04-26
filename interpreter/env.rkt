@@ -112,6 +112,26 @@
           (list (static-method-names class-closure)
                 (static-method-closures class-closure)))))
 
+;;;; *********************************************************************************************************
+;;;; Object/Instance Closure format
+;;;;
+;;;; The closure for a function will be stored in a list with the following format
+;;;; (class-closure instance-field-values)
+;;;;
+;;;; class-closure         - a class closure object
+;;;; instance-field-values - a list of values that correspond to the instance-field names
+;;;; *********************************************************************************************************
+
+(define get-class-closure car)
+(define instance-field-values cadr)
+
+(define get-class-instance-fields
+  (lambda (object-closure)
+    (list (list (method-names (get-class-closure object-closure))
+                (method-closures (get-class-closure object-closure)))
+          (list (instance-field-names (get-class-closure object-closure))
+                (instance-field-values object-closure)))))
+
 ;; Function:    (initial-env)
 ;; Description: creates the initial env for the interpreter which has
 ;;              undefined 'throw and 'return variables in it
@@ -230,6 +250,10 @@
       ;; find the class closure, get its function and  find the requested function
       (find name (get-class-functions (find class-name env)))))
 
+(define lookup-instance-fields
+  (lambda (name object-closure)
+    (find name (get-class-instance-fields object-closure))))
+
 ;; Function:    (lookup-function-closure name env)
 ;; Parameters:  name       - the name of the function to find in the class-closure of class-name
 ;;              env        - the environment to search in
@@ -269,12 +293,15 @@
 ;; Description:  Adds a new function closure to the top layer of the env
 ;; Note:        This function throws an error if the name of the function exists in the env
 (define add-function
-  (lambda (name param-list func-body env)
+  (lambda (name param-list func-body func-class class-name env)
     (add name
          (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name param-list func-body env)))
+                 (add-function name param-list func-body env))
+               (lambda (current-env)
+                 (find class-name current-env))
+         )
          env)))
 
 ;; Function:    (add-class-closure env name super method-names method-closures smn smc ifn)

@@ -592,8 +592,8 @@
 ;; Description: calculate the new env after evaluating function definition
 ;;              statement at the beginning of the parse tree
 (define function-def-statement
-  (lambda (ptree env return break throw continue)
-    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) env)))
+  (lambda (ptree env class-name return break throw continue)
+    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) class-name env)))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
@@ -657,7 +657,7 @@
 ;;              env   - binding list in the form defined in env.rkt
 ;; Description: Performs the the operations in the parse tree based on the env to return the new env
 (define mstate
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-name return break throw continue)
     (cond
       ((null? ptree)
         env)
@@ -762,6 +762,15 @@
       ((eq? (mvalue-statement-op expr) 'funcall)
         ((lambda (closure) ; Getting the func-env from the closure
            (call/cc (lambda (return-cont)
+           ; if there is a dot operator, then evaluate the LHS to get the object-closure
+           ;    then get the function closure of the RHS from the object closure of the LHS
+           ;    cons the object closure onto the params of the function call
+           ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
+           ; if there is not a dot operator, then look up the function closure in the env
+           ;    cons the containing instance onto the new param list to indicate that this DNE
+           ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
+
+           ;;; note that you now need the instance in everything. also the class-name must now be class-closure
                       (mstate (closure-body closure)
                               (add-multiple-vars (closure-params closure)
                                                  (mvalue-list (mvalue-func-call-params expr) env throw)
@@ -787,7 +796,7 @@
 ;; Description: Evaluates a list of expressions using the mvalue function, the given environment, and
 ;;              the given throw continuation. Returns a list of the values the expressions evaluate to.
 (define mvalue-list
-  (lambda (exprs env throw)
+  (lambda (exprs env class-name throw)
     (if (null? exprs)
         '()
-        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env throw)))))
+        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env class-name throw)))))
