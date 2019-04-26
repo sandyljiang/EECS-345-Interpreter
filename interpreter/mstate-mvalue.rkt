@@ -332,14 +332,18 @@
 (define assign-statement
   (lambda (ptree env class-closure instance return break throw continue)
     ;; extract the name of the variable name and pass it into the following function
-    ((lambda (name)
-      ;; make sure the variable has been declared
-      (if (exists? name env)
-        (change-value name
-                (mvalue (var-value ptree) env class-closure instance throw)
-                env)
-        (assign-error name)))
-     (var-name ptree))))
+    (let* ((new-val (mvalue (var-value ptree) env class-closure instance throw))
+           (assign (lambda (name new-env)
+                            ;; make sure the variable has been declared
+                            (if (exists? name new-env)
+                                (change-value name
+                                              new-val
+                                              new-env)
+                                (assign-error name)))))
+      (if (list? (var-name ptree))
+          (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw)))
+          (assign (var-name ptree) env)))))
+ 
 
 ;;;; *********************************************************************************************************
 ;;;; block/begin function
