@@ -344,19 +344,21 @@
 
 ;; Function:    (if-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((if if_cond if_body) ...)
-;;              env      - env binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating the if statement at the beginning of the parse tree
 ;; Note:        that this function is used when the else-body is NOT included
 (define if-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     ;; evaluate the if statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) env return break throw continue))
+        ((eq? condition #t) (mstate (list (if-body ptree)) env class-closure instance return break throw continue))
         ((eq? condition #f) env) ; condition was false, so don't change the env
         (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) env throw))))
@@ -366,22 +368,24 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (if-else-statement ptree env)
-;; Parameters:  ptree    - parse tree in the format ((if if_cond if_body else_body) ...)
-;;              env      - env binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format ((if if_cond if_body else_body) ...)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: Calculate the new env after evaluating the
 ;;              if/else statement at the beginning of the parse tree
 ;; Note:        This function is used when the else-body IS included
 (define if-else-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     ;; evaluate the if/else statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) env return break throw continue))
-        ((eq? condition #f) (mstate (list (else-body ptree)) env return break throw continue))
+        ((eq? condition #t) (mstate (list (if-body ptree)) env class-closure instance return break throw continue))
+        ((eq? condition #f) (mstate (list (else-body ptree)) env class-closure instance return break throw continue))
         (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) env throw))))
 
@@ -390,12 +394,18 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (while-statement ptree env return break throw continue)
-;; Parameters:  ptree - parse tree in the format ((while while-cond while-body) ...)
-;;              env - binding list in the form defined in env.rkt
+;; Parameters:  ptree         - parse tree in the format ((while while-cond while-body) ...)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating the while
 ;;              statement at the beginning of the parse tree
 (define while-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     ;; evaluate the while loop based on the value of the while-cond
     ((lambda (condition)
       (cond
@@ -404,6 +414,8 @@
                            (call/cc (lambda (continue-env)
                                       (mstate (list (while-body ptree))
                                               env
+                                              class-closure
+                                              instance
                                               return
                                               break
                                               throw
@@ -421,17 +433,19 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (try-catch ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format
-;;                         ((try try-block (catch (catch-arg) catch-block) ()) ...)
-;;              env    - binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format
+;;                              ((try try-block (catch (catch-arg) catch-block) ()) ...)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating the try-catch
 ;;              statement at the beginning of the parse tree
 (define try-catch
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (call/cc (lambda (exit-catch)
                (mstate (try-block ptree)
                        env
@@ -442,6 +456,8 @@
                                              (add (catch-arg ptree)
                                                   (find throw-var throw-env)
                                                   throw-env)
+                                             class-closure
+                                             instance
                                              return
                                              break
                                              throw
@@ -449,23 +465,27 @@
                        continue)))))
 
 ;; Function:    (try-finally ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format
-;;                         ((try try-block () (finally finally-block)) ...)
-;;              env    - binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format
+;;                              ((try try-block () (finally finally-block)) ...)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating the try-finally
 ;;              statement at the beginning of the parse tree
 (define try-finally
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (mstate (final-block ptree)
             (mstate (try-block ptree)
                     env
                     (lambda (return-env return-value)
                       (begin (mstate (final-block ptree)
                                      return-env
+                                     class-closure
+                                     instance
                                      return
                                      break
                                      throw
@@ -474,6 +494,8 @@
                     (lambda (break-env)
                       (break (mstate (final-block ptree)
                                      break-env
+                                     class-closure
+                                     instance
                                      return
                                      break
                                      throw
@@ -481,6 +503,8 @@
                     (lambda (throw-env)
                       (throw (mstate (final-block ptree)
                                      throw-env
+                                     class-closure
+                                     instance
                                      return
                                      break
                                      throw
@@ -488,6 +512,8 @@
                     (lambda (continue-env)
                       (continue (mstate (final-block ptree)
                                         continue-env
+                                        class-closure
+                                        instance
                                         return
                                         break
                                         throw
@@ -498,17 +524,19 @@
             continue)))
 
 ;; Function:    (try-catch-finally ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format
-;;                         ((try try-block (catch (catch-arg) catch-block) (finally finally-block)) ...)
-;;              env    - binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format
+;;                              ((try try-block (catch (catch-arg) catch-block) (finally finally-block)) ...)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating the try-catch-finally
 ;;              statement at the beginning of the parse tree
 (define try-catch-finally
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (mstate (final-block ptree)
             (call/cc (lambda (exit-catch)
                         (mstate (try-block ptree)
@@ -516,6 +544,8 @@
                                 (lambda (return-env return-value)
                                   (begin (mstate (final-block ptree)
                                                  return-env
+                                                 class-closure
+                                                 instance
                                                  return
                                                  break
                                                  throw
@@ -524,6 +554,8 @@
                                 (lambda (break-env)
                                   (break (mstate (final-block ptree)
                                                  break-env
+                                                 class-closure
+                                                 instance
                                                  return
                                                  break
                                                  throw
@@ -533,6 +565,8 @@
                                                       (add (catch-arg ptree)
                                                            (find throw-var throw-env)
                                                            throw-env)
+                                                      class-closure
+                                                      instance
                                                       return
                                                       break
                                                       throw
@@ -540,59 +574,67 @@
                                 (lambda (continue-env)
                                   (continue (mstate (final-block ptree)
                                                     continue-env
+                                                    class-closure
+                                                    instance
                                                     return
                                                     break
                                                     throw
                                                     continue))))))
+            class-closure
+            instance
             return
             break
             throw
             continue)))
 
 ;; Function:    (try-statement ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format
-;;                         ((try try-block (catch (catch-arg) catch-block) (finally finally-block)) ...)
-;;                         or
-;;                         ((try try-block () (finally finally-block)) ...)
-;;                         or
-;;                         ((try try-block (catch (catch-arg) catch-block) ()) ...)
-;;                         or
-;;              env      - binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format
+;;                              ((try try-block (catch (catch-arg) catch-block) (finally finally-block)) ...)
+;;                              or
+;;                              ((try try-block () (finally finally-block)) ...)
+;;                              or
+;;                              ((try try-block (catch (catch-arg) catch-block) ()) ...)
+;;                              or
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating the try
 ;;              statement at the beginning of the parse tree
 (define try-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     ;; evaluate the try statement based on the block
     (cond
       ((and (not (has-finally? ptree)) (not (has-catch? ptree)))
         (invalid-try-error ptree))
       ((and (not (has-finally? ptree)) (has-catch? ptree)) ; if try-catch
-        (try-catch ptree env return break throw continue))
+        (try-catch ptree env class-closure instance return break throw continue))
       ((and (has-finally? ptree) (not (has-catch? ptree))) ; if try-finally
-        (try-finally ptree env return break throw continue))
+        (try-finally ptree env class-closure instance return break throw continue))
       (else                                                ; if try-catch-finally
-        (try-catch-finally ptree env return break throw continue)))))
+        (try-catch-finally ptree env class-closure instance return break throw continue)))))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
 ;;;; *********************************************************************************************************
 
 ;; Function:    (function-def-statement ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format
-;;                         (function func-name func-param-list func-body)
-;;              env      - binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format
+;;                              (function func-name func-param-list func-body)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: calculate the new env after evaluating function definition
 ;;              statement at the beginning of the parse tree
 (define function-def-statement
-  (lambda (ptree env class-closure return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (lambda (current-env) class-closure) env)))
 
 ;;;; *********************************************************************************************************
@@ -600,17 +642,19 @@
 ;;;; *********************************************************************************************************
 
 ;; Function:    (function-call-statement ptree env return break throw continue)
-;; Parameters:  ptree    - parse tree in the format
-;;                         (funcall func-call-name func-call-params)
-;;              env      - binding list in the form defined in env.rkt
-;;              return   - a return continuation
-;;              break    - a break continuation
-;;              throw    - a throw continuation
-;;              continue - a continue continuation
+;; Parameters:  ptree         - parse tree in the format
+;;                              (funcall func-call-name func-call-params)
+;;              env           - binding list in the form defined in env.rkt
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              return        - a return continuation
+;;              break         - a break continuation
+;;              throw         - a throw continuation
+;;              continue      - a continue continuation
 ;; Description: Calculate the new environment after evaluating the function body in the closure
 ;;              bound to the function being called at the beginning of the parse tree.
 (define function-call-statement
-  (lambda (ptree env return break throw continue)
+  (lambda (ptree env class-closure instance return break throw continue)
     (begin
      ; Getting the func-env from the closure
      ((lambda (closure)
@@ -619,6 +663,8 @@
                            (add-multiple-vars (closure-params closure)
                                               (mvalue-list (func-call-params ptree) env throw)
                                               (push-layer ((closure-env closure))))
+                           class-closure
+                           instance
                            (lambda (e v) (return-cont e))
                            break-error
                            (lambda (e) (throw env))
