@@ -864,7 +864,10 @@
            ; if there is not a dot operator, then look up the function closure in the env
            ;    cons the containing instance onto the new param list to indicate that this DNE
            ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
-
+                      ((lambda (new-paramlist)
+                         (lookup-function-closure (mvalue-func-call-name expr) env class-closure)
+                         (get-class-closure (cons instance ((closure-params)))))
+                       )
            ;;; note that you now need the instance in everything. also the class-name must now be class-closure
                       (mstate (closure-body closure)
                               (add-multiple-vars (closure-params closure)
