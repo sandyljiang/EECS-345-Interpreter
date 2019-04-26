@@ -26,7 +26,8 @@
        (main-function-closure (lookup-non-local-function 'main class-closure)))
       (call/cc (lambda (return-cont)
                  (parse-retval (mstate (closure-body main-function-closure) ; get the parse tree
-                                       (push-layer (append ((closure-env main-function-closure)) class-env)) ; get the env
+                                       ; get the env
+                                       (push-layer (append ((closure-env main-function-closure)) class-env))
                                        class-closure
                                        '() ; no "this" since main is a static function
                                        (lambda (e v) (return-cont v))
