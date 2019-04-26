@@ -196,7 +196,7 @@
 ;; Function:    (return-statement ptree env break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((return return-expr) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - the return continuation to call in this function
 ;;              break    - a break continuation
@@ -216,7 +216,7 @@
 ;; Function:    (break-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((break) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - the break continuation to call in this function
@@ -235,7 +235,7 @@
 ;; Function:    (continue-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((continue) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -254,7 +254,7 @@
 ;; Function:    (throw-statement ptree env break throw continue)
 ;; Parameters:  ptree    - parse tree in the format ((throw throw-expr) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -272,7 +272,7 @@
 ;; Function:    (declare-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((var var-name) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -290,7 +290,7 @@
 ;; Function:    (declare-assign-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((var var-name var-value) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -301,7 +301,7 @@
   (lambda (ptree env class-closure instance return break throw continue)
     ;; extract the name and value from the ptree and add the to the env
     (add (var-name ptree)
-         (mvalue (var-value ptree) env throw)
+         (mvalue (var-value ptree) env class-closure instance throw)
          env)))
 
 ;;;; *********************************************************************************************************
@@ -311,7 +311,7 @@
 ;; Function:    (assign-statement ptree env)
 ;; Parameters:  ptree    - parse tree in the format ((= var-name var-value) ...)
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -337,7 +337,7 @@
 ;; Function:    (begin-statement ptree env return break throw continue)
 ;; Parameters:  ptree    - parse tree in the format (begin (statement-list ...))
 ;;              env      - env binding list in the form defined in env.rkt
-;;              class-closure - 
+;;              class-closure -
 ;;              instance -
 ;;              return   - a return continuation
 ;;              break    - a break continuation
@@ -349,6 +349,8 @@
   (lambda (ptree env class-closure instance return break throw continue)
     (remove-top-layer (mstate (stmt-list ptree)
                               (push-layer env)
+                              class-closure
+                              instance
                               return
                               (lambda (v) (break (remove-top-layer v)))
                               (lambda (v) (throw (remove-top-layer v)))
