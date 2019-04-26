@@ -68,6 +68,10 @@
   (lambda (env)
     (names (remove-top-layer (remove-top-layer env)))))
 
+(define instance-field-values-def
+  (lambda (env)
+    (values (remove-top-layer (remove-top-layer env)))))
+
 ;; defines the initial body environment for the mstate-class-body
 (define initial-body-env
   (lambda ()
@@ -96,7 +100,8 @@
       (else
         ((lambda (func)
            (mstate-class-body (next-statement ptree)
-                   (func ptree env class-name-to-declare return-error break-error throw-error continue-error)))
+                              (func ptree env class-name-to-declare return-error break-error throw-error continue-error)
+                              class-name-to-declare))
          (outer-operator_switch ptree))))))
 
 (define mstate-class-def
@@ -111,17 +116,18 @@
                                              (method-closures-def body-env)
                                              (static-method-names-def body-env)
                                              (static-method-closures-def body-env)
-                                             (instance-field-names-def body-env)))
+                                             (instance-field-names-def body-env)
+                                             (instance-field-values-def body-env)))
 
        )
-       (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name))
+       (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name ptree))
       )
       env
     )
   )
 )
 
-(define function-closure-class-lookup
+(define func-def-class-closure
   (lambda (class-name-to-declare)
     (lambda (current-env) (find class-name-to-declare current-env))
   )
@@ -136,8 +142,8 @@
 (define declare-static-function
   (lambda (ptree env class-name-to-declare return break throw continue)
     (cons (method-list env)
-          (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (function-closure-class-lookup class-name-to-declare) (remove-top-layer env)))))
+          (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (func-def-class-closure class-name-to-declare) (remove-top-layer env)))))
 
 (define declare-function
   (lambda (ptree env class-name-to-declare return break throw continue)
-    (add-function (func-def-name ptree) (cons 'this (func-def-params ptree)) (func-def-body ptree) (function-closure-class-lookup class-name-to-declare) env)))
+    (add-function (func-def-name ptree) (cons 'this (func-def-params ptree)) (func-def-body ptree) (func-def-class-closure class-name-to-declare) env)))

@@ -21,6 +21,6 @@
         ((eq? retval #f) 'false)
         (else            retval)))
      (mvalue '(funcall main)
-             (mstate-class-def (initial-env) (parser filename))
+             (mstate-class-def (parser filename) (initial-env))
              (string->symbol classname)
              throw-error))))
