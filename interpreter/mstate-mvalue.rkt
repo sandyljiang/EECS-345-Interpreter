@@ -138,6 +138,8 @@
 ;; The left hand side of the dot operator
 (define dot-lhs cadr)
 
+(define new-arg cadar)
+
 ;;;; *********************************************************************************************************
 ;;;; helper functions
 ;;;; *********************************************************************************************************
@@ -817,6 +819,10 @@
     (lookup-instance-fields (RHS-dot-ptree expr)
                             (get-dot-LHS (LHS-dot-ptree expr) env class-closure instance throw))))
 
+(define new-op
+  (lambda (expr env)
+    (class-constructor (find (new-arg expr) env))))
+
 ;; Function:    (mvalue-operator? statement operator)
 ;; Parameters:  statement - the parsed statement to evaluate. First element should be
 ;;                          the operator represented by an atom
@@ -902,6 +908,8 @@
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
         (dot-value expr env class-closure instance throw))
+      ((eq? (mvalue-statement-op expr) 'new)
+        (new-op expr env))
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
