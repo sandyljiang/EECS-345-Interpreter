@@ -898,8 +898,7 @@
                                   (lambda (e) (throw env))
                                   continue-error)
             )
-            ((lambda (closure) ; Getting the func-env from the closure
-              (call/cc (lambda (return-cont)
+
               ; if there is a dot operator, then evaluate the LHS to get the object-closure
               ;    then get the function closure of the RHS from the object closure of the LHS
               ;    cons the object closure onto the params of the function call
@@ -909,6 +908,8 @@
               ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
 
               ;;; note that you now need the instance in everything. also the class-name must now be class-closure
+            ((lambda (closure) ; Getting the func-env from the closure
+              (call/cc (lambda (return-cont)
                 (mstate (closure-body closure)
                                   (add-multiple-vars (cons 'this (closure-params closure))
                                                      (cons instance (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
@@ -919,9 +920,8 @@
                                   break-error
                                   (lambda (e) (throw env))
                                   continue-error))))
-
-            )
-        )
+            (lookup-function-closure (mvalue-func-call-name expr) env class-closure)))
+        
       ((eq? (mvalue-statement-op expr) 'dot)
         (dot-value expr env class-closure instance throw)
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
