@@ -592,8 +592,8 @@
 ;; Description: calculate the new env after evaluating function definition
 ;;              statement at the beginning of the parse tree
 (define function-def-statement
-  (lambda (ptree env class-name return break throw continue)
-    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) class-name env)))
+  (lambda (ptree env class-closure return break throw continue)
+    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (lambda (current-env) class-closure) env)))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
@@ -747,7 +747,7 @@
 ;;              s    - the list representing env, which contains the name-value bindings
 ;; Description: Evaluates the given expression using the given env.
 (define mvalue
-  (lambda (expr env class-name throw)
+  (lambda (expr env class-closure throw)
     (cond
       ((null? expr)
         (error "Error: Evaluating null statement"))
@@ -796,7 +796,7 @@
 ;; Description: Evaluates a list of expressions using the mvalue function, the given environment, and
 ;;              the given throw continuation. Returns a list of the values the expressions evaluate to.
 (define mvalue-list
-  (lambda (exprs env class-name throw)
+  (lambda (exprs env class-closure instance throw)
     (if (null? exprs)
         '()
-        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env class-name throw)))))
+        (cons (mvalue (car exprs) env throw) (mvalue-list (cdr exprs) env class-closure instance throw)))))

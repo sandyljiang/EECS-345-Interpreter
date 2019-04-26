@@ -293,14 +293,13 @@
 ;; Description:  Adds a new function closure to the top layer of the env
 ;; Note:        This function throws an error if the name of the function exists in the env
 (define add-function
-  (lambda (name param-list func-body func-class class-name env)
+  (lambda (name param-list func-body func-class class-closure-lookup env)
     (add name
          (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
                  (add-function name param-list func-body env))
-               (lambda (current-env)
-                 (find class-name current-env))
+               class-closure-lookup
          )
          env)))
 
