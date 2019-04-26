@@ -246,9 +246,9 @@
 ;; Note:        The function throws an error if the function or class was
 ;;              not found or was undefined
 (define lookup-non-local-function
-    (lambda (name env class-name)
+    (lambda (name class-closure)
       ;; find the class closure, get its function and  find the requested function
-      (find name (get-class-functions (find class-name env)))))
+      (find name (get-class-functions class-closure))))
 
 (define lookup-instance-fields
   (lambda (name object-closure)
@@ -268,7 +268,7 @@
     (find-with-undeclared-handler name
                                   env
                                   (lambda ()
-                                    (box (lookup-non-local-function name env class-name))))))
+                                    (box (lookup-non-local-function name class-closure))))))
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
