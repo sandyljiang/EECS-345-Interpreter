@@ -376,7 +376,8 @@
     ;; evaluate the if statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) env class-closure instance return break throw continue))
+        ((eq? condition #t) (mstate
+                             (list (if-body ptree)) env class-closure instance return break throw continue))
         ((eq? condition #f) env) ; condition was false, so don't change the env
         (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) env throw))))
@@ -402,8 +403,10 @@
     ;; evaluate the if/else statement based on the value of the if-cond
     ((lambda (condition)
       (cond
-        ((eq? condition #t) (mstate (list (if-body ptree)) env class-closure instance return break throw continue))
-        ((eq? condition #f) (mstate (list (else-body ptree)) env class-closure instance return break throw continue))
+        ((eq? condition #t) (mstate
+                             (list (if-body ptree)) env class-closure instance return break throw continue))
+        ((eq? condition #f) (mstate
+                             (list (else-body ptree)) env class-closure instance return break throw continue))
         (else               (boolean-mismatch-error condition))))
      (mvalue (if-cond ptree) env throw))))
 
@@ -653,7 +656,12 @@
 ;;              statement at the beginning of the parse tree
 (define function-def-statement
   (lambda (ptree env class-closure instance return break throw continue)
-    (add-function (func-def-name ptree) (func-def-params ptree) (func-def-body ptree) (lambda (current-env) class-closure) env)))
+    (add-function
+     (func-def-name ptree)
+     (func-def-params ptree)
+     (func-def-body ptree)
+     (lambda (current-env) class-closure)
+     env)))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
@@ -843,15 +851,22 @@
            ; if there is a dot operator, then evaluate the LHS to get the object-closure
            ;    then get the function closure of the RHS from the object closure of the LHS
            ;    cons the object closure onto the params of the function call
-           ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
+           ;    evaluate the function with the new param list and the class-closure as the
+           ;    (get-class-closure object-type)
            ; if there is not a dot operator, then look up the function closure in the env
            ;    cons the containing instance onto the new param list to indicate that this DNE
-           ;    evaluate the function with the new param list and the class-closure as the (get-class-closure object-type)
+           ;    evaluate the function with the new param list and the class-closure as the
+           ;    (get-class-closure object-type)
 
-           ;;; note that you now need the instance in everything. also the class-name must now be class-closure
+           ;; note that you now need the instance in everything. also the class-name must now be class-closure
                       (mstate (closure-body closure)
                               (add-multiple-vars (closure-params closure)
-                                                 (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw)
+                                                 (mvalue-list
+                                                  (mvalue-func-call-params expr)
+                                                  env
+                                                  class-closure
+                                                  instance
+                                                  throw)
                                                  (push-layer ((closure-env closure))))
                               class-closure
                               instance
