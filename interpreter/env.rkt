@@ -428,11 +428,12 @@
 
 (define find-in-super
   (lambda (name env instance)
-    (let* ([super-closure (super(get-class-closure instance))]
+    (let* ([super-closure (super (get-class-closure instance))]
            [super-method-names (method-names super-closure)]
            [super-ifn (instance-field-names super-closure)]
            [new-env (list (list super-method-names
                                 (method-closures (get-class-closure instance)))
                           (list super-ifn
-                                (class-instance-field-values (get-class-closure instance))))])
+                                (object-instance-field-values instance)))])
       (find name new-env))))
+

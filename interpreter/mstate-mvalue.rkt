@@ -818,10 +818,16 @@
 ;;              throw         - a throw continuation to pass to the mvalue function evaluating the
 ;;                              expressions
 ;; Description: Evaluates the dot expression using the given env.
+
 (define dot-value
   (lambda (expr env class-closure instance throw)
-    (lookup-instance-fields (dot-rhs expr)
-                            (get-dot-LHS (dot-lhs expr) env class-closure instance throw))))
+    (if (eq? 'super (dot-lhs expr))
+        (find-in-super (dot-rhs expr) env instance)
+        (lookup-instance-fields (dot-rhs expr)
+                                (get-dot-LHS (dot-lhs expr) env class-closure instance throw)))))
+;; if dot-lhs = super then use
+;;also if LHS (dot LHS RHS) use find-in-super instead of lookup-instance-fields
+;;if LHS is not super, jsut use lookup-instance-fields
 
 (define new-op
   (lambda (expr env)
@@ -883,6 +889,7 @@
 ;;;; Mvalue
 ;;;; ********************************************************************************************************
 
+    ;; takes the lhs and calls mvalue on it 
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
     (mvalue LHS-of-dot env class-closure instance throw)))
