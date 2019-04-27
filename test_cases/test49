@@ -1,10 +1,12 @@
-function main() {
-    while (true) {
-        try {
-            break;
-        }
-        finally {
-            return 10;
+class A {
+    static function main() {
+        while (true) {
+            try {
+                break;
+            }
+            finally {
+                return 10;
+            }
         }
     }
 }

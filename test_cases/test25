@@ -1,5 +1,7 @@
-function main() {
-    var x = 10;
-    if (false)
-        return x;
+class A {
+    static function main() {
+        var x = 10;
+        if (false)
+            return x;
+    }
 }

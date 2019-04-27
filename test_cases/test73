@@ -1,10 +1,16 @@
-function and(a, b) {
-    return a && b;
-}
+class A {
+    static function main() {
+        function and(a, b) {
+            return a && b;
+        }
+        
+        function yote() {
+            var l = true;
+            var p = false;
+        
+            return and(l,and(l,p));
+        }
 
-function main() {
-    var l = true;
-    var p = false;
-
-    return and(l,and(l,p));
+        return yote()
+    }
 }
