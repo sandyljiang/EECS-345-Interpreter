@@ -367,8 +367,6 @@
 ;; Description: adds a class closure to the environment
 (define add-class-closure
   (lambda (env name super class-method-names class-method-closures smn smc ifn ifv)
-    (display "env") (newline) (display env) (newline) (newline)
-    (display "super") (display super) (newline)
     (if (null? super)
         (add name
              (list super class-method-names class-method-closures smn smc ifn ifv)
