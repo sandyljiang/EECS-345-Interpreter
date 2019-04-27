@@ -367,17 +367,24 @@
 ;; Description: adds a class closure to the environment
 (define add-class-closure
   (lambda (env name super class-method-names class-method-closures smn smc ifn ifv)
-    ((lambda (super-object)
-       (add name
-            (list super
-                  (append class-method-names (method-names super-object))
-                  (append (method-closures super-object) class-method-closures)
-                  (append smn (static-method-names super-object))
-                  (append (static-method-closures super-object) smc)
-                  (append ifn (instance-field-names super-object))
-                  (append (class-instance-field-values super-object) ifv))
-            env))
-     (find super env))))
+    (display "env") (newline) (display env) (newline) (newline)
+    (display "super") (display super) (newline)
+    (if (null? super)
+        (add name
+             (list super class-method-names class-method-closures smn smc ifn ifv)
+             env)
+
+        ((lambda (super-object)
+          (add name
+                (list super
+                      (append class-method-names (method-names super-object))
+                      (append (method-closures super-object) class-method-closures)
+                      (append smn (static-method-names super-object))
+                      (append (static-method-closures super-object) smc)
+                      (append ifn (instance-field-names super-object))
+                      (append (class-instance-field-values super-object) ifv))
+                env))
+        (find super env)))))
 
 ;; Function:    (add-multiple-vars names values env)
 ;; Parameters:  names  - A list of names of the variables to add to the evironment/env
