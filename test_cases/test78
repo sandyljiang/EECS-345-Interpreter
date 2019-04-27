@@ -1,22 +1,28 @@
-var l = 0;
+class A {
+    static function main() {
+        var l = 0;
+        
+        function f(a, b) {
+            if (a == 10) {
+                throw l;
+            }
+            else {
+                l = a + b;
+            }
+        
+            return l;
+        }
+        
+        function yote() {
+            try {
+                f(11, 23);
+            }
+            catch(e) {
+                return e;
+            }
+            return l;
+        }
 
-function f(a, b) {
-    if (a == 10) {
-        throw l;
+        return yote()
     }
-    else {
-        l = a + b;
-    }
-
-    return l;
-}
-
-function main() {
-    try {
-        f(11, 23);
-    }
-    catch(e) {
-        return e;
-    }
-    return l;
 }

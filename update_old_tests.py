@@ -13,16 +13,22 @@
             out.write("\n}")'''
 
 # update for part 4
-for i in range(1,2):
+for i in range(57,80):
     with open("test_cases/test{}".format(i), "r") as f:
         lines = f.readlines()
 
         with open("test_cases/test{}".format(i), "w") as out:
             out.write("class A {\n")
+            out.write("    static function main() {\n")
 
         for line in lines:
             with open("test_cases/test{}".format(i), "a") as out:
-                out.write("    {}".format(line))
+                if "function main" in line:
+                    out.write("        function yote() {\n")
+                else:
+                    out.write("        {}".format(line))
 
         with open("test_cases/test{}".format(i), "a") as out:
+            out.write("\n        return yote()")
+            out.write("\n    }")
             out.write("\n}")

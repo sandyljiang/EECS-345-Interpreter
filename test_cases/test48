@@ -1,28 +1,30 @@
-function main() {
-    
-    var x;
-    
-    try {
-      x = 20;
-      if (x > 10) {
-        var n = 9;
-        {
-          {
+class A {
+    static function main() {
+        
+        var x;
+        
+        try {
+          x = 20;
+          if (x > 10) {
+            var n = 9;
             {
-              throw 10;
+              {
+                {
+                  throw 10;
+                }
+              }
             }
           }
+          x = x + 5;
         }
-      }
-      x = x + 5;
+        catch(e) {
+          n = n + 1;
+          x = e;
+        }
+        finally {
+          x = x + 100;
+        }
+        return x;
+    
     }
-    catch(e) {
-      n = n + 1;
-      x = e;
-    }
-    finally {
-      x = x + 100;
-    }
-    return x;
-
 }

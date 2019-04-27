@@ -1,22 +1,28 @@
-function factorial(n) {
-    if (n == 0) {
-        return 1;
-    }
-    else if (n == true) {
-        throw false;
-    }
-    else {
-        return n * factorial(n-1);
-    }
-}
+class A {
+    static function main() {
+        function factorial(n) {
+            if (n == 0) {
+                return 1;
+            }
+            else if (n == true) {
+                throw false;
+            }
+            else {
+                return n * factorial(n-1);
+            }
+        }
+        
+        var y = 5;
+        
+        function yote() {
+            try {
+                return factorial(y);
+            }
+            catch(yeet) {
+                return yeet;
+            }
+        }
 
-var y = 5;
-
-function main() {
-    try {
-        return factorial(y);
-    }
-    catch(yeet) {
-        return yeet;
+        return yote()
     }
 }

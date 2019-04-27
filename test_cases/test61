@@ -1,13 +1,19 @@
+class A {
+    static function main() {
+        
+        function fact(n) {
+          var r = 1;
+          while (n > 1) {
+            r = r * n;
+            n = n - 1;
+          }
+          return r;
+        }
+        
+        function yote() {
+          return fact(fact(3) - fact(2));
+        }
 
-function fact(n) {
-  var r = 1;
-  while (n > 1) {
-    r = r * n;
-    n = n - 1;
-  }
-  return r;
-}
-
-function main() {
-  return fact(fact(3) - fact(2));
+        return yote()
+    }
 }

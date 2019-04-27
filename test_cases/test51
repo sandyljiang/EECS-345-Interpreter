@@ -1,8 +1,10 @@
-function main() {
-    try {
-    
-    }
-    finally {
-        return 1;
+class A {
+    static function main() {
+        try {
+        
+        }
+        finally {
+            return 1;
+        }
     }
 }

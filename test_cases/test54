@@ -1,7 +1,13 @@
+class A {
+    static function main() {
+        
+        var x = 4;
+        var y = 6 + x;
+        
+        function yote() {
+          return x + y;
+        }
 
-var x = 4;
-var y = 6 + x;
-
-function main() {
-  return x + y;
+        return yote()
+    }
 }

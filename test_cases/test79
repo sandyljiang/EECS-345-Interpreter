@@ -1,10 +1,16 @@
-var x = 0;
+class A {
+    static function main() {
+        var x = 0;
+        
+        function f(a) {
+            x = true;
+        }
+        
+        function yote() {
+            f(1);
+            return x;
+        }
 
-function f(a) {
-    x = true;
-}
-
-function main() {
-    f(1);
-    return x;
+        return yote()
+    }
 }

@@ -1,6 +1,8 @@
-function main() {
-    var x = 1;
-    if (5)
-        x = 2;
-    return 1;
+class A {
+    static function main() {
+        var x = 1;
+        if (5)
+            x = 2;
+        return 1;
+    }
 }

@@ -1,12 +1,18 @@
+class A {
+    static function main() {
+        
+        function yote() {
+          function h() {
+            return 10;
+          }
+        
+          function g() {
+            return 100;
+          }
+        
+          return g() - h();
+        }
 
-function main() {
-  function h() {
-    return 10;
-  }
-
-  function g() {
-    return 100;
-  }
-
-  return g() - h();
+        return yote()
+    }
 }

@@ -1,8 +1,14 @@
+class A {
+    static function main() {
+        
+        function f(a) {
+          return a*a;
+        }
+        
+        function yote() {
+          return f(10, 11, 12);
+        }
 
-function f(a) {
-  return a*a;
-}
-
-function main() {
-  return f(10, 11, 12);
+        return yote()
+    }
 }

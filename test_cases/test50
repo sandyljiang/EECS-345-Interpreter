@@ -1,7 +1,9 @@
-function main() {
-    while (true) {
-        if (true)
-            break;
+class A {
+    static function main() {
+        while (true) {
+            if (true)
+                break;
+        }
+        return 1;
     }
-    return 1;
 }
