@@ -419,3 +419,30 @@
          ((eq? box-found undeclared-var) env)
          (else                           (begin (set-box! box-found new-value) env))))
      (find-box name env))))
+
+;; Function:    (find-in-super name env instance)
+;; Parameters:  name       - 
+;;              env        - the environment to use to evaluate expressions
+;;              instance   - the object closure that is currently being used
+;; Description:
+
+(define find-in-super
+  (lambda (name env instance)
+      (let* ([super-closure (super(get-class-closure instance))]
+             [super-method-names (method-names super-closure)]
+             [super-ifn (ifn super-closure)]
+             [new-env (list (list super-method-names
+                               (method closures (get-class-closure instance)))
+                         (list super-ifn
+                               (ifv (get-class-closure instance))))])
+             (find name new-env))))
+
+;; Function:    (lookup-instance-fields name object-closure)
+;; Parameters:  name           - the name of  variable/function to find in the object-closure
+;;              object-closure - the object closure to lookup values from
+;; Description: Searches the object-closure's instance fields for name and returns the value
+;; Note:        The function throws an error if the variable/function or class was
+;;              not found or was undefined
+(define lookup-instance-fields
+  (lambda (name object-closure)
+    (find name (get-object-instance-fields object-closure))))
