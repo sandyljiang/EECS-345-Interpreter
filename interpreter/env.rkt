@@ -214,23 +214,35 @@
   (lambda (env)
     (next-layer env)))
 
+(define search-values
+  (lambda (index values-list)
+    (cond
+      ((null? values-list)
+        (error "Error: could not find value"))
+      ((zero? index)
+        (car values-list))
+      (else
+        (search-values (- index 1) (cdr values-list))))))
+
 ;; Function:    (find-box name env)
 ;; Parameters:  name  the name of the variable to find in the env
 ;;              env the binding list to search
 ;; Description: Searches the env for the name and returns a box with the associated value
+(define find-box-acc
+  (lambda (name env acc values-to-search)
+    (cond
+      ((and (null? (names env)) (null-env? (next-layer env))) ; reached an empty env, so the variable does not exist
+        undeclared-var)
+      ((null? (names env))  ; variable was not in this layer, so check the next
+        (find-box-acc name (next-layer env) (- (len (names (next-layer env))) 1) (values (next-layer env))))
+      ((eq? (current-name env) name) ; found the variable
+        (search-values acc values-to-search))
+      (else ; recurse on the env without the current name and value
+        (find-box-acc name (next-env env) (- acc 1) values-to-search)))))
+
 (define find-box
   (lambda (name env)
-    (cond
-      ((null-env? env) ; reached an empty env, so the variable does not exist
-        undeclared-var)
-      ((invalid-layer? env) ; env is corrupt
-        (invalid-env-error env))
-      ((null-layer? env) ; variable was not in this layer, so check the next
-        (find-box name (next-layer env)))
-      ((eq? (current-name env) name) ; found the variable
-        (current-value env))
-      (else ; recurse on the env without the current name and value
-        (find-box name (next-env env))))))
+    (find-box-acc name env (- (len (names env)) 1) (values env))))
 
 ;; Function:    (find-with-undeclared-handler name env)
 ;; Parameters:  name    - the name of the variable to find in the env
@@ -309,7 +321,7 @@
     (if (exists-in-top-layer? name env)
       (double-declare-error name)
       (cons (cons (cons name (names env))
-                  (list (cons (box value) (values env))))
+                  (list (append (values env) (list (box value)))))
             (next-layer env)))))
 
 ;; Function:    (func-def-class-closure)
