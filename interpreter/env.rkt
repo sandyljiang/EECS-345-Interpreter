@@ -371,7 +371,7 @@
     (display "super") (display super) (newline)
     (if (null? super)
         (add name
-             (list super method-names method-closures smn smc ifn ifv)
+             (list super class-method-names class-method-closures smn smc ifn ifv)
              env)
 
         ((lambda (super-object)
