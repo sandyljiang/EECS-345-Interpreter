@@ -822,11 +822,18 @@
                                         (find 'this env)
                                         (find 'this env)
                                         (cons (find (super (get-class-closure (find 'super env))) env) (list (object-instance-field-values (find 'this env))))
-                                        (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (find (super (get-class-closure (find 'super env))) env))
+                                        (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
                                         throw)
                 )
                 ((and (eq? LHS-symbol 'super) (null? LHS-super-name))
-                  (error "Error: No Super")
+                  (mstate-function-call expr
+                                        env
+                                        (get-class-closure (find 'super env))
+                                        (find 'this env)
+                                        (find 'this env)
+                                        '()
+                                        (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
+                                        throw)
                 )
                 ((null? LHS-super-name)
                   (mstate-function-call expr

@@ -12,7 +12,7 @@
 (define-syntax debug
   (lambda (syn)
     (define slist (syntax->list syn))
-    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) x)))
+    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) (newline) x)))
   )
 )
 
@@ -461,3 +461,4 @@
                           (list super-ifn
                                 (object-instance-field-values instance)))])
       (find name new-env))))
+
