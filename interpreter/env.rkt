@@ -343,11 +343,11 @@
 (define add-function
   (lambda (name param-list func-body class-closure-lookup env)
     (add name
-         (list (cons 'this param-list)
+         (debug (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name (cons 'this param-list) func-body class-closure-lookup env))
-               class-closure-lookup)
+                 (add-function name param-list func-body class-closure-lookup env))
+               class-closure-lookup))
          env)))
 
 ;; Function:    (add-class-closure env name super method-names method-closures smn smc ifn)
@@ -461,4 +461,3 @@
                           (list super-ifn
                                 (object-instance-field-values instance)))])
       (find name new-env))))
-

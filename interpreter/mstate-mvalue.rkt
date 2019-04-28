@@ -683,7 +683,7 @@
   (lambda (ptree env class-closure instance return break throw continue)
     (add-function
      (func-def-name ptree)
-     (func-def-params ptree)
+     (cons 'this (func-def-params ptree))
      (func-def-body ptree)
      (lambda (current-env) class-closure)
      env)))
@@ -892,7 +892,12 @@
     ;; takes the lhs and calls mvalue on it 
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
-    (mvalue LHS-of-dot env class-closure instance throw)))
+    (display "inside get-dot-lhs") (newline)
+    (display LHS-of-dot) (newline)
+    (display "instance: ") (display instance) (newline)
+    (if (eq? LHS-of-dot 'super)
+        (find (super (get-class-closure instance)) env)
+        (mvalue LHS-of-dot env class-closure instance throw))))
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr - list representing the parse tree
@@ -904,6 +909,7 @@
 ;; Description: Evaluates the given expression using the given env.
 (define mvalue
   (lambda (expr env class-closure instance throw)
+    (display "inside mvalue") (newline)
     (cond
       ((null? expr)
         (error "Error: Evaluating null statement"))
@@ -914,10 +920,15 @@
       ((eq? expr 'false)
         #f)
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
+        (display "mvalue expr: ")
+        (display expr) (newline)
         (find expr env)) ;; TODO: change to call lookup function
       ((eq? (mvalue-statement-op expr) 'funcall)
+        (newline) (display "inside funcall, ")
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
+        (display "inside mvalue dot")
+        (display expr) (newline)
         (dot-value expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'new)
         (new-op expr env))
