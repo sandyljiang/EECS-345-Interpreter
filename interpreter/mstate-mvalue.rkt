@@ -801,7 +801,7 @@
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
         (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
                (LHS-func-lookup (if (eq? (dot-lhs (mvalue-func-call-name expr)) 'super)
-                                    (super (get-class-closure LHS))
+                                    (find (super (get-class-closure LHS)) env)
                                     (get-class-closure LHS)))
                (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env LHS-func-lookup)))
               (newline) (display "RHS: ") (display RHS) (newline) (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
