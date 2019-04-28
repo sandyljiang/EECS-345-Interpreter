@@ -19,6 +19,6 @@ class A {
           return cmethod() + a + b;
         }
 
-        return yote()
+        return yote();
     }
 }

@@ -9,6 +9,6 @@ class A {
           return f(10, 11, 12);
         }
 
-        return yote()
+        return yote();
     }
 }

@@ -20,6 +20,6 @@ class A {
           return f(10);
         }
 
-        return yote()
+        return yote();
     }
 }

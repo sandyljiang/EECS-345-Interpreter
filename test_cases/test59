@@ -12,6 +12,6 @@ class A {
           return (minmax(10, 100, true) && minmax(5, 3, false));
         }
 
-        return yote()
+        return yote();
     }
 }

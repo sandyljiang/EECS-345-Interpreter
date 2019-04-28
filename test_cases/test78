@@ -23,6 +23,6 @@ class A {
             return l;
         }
 
-        return yote()
+        return yote();
     }
 }

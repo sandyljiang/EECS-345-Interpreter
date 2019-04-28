@@ -24,8 +24,8 @@
        (class-env (mstate-class-def (parser filename) (initial-env)))
        (class-closure (find (string->symbol classname) class-env))
        (main-function-closure (lookup-non-local-function 'main class-closure)))
-      (call/cc (lambda (return-cont)
-                 (parse-retval (mstate (closure-body main-function-closure) ; get the parse tree
+      (parse-retval (call/cc (lambda (return-cont)
+                               (mstate (closure-body main-function-closure) ; get the parse tree
                                        ; get the env
                                        (push-layer (append ((closure-env main-function-closure)) class-env))
                                        class-closure

@@ -343,10 +343,10 @@
 (define add-function
   (lambda (name param-list func-body class-closure-lookup env)
     (add name
-         (list (cons 'this param-list)
+         (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name (cons 'this param-list) func-body class-closure-lookup env))
+                 (add-function name param-list func-body class-closure-lookup env))
                class-closure-lookup)
          env)))
 
@@ -367,8 +367,6 @@
 ;; Description: adds a class closure to the environment
 (define add-class-closure
   (lambda (env name super class-method-names class-method-closures smn smc ifn ifv)
-    (display "env") (newline) (display env) (newline) (newline)
-    (display "super") (display super) (newline)
     (if (null? super)
         (add name
              (list super class-method-names class-method-closures smn smc ifn ifv)

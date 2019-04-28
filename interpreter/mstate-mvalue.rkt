@@ -343,7 +343,7 @@
       (if (list? (var-name ptree))
           (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw)))
           (assign (var-name ptree) env)))))
- 
+
 
 ;;;; *********************************************************************************************************
 ;;;; block/begin function
@@ -762,6 +762,8 @@
                                             while-break
                                             throw
                                             continue)))
+                class-closure
+                instance
                 return
                 break
                 throw
@@ -784,17 +786,23 @@
 
 (define mstate-function-call
   (lambda (expr env class-closure instance LHS-dot function-closure throw)
-    (call/cc (lambda (return-cont)
-               (mstate (closure-body function-closure)
-                       (add-multiple-vars (closure-params function-closure)
-                                          (cons LHS-dot (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
-                                          (push-layer (append ((closure-env function-closure)) env)))
-                       class-closure
-                       LHS-dot
-                       (lambda (e v) (return-cont v))
-                       break-error
-                       (lambda (e) (throw env))
-                       continue-error)))))
+    (let ((funcall (lambda (values-lis inst)
+                    (call/cc (lambda (return-cont)
+                      (mstate (closure-body function-closure)
+                              (add-multiple-vars (closure-params function-closure)
+                                                  values-lis
+                                                  (push-layer (append ((closure-env function-closure)) env)))
+                              class-closure
+                              inst
+                              (lambda (e v) (return-cont v))
+                              break-error
+                              (lambda (e) (throw env))
+                              continue-error)))))
+          (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw)))
+    (if (and (not (null? (closure-params function-closure))) (eq? (car (closure-params function-closure)) 'this))
+      (funcall (cons LHS-dot eval-values) LHS-dot)
+      (funcall eval-values instance)))))
+
 
 (define handle-function-call
   (lambda (expr env class-closure instance throw)
@@ -889,7 +897,7 @@
 ;;;; Mvalue
 ;;;; ********************************************************************************************************
 
-    ;; takes the lhs and calls mvalue on it 
+    ;; takes the lhs and calls mvalue on it
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
     (mvalue LHS-of-dot env class-closure instance throw)))

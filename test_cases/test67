@@ -30,6 +30,6 @@ class A {
           return x - y;
         }
 
-        return yote()
+        return yote();
     }
 }

@@ -13,6 +13,6 @@ class A {
           return g() - h();
         }
 
-        return yote()
+        return yote();
     }
 }

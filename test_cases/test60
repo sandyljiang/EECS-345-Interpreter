@@ -19,6 +19,6 @@ class A {
           return binom(6,3);
         }
 
-        return yote()
+        return yote();
     }
 }

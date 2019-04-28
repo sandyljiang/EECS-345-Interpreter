@@ -18,17 +18,18 @@ for i in range(57,80):
         lines = f.readlines()
 
         with open("test_cases/test{}".format(i), "w") as out:
-            out.write("class A {\n")
-            out.write("    static function main() {\n")
+            pass
+            '''out.write("class A {\n")
+            out.write("    static function main() {\n")'''
 
         for line in lines:
             with open("test_cases/test{}".format(i), "a") as out:
-                if "function main" in line:
-                    out.write("        function yote() {\n")
+                if "return yote" in line:
+                    out.write("        return yote();\n")
                 else:
-                    out.write("        {}".format(line))
+                    out.write("{}".format(line))
 
-        with open("test_cases/test{}".format(i), "a") as out:
+        '''with open("test_cases/test{}".format(i), "a") as out:
             out.write("\n        return yote()")
             out.write("\n    }")
-            out.write("\n}")
+            out.write("\n}")'''

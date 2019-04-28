@@ -1,10 +1,10 @@
 class A {
     static function main() {
-        
+
         var x = 1;
         var y = 10;
         var r = 0;
-        
+
         function yote() {
           while (x < y) {
              r = r + x;
@@ -12,8 +12,8 @@ class A {
           }
           return r;
         }
-        
 
-        return yote()
+
+        return yote();
     }
 }

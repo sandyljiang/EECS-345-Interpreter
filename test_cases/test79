@@ -11,6 +11,6 @@ class A {
             return x;
         }
 
-        return yote()
+        return yote();
     }
 }

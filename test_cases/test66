@@ -29,6 +29,6 @@ class A {
           return collatz(111);
         }
 
-        return yote()
+        return yote();
     }
 }
