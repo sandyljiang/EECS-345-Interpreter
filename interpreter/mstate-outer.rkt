@@ -158,7 +158,7 @@
   (lambda (ptree env class-name-to-declare)
     (cons (method-list env)
           (add-function (func-def-name ptree)
-                        (cons 'this (func-def-params ptree))
+                        (cons 'this (cons 'super (func-def-params ptree)))
                         (func-def-body ptree)
                         (func-def-class-closure class-name-to-declare)
                         (remove-top-layer env)))))
@@ -172,7 +172,7 @@
 (define declare-function-outer
   (lambda (ptree env class-name-to-declare)
     (add-function (func-def-name ptree)
-                  (cons 'this (func-def-params ptree))
+                  (cons 'this (cons 'super (func-def-params ptree)))
                   (func-def-body ptree)
                   (func-def-class-closure class-name-to-declare)
                   env)))

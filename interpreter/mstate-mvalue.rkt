@@ -785,39 +785,76 @@
 ;;;; ********************************************************************************************************
 
 (define mstate-function-call
-  (lambda (expr env class-closure instance LHS-dot function-closure throw)
-    (let ((funcall (lambda (values-lis inst)
+  (lambda (expr env class-closure instance this super function-closure throw)
+    (let ((funcall (lambda (values-lis)
                     (call/cc (lambda (return-cont)
                       (mstate (closure-body function-closure)
                               (add-multiple-vars (closure-params function-closure)
                                                   values-lis
                                                   (push-layer (append ((closure-env function-closure)) env)))
                               class-closure
-                              inst
+                              instance
                               (lambda (e v) (return-cont v))
                               break-error
                               (lambda (e) (throw env))
                               continue-error)))))
-          (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw)))
-    (if (and (not (null? (closure-params function-closure))) (eq? (car (closure-params function-closure)) 'this))
-      (funcall (cons LHS-dot eval-values) LHS-dot)
-      (funcall eval-values instance)))))
+          (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
+          (params (closure-params function-closure)))
+    (cond
+      ((and (not (null? params)) (eq? (car params) 'this) (eq? (cadr params) 'super))
+        (funcall (cons this (cons super eval-values))))
+      (else
+        (funcall eval-values instance))))))
 
 
 (define handle-function-call
   (lambda (expr env class-closure instance throw)
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
-        (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
-               (LHS-func-lookup (if (eq? (dot-lhs (mvalue-func-call-name expr)) 'super)
-                                    (super (get-class-closure LHS))
-                                    (get-class-closure LHS)))
-               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env LHS-func-lookup)))
-              (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
+        (let* ((LHS-symbol (dot-lhs (mvalue-func-call-name expr)))
+               (LHS (get-dot-LHS LHS-symbol env class-closure instance throw))
+               (LHS-super-name (super (get-class-closure LHS)))
+               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure LHS))))
+              (cond
+                ((and (eq? LHS-symbol 'super) (not (null? LHS-super-name)))
+                  (mstate-function-call expr
+                                        env
+                                        (get-class-closure (find 'super env))
+                                        (find 'this env)
+                                        (find 'this env)
+                                        (cons (find (super (get-class-closure (find 'super env))) env) (list (object-instance-field-values (find 'this env))))
+                                        (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (find (super (get-class-closure (find 'super env))) env))
+                                        throw)
+                )
+                ((and (eq? LHS-symbol 'super) (null? LHS-super-name))
+                  (error "Error: No Super")
+                )
+                ((null? LHS-super-name)
+                  (mstate-function-call expr
+                                        env
+                                        ((closure-class RHS) env)
+                                        LHS
+                                        LHS
+                                        '()
+                                        RHS
+                                        throw)
+                )
+                (else
+                  (mstate-function-call expr
+                                        env
+                                        ((closure-class RHS) env)
+                                        LHS
+                                        LHS
+                                        (cons (find LHS-super-name env) (list (object-instance-field-values LHS)))
+                                        RHS
+                                        throw)
+                )
+              ))
         (mstate-function-call expr
                               env
                               class-closure
                               instance
                               instance
+                              (cons (find (super (get-class-closure instance)) env) (list (object-instance-field-values instance)))
                               (lookup-function-closure (mvalue-func-call-name expr) env class-closure)
                               throw))))
 
@@ -907,9 +944,7 @@
     ;    (cons (find (super (get-class-closure instance)) env)
     ;                       (list (object-instance-field-values instance)))
     ;;(display "instance: ") (display instance) (newline) (display "//") (newline)
-    (if (eq? LHS-of-dot 'super)
-        instance
-        (mvalue LHS-of-dot env class-closure instance throw))))
+    (mvalue LHS-of-dot env class-closure instance throw)))
 
 ;; Function:    (mvalue expr env)
 ;; Parameters:  expr - list representing the parse tree
