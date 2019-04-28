@@ -801,7 +801,7 @@
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
         (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
                (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) env (get-class-closure LHS))))
-              (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
+              (newline) (display "RHS: ") (display RHS) (newline) (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
         (mstate-function-call expr
                               env
                               class-closure
@@ -894,9 +894,10 @@
   (lambda (LHS-of-dot env class-closure instance throw)
     (display "inside get-dot-lhs") (newline)
     (display LHS-of-dot) (newline)
-    (display "instance: ") (display instance) (newline)
+    (display "instance: ") (display instance) (newline) (display "//") (newline)
     (if (eq? LHS-of-dot 'super)
-        (find (super (get-class-closure instance)) env)
+        (debug (cons (find (super (get-class-closure instance)) env)
+                           (list (object-instance-field-values instance))))
         (mvalue LHS-of-dot env class-closure instance throw))))
 
 ;; Function:    (mvalue expr env)
@@ -909,7 +910,7 @@
 ;; Description: Evaluates the given expression using the given env.
 (define mvalue
   (lambda (expr env class-closure instance throw)
-    (display "inside mvalue") (newline)
+    (newline) (display "inside mvalue") (newline) (display "expr: ") (display expr) (newline)
     (cond
       ((null? expr)
         (error "Error: Evaluating null statement"))
@@ -920,11 +921,9 @@
       ((eq? expr 'false)
         #f)
       ((not (list? expr)) ; if the expression is a variable, lookup the variable
-        (display "mvalue expr: ")
-        (display expr) (newline)
         (find expr env)) ;; TODO: change to call lookup function
       ((eq? (mvalue-statement-op expr) 'funcall)
-        (newline) (display "inside funcall, ")
+        (display "inside funcall, ")
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
         (display "inside mvalue dot")

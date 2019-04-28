@@ -305,10 +305,11 @@
 ;; Note:        If there is a local variable with the same name as the function, this finds that
 (define lookup-function-closure
   (lambda (name env class-closure)
-    (find-with-undeclared-handler name
+    (newline)(display "in lookup-function-closure") (newline) (display "Name: ") (display name) (newline) (display "class-closure: ") (display class-closure) (newline)
+    (debug (find-with-undeclared-handler name
                                   env
                                   (lambda ()
-                                    (box (lookup-non-local-function name class-closure))))))
+                                    (box (lookup-non-local-function name class-closure)))))))
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
@@ -343,11 +344,11 @@
 (define add-function
   (lambda (name param-list func-body class-closure-lookup env)
     (add name
-         (debug (list param-list
+         (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
                  (add-function name param-list func-body class-closure-lookup env))
-               class-closure-lookup))
+               class-closure-lookup)
          env)))
 
 ;; Function:    (add-class-closure env name super method-names method-closures smn smc ifn)
