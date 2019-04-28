@@ -808,7 +808,10 @@
   (lambda (expr env class-closure instance throw)
     (if (list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
         (let* ((LHS (get-dot-LHS (dot-lhs (mvalue-func-call-name expr)) env class-closure instance throw))
-               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure LHS))))
+               (LHS-func-lookup (if (eq? (dot-lhs (mvalue-func-call-name expr)) 'super)
+                                    (super (get-class-closure LHS))
+                                    (get-class-closure LHS)))
+               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env LHS-func-lookup)))
               (mstate-function-call expr env ((closure-class RHS) env) instance LHS RHS throw))
         (mstate-function-call expr
                               env
@@ -900,10 +903,12 @@
     ;; takes the lhs and calls mvalue on it
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
-
+    ;(if (eq? LHS-of-dot 'super)
+    ;    (cons (find (super (get-class-closure instance)) env)
+    ;                       (list (object-instance-field-values instance)))
+    ;;(display "instance: ") (display instance) (newline) (display "//") (newline)
     (if (eq? LHS-of-dot 'super)
-        (cons (find (super (get-class-closure instance)) env)
-                           (list (object-instance-field-values instance)))
+        instance
         (mvalue LHS-of-dot env class-closure instance throw))))
 
 ;; Function:    (mvalue expr env)
