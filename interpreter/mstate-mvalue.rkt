@@ -692,13 +692,16 @@
 ;;              statement at the beginning of the parse tree
 (define function-def-statement
   (lambda (ptree env class-closure instance return break throw continue)
-    (add-function
-     (func-def-name ptree)
-     (cons 'this (cons 'super (func-def-params ptree)))
-     (func-def-body ptree)
-     (box class-closure)
-     env
-     env)))
+    ((lambda (params) (add-function
+      (func-def-name ptree)
+      params
+      (func-def-body ptree)
+      (box class-closure)
+      env
+      env))
+     (if (exists? 'this env)
+        (cons 'this (cons 'super (func-def-params ptree)))
+        (func-def-params ptree)))))
 
 ;;;; *********************************************************************************************************
 ;;;; function definition operator
@@ -813,10 +816,10 @@
           (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
           (params (closure-params function-closure)))
     (cond
-      ((and (not (null? params)) (eq? (car params) 'this) (eq? (cadr params) 'super))
+      ((and (not (null? params)) (eq? (car params) 'this))
         (funcall (cons this (cons super eval-values))))
       (else
-        (funcall eval-values instance))))))
+        (funcall eval-values))))))
 
 
 (define handle-function-call
