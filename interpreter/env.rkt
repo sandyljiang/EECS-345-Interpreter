@@ -111,6 +111,21 @@
   (lambda (ptree)
     (caddr (cddddr ptree))))
 
+(define get-class-methods
+  (lambda (class-closure)
+    (list (list (method-names class-closure)
+                (method-closures class-closure)))))
+
+(define get-class-static-methods
+  (lambda (class-closure)
+    (list (list (static-method-names class-closure)
+                (static-method-closures class-closure)))))
+
+(define get-class-vars
+  (lambda (class-closure)
+    (list (list (instance-field-names class-closure)
+                (class-instance-field-values class-closure)))))
+
 ;; Function:    (find name env)
 ;; Parameters:  class-closure - the closure to extract the functions from
 ;; Description: extracts the functions from the class closure and returns them in the
@@ -353,13 +368,14 @@
 ;; Description:  Adds a new function closure to the top layer of the env
 ;; Note:        This function throws an error if the name of the function exists in the env
 (define add-function
-  (lambda (name param-list func-body class-closure-lookup env func-env)
+  (lambda (name param-list func-body class env func-env)
     (add name
          (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name param-list func-body class-closure-lookup func-env func-env))
-               class-closure-lookup)
+                 (add-function name param-list func-body class func-env func-env))
+               (lambda (current-env)
+                 (unbox class)))
          env)))
 
 ;; Function:    (add-class-closure env name super method-names method-closures smn smc ifn)
@@ -379,22 +395,31 @@
 ;; Description: adds a class closure to the environment
 (define add-class-closure
   (lambda (env name super class-method-names class-method-closures smn smc ifn ifv)
-    (if (null? super)
-        (add name
-             (list super class-method-names class-method-closures smn smc ifn ifv)
-             env)
+    (add name
+         (list super class-method-names class-method-closures smn smc ifn ifv)
+         env)))
 
-        ((lambda (super-object)
-          (add name
-                (list super
-                      (append class-method-names (method-names super-object))
-                      (append (method-closures super-object) class-method-closures)
-                      (append smn (static-method-names super-object))
-                      (append (static-method-closures super-object) smc)
-                      (append ifn (instance-field-names super-object))
-                      (append (class-instance-field-values super-object) ifv))
-                env))
-        (find super env)))))
+(define find-super
+  (lambda (class-closure env)
+    (if (null? (super class-closure))
+      '()
+      (find (super class-closure) env))))
+
+(define update-class-with-super
+  (lambda (env name)
+    (let* ((class (find name env))
+           (super-object (find-super class env)))
+      (if (null? super-object)
+          env
+          (change-value name
+              (list (super class)
+                    (append (method-names class) (method-names super-object))
+                    (append (method-closures super-object) (method-closures class))
+                    (append (static-method-names class) (static-method-names super-object))
+                    (append (static-method-closures super-object) (static-method-closures class))
+                    (append (instance-field-names class) (instance-field-names super-object))
+                    (append (class-instance-field-values super-object) (class-instance-field-values class)))
+              env)))))
 
 ;; Function:    (add-multiple-vars names values env)
 ;; Parameters:  names  - A list of names of the variables to add to the evironment/env
@@ -456,6 +481,57 @@
          ((eq? box-found undeclared-var) env)
          (else                           (begin (set-box! box-found new-value) env))))
      (find-box name env))))
+
+
+(define change-class-vars
+  (lambda (var-name var-value env class-name-to-declare)
+    (let* ((current-class (find class-name-to-declare env))
+           (new-vars (add var-name var-value (get-class-vars current-class)))
+           (new-names (names new-vars))
+           (new-values (values new-vars)))
+      (change-value class-name-to-declare
+                    (list (super current-class)
+                          (method-names current-class)
+                          (method-closures current-class)
+                          (static-method-names current-class)
+                          (static-method-closures current-class)
+                          new-names
+                          new-values)
+                    env))))
+
+(define change-class-methods
+  (lambda (func-name func-params func-body class-name-to-declare env)
+    (let* ((class-box (find-box class-name-to-declare env))
+           (current-class (find class-name-to-declare env))
+           (new-methods (add-function func-name func-params func-body class-box (get-class-methods current-class) env))
+           (new-names (names new-methods))
+           (new-values (values new-methods)))
+      (change-value class-name-to-declare
+                    (list (super current-class)
+                          new-names
+                          new-values
+                          (static-method-names current-class)
+                          (static-method-closures current-class)
+                          (instance-field-names current-class)
+                          (class-instance-field-values current-class))
+                    env))))
+
+(define change-class-static-methods
+  (lambda (func-name func-params func-body class-name-to-declare env)
+    (let* ((class-box (find-box class-name-to-declare env))
+           (current-class (find class-name-to-declare env))
+           (new-methods (add-function func-name func-params func-body class-box (get-class-static-methods current-class) env))
+           (new-names (names new-methods))
+           (new-values (values new-methods)))
+      (change-value class-name-to-declare
+                    (list (super current-class)
+                          (method-names current-class)
+                          (method-closures current-class)
+                          new-names
+                          new-values
+                          (instance-field-names current-class)
+                          (class-instance-field-values current-class))
+                    env))))
 
 ;; Function:    (find-in-super name env instance)
 ;; Parameters:  name       - the name of the the super in the new environment

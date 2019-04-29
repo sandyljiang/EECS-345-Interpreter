@@ -108,17 +108,18 @@
   (lambda (ptree env)
     (if (not (null? ptree))
       ((lambda (body-env)
-        (mstate-class-def (next-statement ptree)
+        (mstate-class-def (next-statement ptree) (update-class-with-super body-env (class-def-name ptree))))
+       (mstate-class-body (class-def-body ptree)
                           (add-class-closure env
                                              (class-def-name ptree)
                                              (class-def-super ptree)
-                                             (method-names-def body-env)
-                                             (method-closures-def body-env)
-                                             (static-method-names-def body-env)
-                                             (static-method-closures-def body-env)
-                                             (instance-field-names-def body-env)
-                                             (instance-field-values-def body-env))))
-       (mstate-class-body (class-def-body ptree) (initial-body-env) (class-def-name ptree)))
+                                             '()
+                                             '()
+                                             '()
+                                             '()
+                                             '()
+                                             '())
+                          (class-def-name ptree)))
       env)))
 
 ;; Function:    (declare-var-outer ptree env class-name-to-declare)
@@ -128,9 +129,7 @@
 ;; Description: adds a new undefined variable variable to the instance fields layer of env
 (define declare-var-outer
   (lambda (ptree env class-name-to-declare)
-    (cons (method-list env)
-          (cons (static-method-list env)
-                (add (var-name ptree) undefined-var (remove-top-layer (remove-top-layer env)))))))
+    (change-class-vars (var-name ptree) undefined-var env class-name-to-declare)))
 
 ;; Function:    (declare-assign-outer ptree env class-name-to-declare)
 ;; Parameters:  ptree                 - parse tree in the format ((var var-name var-value) ...)
@@ -141,12 +140,8 @@
 ;;              only numbers and booleans are valid values in class definition
 (define declare-assign-outer
   (lambda (ptree env class-name-to-declare)
-    ;; extract the name and value from the ptree and add the to the env
-    (cons (method-list env)
-          (cons (static-method-list env)
-                (add (var-name ptree)
-                     (var-value ptree) ; assuming it can only be a number or bool and dont need to mvalue it
-                     (remove-top-layer (remove-top-layer env)))))))
+    ; assuming var-value can only be a number or bool and dont need to mvalue it
+    (change-class-vars (var-name ptree) (var-value ptree) env class-name-to-declare)))
 
 ;; Function:    (declare-static-function-outer ptree env class-name-to-declare)
 ;; Parameters:  ptree                 - parse tree in the format
@@ -156,13 +151,11 @@
 ;; Description: adds a new static function closure to the static methods layer of env
 (define declare-static-function-outer
   (lambda (ptree env class-name-to-declare)
-    (cons (method-list env)
-          (add-function (func-def-name ptree)
-                        (cons 'this (cons 'super (func-def-params ptree)))
-                        (func-def-body ptree)
-                        (func-def-class-closure class-name-to-declare)
-                        (remove-top-layer env)
-                        (initial-env)))))
+    (change-class-static-methods (func-def-name ptree)
+                          (func-def-params ptree)
+                          (func-def-body ptree)
+                          class-name-to-declare
+                          env)))
 
 ;; Function:    (declare-function-outer ptree env class-name-to-declare)
 ;; Parameters:  ptree                 - parse tree in the format
@@ -172,9 +165,8 @@
 ;; Description: adds a new member function closure to the methods layer of env
 (define declare-function-outer
   (lambda (ptree env class-name-to-declare)
-    (add-function (func-def-name ptree)
-                  (cons 'this (cons 'super (func-def-params ptree)))
-                  (func-def-body ptree)
-                  (func-def-class-closure class-name-to-declare)
-                  env
-                  (initial-env))))
+    (change-class-methods (func-def-name ptree)
+                          (cons 'this (cons 'super (func-def-params ptree)))
+                          (func-def-body ptree)
+                          class-name-to-declare
+                          env)))

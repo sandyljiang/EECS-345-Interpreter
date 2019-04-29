@@ -342,16 +342,16 @@
                                 (assign-error name)))))
       (cond
         ((list? (var-name ptree))
-          (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))))
+          (begin (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))) env))
         ((and (not (exists? (var-name ptree) env)) (exists? 'this env))
-          (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
+          (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
                                 env
                                 class-closure
                                 instance
                                 return
                                 break
                                 throw
-                                continue)
+                                continue) env)
         )
         (else
           (assign (var-name ptree) env))))))
@@ -696,7 +696,7 @@
      (func-def-name ptree)
      (cons 'this (cons 'super (func-def-params ptree)))
      (func-def-body ptree)
-     (lambda (current-env) class-closure)
+     (box class-closure)
      env
      env)))
 
@@ -828,6 +828,7 @@
                (LHS-super-name (super (get-class-closure LHS)))
                (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure LHS))))
               (cond
+                ;; if calling on super and the super has a super
                 ((and (eq? LHS-symbol 'super) (not (null? LHS-super-name)))
                   (mstate-function-call expr
                                         env
@@ -839,6 +840,7 @@
                                         (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
                                         throw)
                 )
+                ;; if calling on super and the super does not have a super
                 ((and (eq? LHS-symbol 'super) (null? LHS-super-name))
                   (mstate-function-call expr
                                         env
@@ -850,6 +852,7 @@
                                         (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
                                         throw)
                 )
+                ;; if there is not super
                 ((null? LHS-super-name)
                   (mstate-function-call expr
                                         env
@@ -860,6 +863,7 @@
                                         RHS
                                         throw)
                 )
+                ;; if there is a super and calling on something else
                 (else
                   (mstate-function-call expr
                                         env
@@ -1005,11 +1009,12 @@
         #t)
       ((eq? expr 'false)
         #f)
-      ((and (not (list? expr)) (exists? expr env)); if the expression is a variable, lookup the variable
+      ;((not (list? expr))
+      ;  (find expr env))
+      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
         (find expr env)) ;; TODO: change to call lookup function
       ((not (list? expr))
-        (dot-value (list 'dot 'this expr) env class-closure instance throw)
-      )
+        (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
       ((eq? (mvalue-statement-op expr) 'funcall)
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
