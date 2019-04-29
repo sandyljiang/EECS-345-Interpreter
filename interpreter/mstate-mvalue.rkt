@@ -801,19 +801,21 @@
 
 (define mstate-function-call
   (lambda (expr env class-closure instance this super function-closure throw)
-    (let ((funcall (lambda (values-lis)
+    (let*((instance-methods (if (null? instance) instance (method-closures (get-class-closure instance))))
+          (instance-values (if (null? instance) instance (object-instance-field-values instance)))
+          (funcall (lambda (values-lis)
                     (call/cc (lambda (return-cont)
                       (mstate (closure-body function-closure)
                               (add-multiple-vars (closure-params function-closure)
                                                   values-lis
-                                                  (push-layer (append ((closure-env function-closure)) env)))
+                                                  (push-layer ((closure-env function-closure) instance-methods instance-values)))
                               class-closure
                               instance
                               (lambda (e v) (return-cont v))
                               break-error
                               (lambda (e) (throw env))
                               continue-error)))))
-          (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
+          (eval-values (mvalue-list (mvalue-func-call-params expr) (debug env) class-closure instance throw))
           (params (closure-params function-closure)))
     (cond
       ((and (not (null? params)) (eq? (car params) 'this))
@@ -878,13 +880,13 @@
                                         throw)
                 )
               )))
-      ((and (not (exists? (mvalue-func-call-name expr) env)) (exists? 'this env))
-        (handle-function-call (append (list (car expr) (list 'dot 'this (mvalue-func-call-name expr))) (mvalue-func-call-params expr))
-                              env
-                              class-closure
-                              instance
-                              throw)
-      )
+      ;((and (not (exists? (mvalue-func-call-name expr) env)) (exists? 'this env))
+      ;  (handle-function-call (append (list (car expr) (list 'dot 'this (mvalue-func-call-name expr))) (mvalue-func-call-params expr))
+      ;                        env
+      ;                        class-closure
+      ;                        instance
+      ;                        throw)
+      ;)
       ((not (null? instance))
         (mstate-function-call expr
                               env

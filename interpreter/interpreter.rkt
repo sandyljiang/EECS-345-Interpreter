@@ -27,7 +27,7 @@
       (parse-retval (call/cc (lambda (return-cont)
                                (mstate (closure-body main-function-closure) ; get the parse tree
                                        ; get the env
-                                       (push-layer ((closure-env main-function-closure)))
+                                       (push-layer ((closure-env main-function-closure) '() '()))
                                        class-closure
                                        '() ; no "this" since main is a static function
                                        (lambda (e v) (return-cont v))

@@ -372,8 +372,21 @@
     (add name
          (list param-list
                func-body
-               (lambda () ; the env is accessed via function to allow access to itself
+               (lambda (method-closures values) ; the env is accessed via function to allow access to itself
                  (add-function name param-list func-body class func-env func-env))
+               (lambda (current-env)
+                 (unbox class)))
+         env)))
+
+(define add-member-function
+  (lambda (name param-list func-body class env func-env)
+    (add name
+         (list param-list
+               func-body
+               (lambda (method-closures values) ; the env is accessed via function to allow access to itself
+                 (append (list (list (method-names (unbox class)) method-closures)
+                               (list (instance-field-names (unbox class)) values))
+                         func-env))
                (lambda (current-env)
                  (unbox class)))
          env)))
@@ -503,7 +516,7 @@
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
            (current-class (find class-name-to-declare env))
-           (new-methods (add-function func-name func-params func-body class-box (get-class-methods current-class) env))
+           (new-methods (add-member-function func-name func-params func-body class-box (get-class-methods current-class) env))
            (new-names (names new-methods))
            (new-values (values new-methods)))
       (change-value class-name-to-declare
