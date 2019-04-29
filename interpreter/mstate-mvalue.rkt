@@ -343,16 +343,16 @@
       (cond
         ((list? (var-name ptree))
           (begin (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))) env))
-        ((and (not (exists? (var-name ptree) env)) (exists? 'this env))
-          (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
-                                env
-                                class-closure
-                                instance
-                                return
-                                break
-                                throw
-                                continue) env)
-        )
+        ;((and (not (exists? (var-name ptree) env)) (exists? 'this env))
+        ;  (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
+        ;                        env
+        ;                        class-closure
+        ;                        instance
+        ;                        return
+        ;                        break
+        ;                        throw
+        ;                        continue) env)
+        ;)
         (else
           (assign (var-name ptree) env))))))
 
@@ -800,26 +800,27 @@
 ;;;; ********************************************************************************************************
 
 (define mstate-function-call
-  (lambda (expr env class-closure instance this super function-closure throw)
-    (let*((instance-methods (if (null? instance) instance (method-closures (get-class-closure instance))))
-          (instance-values (if (null? instance) instance (object-instance-field-values instance)))
-          (funcall (lambda (values-lis)
-                    (call/cc (lambda (return-cont)
-                      (mstate (closure-body function-closure)
-                              (add-multiple-vars (closure-params function-closure)
-                                                  values-lis
-                                                  (push-layer ((closure-env function-closure) instance-methods instance-values)))
-                              class-closure
-                              instance
-                              (lambda (e v) (return-cont v))
-                              break-error
-                              (lambda (e) (throw env))
-                              continue-error)))))
-          (eval-values (mvalue-list (mvalue-func-call-params expr) (debug env) class-closure instance throw))
-          (params (closure-params function-closure)))
+  (lambda (expr env class-closure instance function-closure throw)
+    (let* ((instance-methods (if (null? instance) instance (method-closures (get-class-closure instance))))
+           (instance-values (if (null? instance) instance (object-instance-field-values instance)))
+           (super-object (if (exists? 'super env) (find 'super env) '()))
+           (funcall (lambda (values-lis)
+                     (call/cc (lambda (return-cont)
+                       (mstate (closure-body function-closure)
+                               (add-multiple-vars (closure-params function-closure)
+                                                   values-lis
+                                                   (push-layer ((closure-env function-closure) instance-methods instance-values)))
+                               class-closure
+                               instance
+                               (lambda (e v) (return-cont v))
+                               break-error
+                               (lambda (e) (throw env))
+                               continue-error)))))
+           (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
+           (params (closure-params function-closure)))
     (cond
       ((and (not (null? params)) (eq? (car params) 'this))
-        (funcall (cons this (cons super eval-values))))
+        (funcall (cons instance (cons (cons (debug (find 'super (debug env))) (list (object-instance-field-values instance))) eval-values))))
       (else
         (funcall eval-values))))))
 
@@ -834,38 +835,13 @@
                (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure LHS))))
               (cond
                 ;; if calling on super and the super has a super
-                ((and (eq? LHS-symbol 'super) (not (null? LHS-super-name)))
+                ((and (eq? LHS-symbol 'super))
                   (mstate-function-call expr
                                         env
                                         (get-class-closure (find 'super env))
-                                        (find 'this env)
-                                        (find 'this env)
-                                        (cons (find (super (get-class-closure (find 'super env))) env) (list (object-instance-field-values instance)))
+                                        instance
                                         ;(find-in-super (dot-rhs (mvalue-func-call-name expr)) env instance)
                                         (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
-                                        throw)
-                )
-                ;; if calling on super and the super does not have a super
-                ((and (eq? LHS-symbol 'super) (null? LHS-super-name))
-                  (mstate-function-call expr
-                                        env
-                                        (get-class-closure (find 'super env))
-                                        (find 'this env)
-                                        (find 'this env)
-                                        '()
-                                        ;(find-in-super (dot-rhs (mvalue-func-call-name expr)) env instance)
-                                        (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
-                                        throw)
-                )
-                ;; if there is not super
-                ((null? LHS-super-name)
-                  (mstate-function-call expr
-                                        env
-                                        ((closure-class RHS) env)
-                                        LHS
-                                        LHS
-                                        '()
-                                        RHS
                                         throw)
                 )
                 ;; if there is a super and calling on something else
@@ -874,8 +850,6 @@
                                         env
                                         ((closure-class RHS) env)
                                         LHS
-                                        LHS
-                                        (cons (find LHS-super-name env) (list (object-instance-field-values LHS)))
                                         RHS
                                         throw)
                 )
@@ -892,8 +866,6 @@
                               env
                               class-closure
                               instance
-                              instance
-                              (cons (find (super (get-class-closure instance)) env) (list (object-instance-field-values instance)))
                               (lookup-function-closure (mvalue-func-call-name expr) env (get-class-closure instance))
                               throw))
       (else
@@ -901,8 +873,6 @@
                               env
                               class-closure
                               instance
-                              instance
-                              '()
                               (find (mvalue-func-call-name expr) env)
                               throw)
       ))))
