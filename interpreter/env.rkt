@@ -279,6 +279,18 @@
 ;; Description: Searches the env for the class-name and find the function name in it
 ;; Note:        The function throws an error if the function or class was
 ;;              not found or was undefined
+(define lookup-non-local-function-box
+    (lambda (name class-closure)
+      ;; find the class closure, get its function and  find the requested function
+      (find-box name (get-class-functions class-closure))))
+
+;; Function:    (lookup-non-local-function name env)
+;; Parameters:  name       - the name of the function to find in the class-closure of class-name
+;;              env        - the environment to search in
+;;              class-name - the name of the class to find the function in
+;; Description: Searches the env for the class-name and find the function name in it
+;; Note:        The function throws an error if the function or class was
+;;              not found or was undefined
 (define lookup-non-local-function
     (lambda (name class-closure)
       ;; find the class closure, get its function and  find the requested function
@@ -308,7 +320,7 @@
     (find-with-undeclared-handler name
                                   env
                                   (lambda ()
-                                    (box (lookup-non-local-function name class-closure))))))
+                                    (lookup-non-local-function-box name class-closure)))))
 
 ;; Function:    (add name value env)
 ;; Parameters:  name  the name of the variable to add to the env
@@ -341,12 +353,12 @@
 ;; Description:  Adds a new function closure to the top layer of the env
 ;; Note:        This function throws an error if the name of the function exists in the env
 (define add-function
-  (lambda (name param-list func-body class-closure-lookup env)
+  (lambda (name param-list func-body class-closure-lookup env func-env)
     (add name
          (list param-list
                func-body
                (lambda () ; the env is accessed via function to allow access to itself
-                 (add-function name param-list func-body class-closure-lookup env))
+                 (add-function name param-list func-body class-closure-lookup func-env func-env))
                class-closure-lookup)
          env)))
 
@@ -453,7 +465,7 @@
 
 (define find-in-super
   (lambda (name env instance)
-    (let* ([super-closure (super (get-class-closure instance))]
+    (let* ([super-closure (find (super (get-class-closure instance)) env)]
            [super-method-names (method-names super-closure)]
            [super-ifn (instance-field-names super-closure)]
            [new-env (list (list super-method-names

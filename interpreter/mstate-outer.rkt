@@ -161,7 +161,8 @@
                         (cons 'this (cons 'super (func-def-params ptree)))
                         (func-def-body ptree)
                         (func-def-class-closure class-name-to-declare)
-                        (remove-top-layer env)))))
+                        (remove-top-layer env)
+                        (initial-env)))))
 
 ;; Function:    (declare-function-outer ptree env class-name-to-declare)
 ;; Parameters:  ptree                 - parse tree in the format
@@ -175,4 +176,5 @@
                   (cons 'this (cons 'super (func-def-params ptree)))
                   (func-def-body ptree)
                   (func-def-class-closure class-name-to-declare)
-                  env)))
+                  env
+                  (initial-env))))
