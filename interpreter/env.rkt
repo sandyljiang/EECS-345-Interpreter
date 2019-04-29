@@ -464,7 +464,7 @@
   (lambda (name env)
     (cond
       ((null-env? env)               #f)
-      ((null-layer? env)             #f)
+      ((null? (names env))             #f)
       ((eq? name (current-name env)) #t)
       (else                          (exists-in-top-layer? name (next-env env))))))
 
@@ -476,7 +476,7 @@
 (define exists?
   (lambda (name env)
     (cond
-      ((null-env? env)                 #f)
+      ((and (null? (names env)) (null-env? (next-layer env)))                 #f)
       ((exists-in-top-layer? name env) #t)
       (else                            (exists? name (next-layer env))))))
 

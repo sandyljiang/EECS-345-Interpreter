@@ -343,16 +343,16 @@
       (cond
         ((list? (var-name ptree))
           (begin (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))) env))
-        ;((and (not (exists? (var-name ptree) env)) (exists? 'this env))
-        ;  (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
-        ;                        env
-        ;                        class-closure
-        ;                        instance
-        ;                        return
-        ;                        break
-        ;                        throw
-        ;                        continue) env)
-        ;)
+        ((and (not (exists? (var-name ptree) env)) (exists? 'this env))
+          (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
+                                env
+                                class-closure
+                                instance
+                                return
+                                break
+                                throw
+                                continue) env)
+        )
         (else
           (assign (var-name ptree) env))))))
 
@@ -855,13 +855,13 @@
                                         throw)
                 )
               )))
-      ;((and (not (exists? (mvalue-func-call-name expr) env)) (exists? 'this env))
-      ;  (handle-function-call (append (list (car expr) (list 'dot 'this (mvalue-func-call-name expr))) (mvalue-func-call-params expr))
-      ;                        env
-      ;                        class-closure
-      ;                        instance
-      ;                        throw)
-      ;)
+      ((and (not (exists? (mvalue-func-call-name expr) env)) (exists? 'this env))
+        (handle-function-call (append (list (car expr) (list 'dot 'this (mvalue-func-call-name expr))) (mvalue-func-call-params expr))
+                              env
+                              class-closure
+                              instance
+                              throw)
+      )
       ((not (null? instance))
         (mstate-function-call expr
                               env
@@ -985,12 +985,12 @@
         #t)
       ((eq? expr 'false)
         #f)
+      ;((not (list? expr)) ; idk why this works
+      ;  (find expr env))
+      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
+        (find expr env)) ;; TODO: change to call lookup function
       ((not (list? expr))
-        (find expr env))
-      ;((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
-      ;  (find expr env)) ;; TODO: change to call lookup function
-      ;((not (list? expr))
-      ;  (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
+        (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
       ((eq? (mvalue-statement-op expr) 'funcall)
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
