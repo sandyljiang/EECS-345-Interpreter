@@ -833,13 +833,13 @@
                (LHS (get-dot-LHS LHS-symbol env class-closure instance throw))
                (LHS-super-name (super (get-class-closure LHS)))
                (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure LHS)))
-               (super-object (find (super class-closure) env)))
+               (super-object (if (null? (super class-closure)) '() (find (super class-closure) env))))
               (cond
                 ;; if calling on super and the super has a super
                 ((and (eq? LHS-symbol 'super))
                   (mstate-function-call expr
                                         env
-                                        (find (super class-closure) env)
+                                        super-object
                                         instance
                                         ;(find-in-super (dot-rhs (mvalue-func-call-name expr)) env instance)
                                         (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env super-object)
