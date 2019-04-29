@@ -803,7 +803,7 @@
   (lambda (expr env class-closure instance function-closure throw)
     (let* ((instance-methods (if (null? instance) instance (method-closures (get-class-closure instance))))
            (instance-values (if (null? instance) instance (object-instance-field-values instance)))
-           (super-object (if (exists? 'super env) (get-class-closure (find 'super env)) (find (super (get-class-closure instance)) env)))
+           (super-object (if (exists? (super class-closure) env) (find (super class-closure) env) '()))
            (funcall (lambda (values-lis)
                      (call/cc (lambda (return-cont)
                        (mstate (closure-body function-closure)
@@ -838,7 +838,7 @@
                 ((and (eq? LHS-symbol 'super))
                   (mstate-function-call expr
                                         env
-                                        (get-class-closure (find 'super env))
+                                        (find (super class-closure) env)
                                         instance
                                         ;(find-in-super (dot-rhs (mvalue-func-call-name expr)) env instance)
                                         (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure (find 'super env)))
