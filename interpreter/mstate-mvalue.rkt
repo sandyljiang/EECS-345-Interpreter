@@ -803,7 +803,7 @@
   (lambda (expr env class-closure instance function-closure throw)
     (let* ((instance-methods (if (null? instance) instance (method-closures (get-class-closure instance))))
            (instance-values (if (null? instance) instance (object-instance-field-values instance)))
-           (super-object (if (exists? 'super env) (find 'super env) '()))
+           (super-object (if (exists? 'super env) (find 'super env) (find (super (get-class-closure instance)) env)))
            (funcall (lambda (values-lis)
                      (call/cc (lambda (return-cont)
                        (mstate (closure-body function-closure)
@@ -820,7 +820,7 @@
            (params (closure-params function-closure)))
     (cond
       ((and (not (null? params)) (eq? (car params) 'this))
-        (funcall (cons instance (cons (cons (debug (find 'super (debug env))) (list (object-instance-field-values instance))) eval-values))))
+        (funcall (cons instance (cons (cons super-object (list (object-instance-field-values instance))) eval-values))))
       (else
         (funcall eval-values))))))
 
