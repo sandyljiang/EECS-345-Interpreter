@@ -985,12 +985,12 @@
         #t)
       ((eq? expr 'false)
         #f)
-      ;((not (list? expr))
-      ;  (find expr env))
-      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
-        (find expr env)) ;; TODO: change to call lookup function
       ((not (list? expr))
-        (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
+        (find expr env))
+      ;((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
+      ;  (find expr env)) ;; TODO: change to call lookup function
+      ;((not (list? expr))
+      ;  (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
       ((eq? (mvalue-statement-op expr) 'funcall)
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
