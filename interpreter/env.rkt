@@ -515,7 +515,12 @@
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
            (current-class (find class-name-to-declare env))
-           (new-methods (add-member-function func-name func-params func-body class-box (get-class-methods current-class) env))
+           (new-methods (add-member-function func-name
+                                             func-params
+                                             func-body
+                                             class-box
+                                             (get-class-methods current-class)
+                                             env))
            (new-names (names new-methods))
            (new-values (values new-methods)))
       (change-value class-name-to-declare
@@ -532,7 +537,12 @@
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
            (current-class (find class-name-to-declare env))
-           (new-methods (add-function func-name func-params func-body class-box (get-class-static-methods current-class) env))
+           (new-methods (add-function func-name
+                                      func-params
+                                      func-body
+                                      class-box
+                                      (get-class-static-methods current-class)
+                                      env))
            (new-names (names new-methods))
            (new-values (values new-methods)))
       (change-value class-name-to-declare
