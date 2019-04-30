@@ -545,6 +545,14 @@
                           (class-instance-field-values current-class))
                     env))))
 
+;; Function:    (change-class-static-methods func-name func-params func-body class-name-to-declare env)
+;; Parameters:  func-name             - The name of the static method to add
+;;              func-params           - The parameters of the method
+;;              func-body             - The body of the method
+;;              class-name-to-declare - The name of the class to add a method to
+;;              env                   - The environment to add a method to the class closure in
+;; Description: Adds a new static class method to the given class in the given environment
+
 (define change-class-static-methods
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
