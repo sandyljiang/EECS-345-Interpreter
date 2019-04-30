@@ -384,7 +384,7 @@
          (list param-list
                func-body
                (lambda (method-closures values) ; the env is accessed via function to allow access to itself
-                 (append (list (list (method-names (unbox class)) method-closures)
+                 (append (list ;(list (method-names (unbox class)) method-closures)
                                (list (instance-field-names (unbox class)) values))
                          func-env))
                (lambda (current-env)
@@ -476,6 +476,7 @@
 (define exists?
   (lambda (name env)
     (cond
+      ((null-env? env) #f)
       ((and (null? (names env)) (null-env? (next-layer env)))                 #f)
       ((exists-in-top-layer? name env) #t)
       (else                            (exists? name (next-layer env))))))
