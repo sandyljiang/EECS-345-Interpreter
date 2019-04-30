@@ -843,7 +843,7 @@
                                           continue-error))))))
       (cond
         ((and (not (null? params)) (eq? (car params) 'this)) ; if binding implicit params is necessary
-          (funcall (bind-implicit-params instance (get-super-closure class-closure env) eval-values)))
+          (funcall (bind-implicit-params instance (find-super class-closure env) eval-values)))
         (else
           (funcall eval-values))))))
 
@@ -865,7 +865,7 @@
 ;; Description: Evaluates the function call with a dot operator.
 (define handle-function-call-with-dot
   (lambda (expr env class-closure instance throw)
-    (let* ((super-object (get-super-closure class-closure env))
+    (let* ((super-object (find-super class-closure env))
            (LHS-symbol   (dot-lhs (mvalue-func-call-name expr)))
            (LHS          (get-dot-LHS LHS-symbol env class-closure instance throw))
            (RHS          (get-RHS-func expr (get-class-closure LHS))))

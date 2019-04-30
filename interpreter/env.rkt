@@ -9,11 +9,6 @@
 ;;;; env handling functions
 ;;;; *********************************************************************************************************
 
-(define-syntax debug
-  (lambda (syn)
-    (define slist (syntax->list syn))
-    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) (newline) x)))))
-
 ;; definition for a layer with no values in it
 (define null-layer '(() ()))
 
@@ -109,7 +104,7 @@
   (lambda (ptree)
     (caddr (cddddr ptree))))
 
-(define get-super-closure
+(define find-super
   (lambda (class-closure env)
     (if (null? (super class-closure))
       '()
@@ -388,6 +383,14 @@
                  (unbox class)))
          env)))
 
+;; Function:    (add-member-function name param-list func-body env)
+;; Parameters:  name       - the name of the function to add to the env
+;;              param-list - a list of atoms that represent the parameter names for a functions
+;;              func-body  - a parse tree used to evaluate the function
+;;              env        - the environment when the function is declared to keep track of
+;;                           what is in the function's scope
+;; Description:  Adds a new member function closure to the top layer of the env
+;; Note:        This function throws an error if the name of the function exists in the env
 (define add-member-function
   (lambda (name param-list func-body class env func-env)
     (add name
@@ -421,12 +424,10 @@
          (list super class-method-names class-method-closures smn smc ifn ifv)
          env)))
 
-(define find-super
-  (lambda (class-closure env)
-    (if (null? (super class-closure))
-      '()
-      (find (super class-closure) env))))
-
+;; Function:    (update-class-with-super env name)
+;; Parameters:  names  - A list of names of the variables to add to the evironment/env
+;;              env    - the environment to add the name/value pairs to
+;; Description: Updates each class closure with the super lists
 (define update-class-with-super
   (lambda (env name)
     (let* ((class (find name env))
@@ -595,12 +596,12 @@
 
 (define find-in-super
   (lambda (name env instance)
-    (let* ([super-closure (find (super (get-class-closure instance)) env)]
-           [super-method-names (method-names super-closure)]
-           [super-ifn (instance-field-names super-closure)]
-           [new-env (list (list super-method-names
+    (let* ((super-closure (find (super (get-class-closure instance)) env))
+           (super-method-names (method-names super-closure))
+           (super-ifn (instance-field-names super-closure))
+           (new-env (list (list super-method-names
                                 (method-closures (get-class-closure instance)))
                           (list super-ifn
-                                (object-instance-field-values instance)))])
+                                (object-instance-field-values instance)))))
       (find name new-env))))
 
