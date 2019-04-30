@@ -594,29 +594,27 @@
   (lambda (ptree env class-closure instance return break throw continue)
     (mstate (final-block ptree)
             (call/cc (lambda (exit-catch)
-                        (mstate (try-block ptree)
+                        (let* ((mstate-final (lambda (new-env)
+                                              (mstate (final-block ptree)
+                                                      new-env
+                                                      class-closure
+                                                      instance
+                                                      return
+                                                      break
+                                                      throw
+                                                      continue)))
+                              (catch-block-cont (lambda (cont)
+                                                  (lambda (new-env)
+                                                    (cont (mstate-final new-env))))))
+                            (mstate (try-block ptree)
                                 env
                                 class-closure
                                 instance
                                 (lambda (return-env return-value)
-                                  (begin (mstate (final-block ptree)
-                                                 return-env
-                                                 class-closure
-                                                 instance
-                                                 return
-                                                 break
-                                                 throw
-                                                 continue)
+                                  (begin (mstate-final return-env)
                                          (return return-value)))
                                 (lambda (break-env)
-                                  (break (mstate (final-block ptree)
-                                                 break-env
-                                                 class-closure
-                                                 instance
-                                                 return
-                                                 break
-                                                 throw
-                                                 continue)))
+                                  (break (mstate-final break-env)))
                                 (lambda (throw-env)
                                   (exit-catch (mstate (catch-block ptree)
                                                       (add (catch-arg ptree)
@@ -624,19 +622,12 @@
                                                            throw-env)
                                                       class-closure
                                                       instance
-                                                      (lambda (e v) (return (mstate (final-block ptree) e class-closure instance return break throw continue) v))
-                                                      (lambda (te) (break (mstate (final-block ptree) te class-closure instance return break throw continue)))
-                                                      (lambda (te) (throw (mstate (final-block ptree) te class-closure instance return break throw continue)))
-                                                      (lambda (te) (continue (mstate (final-block ptree) te class-closure instance return break throw continue))))))
+                                                      (lambda (e v) (return (mstate-final e) v))
+                                                      (catch-block-cont break)
+                                                      (catch-block-cont throw)
+                                                      (catch-block-cont continue))))
                                 (lambda (continue-env)
-                                  (continue (mstate (final-block ptree)
-                                                    continue-env
-                                                    class-closure
-                                                    instance
-                                                    return
-                                                    break
-                                                    throw
-                                                    continue))))))
+                                  (continue (mstate-final continue-env)))))))
             class-closure
             instance
             return
