@@ -5,16 +5,14 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 3
+;;;; Interpreter Part 4
 ;;;; env handling functions
 ;;;; *********************************************************************************************************
 
 (define-syntax debug
   (lambda (syn)
     (define slist (syntax->list syn))
-    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) (newline) x)))
-  )
-)
+    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) (newline) x)))))
 
 ;; definition for a layer with no values in it
 (define null-layer '(() ()))
@@ -258,7 +256,7 @@
 (define find-box-acc
   (lambda (name env acc values-to-search)
     (cond
-      ((and (null? (names env)) (null-env? (next-layer env))) ; reached an empty env, so the variable does not exist
+      ((and (null? (names env)) (null-env? (next-layer env))); reached empty env, var does not exist
         undeclared-var)
       ((null? (names env))  ; variable was not in this layer, so check the next
         (find-box-acc name (next-layer env) (- (len (names (next-layer env))) 1) (values (next-layer env))))
@@ -308,7 +306,7 @@
 ;;              not found or was undefined
 (define lookup-non-local-function-box
     (lambda (name class-closure)
-      ;; find the class closure, get its function and  find the requested function
+      ;; find the class closure, get its function and find the requested function
       (find-box name (get-class-functions class-closure))))
 
 ;; Function:    (lookup-non-local-function name env)
@@ -528,7 +526,12 @@
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
            (current-class (find class-name-to-declare env))
-           (new-methods (add-member-function func-name func-params func-body class-box (get-class-methods current-class) env))
+           (new-methods (add-member-function func-name
+                                             func-params
+                                             func-body
+                                             class-box
+                                             (get-class-methods current-class)
+                                             env))
            (new-names (names new-methods))
            (new-values (values new-methods)))
       (change-value class-name-to-declare
@@ -545,7 +548,12 @@
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
            (current-class (find class-name-to-declare env))
-           (new-methods (add-function func-name func-params func-body class-box (get-class-static-methods current-class) env))
+           (new-methods (add-function func-name
+                                      func-params
+                                      func-body
+                                      class-box
+                                      (get-class-static-methods current-class)
+                                      env))
            (new-names (names new-methods))
            (new-values (values new-methods)))
       (change-value class-name-to-declare
@@ -559,10 +567,10 @@
                     env))))
 
 ;; Function:    (find-in-super name env instance)
-;; Parameters:  name       - the name of the the super in the new environment
+;; Parameters:  name       - the name of the super in the new environment
 ;;              env        - the environment to use to evaluate expressions
 ;;              instance   - the object closure that is currently being used
-;; Description:
+;; Description: Adjusts the lookups to handle the case when the left side of the dot is "super".
 
 (define find-in-super
   (lambda (name env instance)

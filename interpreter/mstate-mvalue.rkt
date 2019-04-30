@@ -6,7 +6,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 3
+;;;; Interpreter Part 4
 ;;;; mstate calculation functions
 ;;;; *********************************************************************************************************
 
@@ -259,6 +259,19 @@
     (continue env)))
 
 ;;;; *********************************************************************************************************
+;;;; new operator
+;;;; *********************************************************************************************************
+
+;; Function:    (new-op expr env)
+;; Parameters:  expr          - the expression representing left of an assignment statement
+;;              env           - the environment that the new instance will be in
+;; Description: Creates a new instance with the constructor in the given env.
+
+(define new-op
+  (lambda (expr env)
+    (class-constructor (find (new-arg expr) env))))
+
+;;;; *********************************************************************************************************
 ;;;; throw operator
 ;;;; *********************************************************************************************************
 
@@ -328,31 +341,32 @@
 ;;              break         - a break continuation
 ;;              throw         - a throw continuation
 ;;              continue      - a continue continuation
-;; Description: changes the value of the specifed variable in the parse tree to the new value
+;; Description: Assigns the value of the specifed variable in the parse tree to the new value
 (define assign-statement
   (lambda (ptree env class-closure instance return break throw continue)
     ;; extract the name of the variable name and pass it into the following function
     (let* ((new-val (mvalue (var-value ptree) env class-closure instance throw))
+           (append-dot (list (list (statement-op ptree)
+                                   (list 'dot 'this (var-name ptree))
+                                   (var-value ptree))))
            (assign (lambda (name new-env)
                             ;; make sure the variable has been declared
                             (if (exists? name new-env)
-                                (change-value name
-                                              new-val
-                                              new-env)
-                                (assign-error name)))))
+                              (change-value name
+                                            new-val
+                                            new-env)
+                              (assign-error name)))))
       (cond
         ((list? (var-name ptree))
-          (begin (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))) env))
-        ((and (not (exists? (var-name ptree) env)) (exists? 'this env))
-          (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
-                                env
-                                class-closure
-                                instance
-                                return
-                                break
-                                throw
-                                continue) env)
-        )
+          (begin (assign (dot-rhs (var-name ptree))
+                         (get-object-instance-fields (mvalue (dot-lhs (var-name ptree))
+                                                             env
+                                                             class-closure
+                                                             instance
+                                                             throw)))
+                 env)) ; update the instance fields, but return the original env that is not updated by boxen
+        ((and (not (exists? (var-name ptree) env)) (exists? 'this env)) ; recall and append dot
+          (assign-statement append-dot env class-closure instance return break throw continue))
         (else
           (assign (var-name ptree) env))))))
 
@@ -594,29 +608,27 @@
   (lambda (ptree env class-closure instance return break throw continue)
     (mstate (final-block ptree)
             (call/cc (lambda (exit-catch)
-                        (mstate (try-block ptree)
+                        (let* ((mstate-final (lambda (new-env)
+                                              (mstate (final-block ptree)
+                                                      new-env
+                                                      class-closure
+                                                      instance
+                                                      return
+                                                      break
+                                                      throw
+                                                      continue)))
+                              (catch-block-cont (lambda (cont)
+                                                  (lambda (new-env)
+                                                    (cont (mstate-final new-env))))))
+                            (mstate (try-block ptree)
                                 env
                                 class-closure
                                 instance
                                 (lambda (return-env return-value)
-                                  (begin (mstate (final-block ptree)
-                                                 return-env
-                                                 class-closure
-                                                 instance
-                                                 return
-                                                 break
-                                                 throw
-                                                 continue)
+                                  (begin (mstate-final return-env)
                                          (return return-value)))
                                 (lambda (break-env)
-                                  (break (mstate (final-block ptree)
-                                                 break-env
-                                                 class-closure
-                                                 instance
-                                                 return
-                                                 break
-                                                 throw
-                                                 continue)))
+                                  (break (mstate-final break-env)))
                                 (lambda (throw-env)
                                   (exit-catch (mstate (catch-block ptree)
                                                       (add (catch-arg ptree)
@@ -624,19 +636,12 @@
                                                            throw-env)
                                                       class-closure
                                                       instance
-                                                      (lambda (e v) (return (mstate (final-block ptree) e class-closure instance return break throw continue) v))
-                                                      (lambda (te) (break (mstate (final-block ptree) te class-closure instance return break throw continue)))
-                                                      (lambda (te) (throw (mstate (final-block ptree) te class-closure instance return break throw continue)))
-                                                      (lambda (te) (continue (mstate (final-block ptree) te class-closure instance return break throw continue))))))
+                                                      (lambda (e v) (return (mstate-final e) v))
+                                                      (catch-block-cont break)
+                                                      (catch-block-cont throw)
+                                                      (catch-block-cont continue))))
                                 (lambda (continue-env)
-                                  (continue (mstate (final-block ptree)
-                                                    continue-env
-                                                    class-closure
-                                                    instance
-                                                    return
-                                                    break
-                                                    throw
-                                                    continue))))))
+                                  (continue (mstate-final continue-env)))))))
             class-closure
             instance
             return
@@ -919,13 +924,6 @@
         (find-in-super (dot-rhs expr) env instance)
         (lookup-instance-fields (dot-rhs expr)
                                 (get-dot-LHS (dot-lhs expr) env class-closure instance throw)))))
-;; if dot-lhs = super then use
-;;also if LHS (dot LHS RHS) use find-in-super instead of lookup-instance-fields
-;;if LHS is not super, jsut use lookup-instance-fields
-
-(define new-op
-  (lambda (expr env)
-    (class-constructor (find (new-arg expr) env))))
 
 ;; Function:    (mvalue-operator? statement operator)
 ;; Parameters:  statement - the parsed statement to evaluate. First element should be
@@ -963,8 +961,6 @@
       ((mvalue-operator? expr '&&)  (lambda (op1 op2) (and op1 op2)))
       ((mvalue-operator? expr '||)  (lambda (op1 op2) (or op1 op2)))
 
-
-
       ;; Operator not recognized
       (else                        (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
@@ -983,13 +979,16 @@
 ;;;; Mvalue
 ;;;; ********************************************************************************************************
 
-    ;; takes the lhs and calls mvalue on it
+;; Function:    (get-dot-LHS LHS-of-dot env class-closure instance throw)
+;; Parameters:  LHS-of-dot    - The LHS of the dot
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation
+;; Description: Takes the lhs and calls mvalue on it
+
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
-    ;(if (eq? LHS-of-dot 'super)
-    ;    (cons (find (super (get-class-closure instance)) env)
-    ;                       (list (object-instance-field-values instance)))
-    ;;(display "instance: ") (display instance) (newline) (display "//") (newline)
     (mvalue LHS-of-dot env class-closure instance throw)))
 
 ;; Function:    (mvalue expr env)
@@ -1011,12 +1010,10 @@
         #t)
       ((eq? expr 'false)
         #f)
-      ;((not (list? expr)) ; idk why this works
-      ;  (find expr env))
-      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
-        (find expr env)) ;; TODO: change to call lookup function
+      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env))))
+        (find expr env))
       ((not (list? expr))
-        (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
+        (dot-value (list 'dot 'this expr) env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'funcall)
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
@@ -1026,7 +1023,8 @@
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw) (mvalue (operand2 expr) env class-closure instance throw)))
+        ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw)
+                              (mvalue (operand2 expr) env class-closure instance throw)))
          (2_op_switch expr)))
       (else
         (error "Error: Executing invalid expression.\nExpression: " expr)))))
@@ -1041,8 +1039,10 @@
 ;; Description: Evaluates a list of expressions using the mvalue function, the given environment,
 ;;              and the given throw continuation. Returns a list of the values the expressions
 ;;              evaluate to.
+
 (define mvalue-list
   (lambda (exprs env class-closure instance throw)
     (if (null? exprs)
         '()
-        (cons (mvalue (car exprs) env class-closure instance throw) (mvalue-list (cdr exprs) env class-closure instance throw)))))
+        (cons (mvalue (car exprs) env class-closure instance throw)
+              (mvalue-list (cdr exprs) env class-closure instance throw)))))

@@ -8,7 +8,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 3
+;;;; Interpreter Part 4
 ;;;; *********************************************************************************************************
 
 ;; Interprets the code in the file specified by filename and returns the value
