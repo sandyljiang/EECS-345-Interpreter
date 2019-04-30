@@ -624,10 +624,10 @@
                                                            throw-env)
                                                       class-closure
                                                       instance
-                                                      return
-                                                      break
-                                                      throw
-                                                      continue)))
+                                                      (lambda (e v) (return (mstate (final-block ptree) e class-closure instance return break throw continue) v))
+                                                      (lambda (te) (break (mstate (final-block ptree) te class-closure instance return break throw continue)))
+                                                      (lambda (te) (throw (mstate (final-block ptree) te class-closure instance return break throw continue)))
+                                                      (lambda (te) (continue (mstate (final-block ptree) te class-closure instance return break throw continue))))))
                                 (lambda (continue-env)
                                   (continue (mstate (final-block ptree)
                                                     continue-env
