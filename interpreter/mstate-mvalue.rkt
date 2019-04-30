@@ -6,7 +6,7 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 3
+;;;; Interpreter Part 4
 ;;;; mstate calculation functions
 ;;;; *********************************************************************************************************
 
@@ -257,6 +257,19 @@
 (define continue-statement
   (lambda (ptree env class-closure instance return break throw continue)
     (continue env)))
+
+;;;; *********************************************************************************************************
+;;;; new operator
+;;;; *********************************************************************************************************
+
+;; Function:    (new-op expr env)
+;; Parameters:  expr          - the expression representing left of an assignment statement
+;;              env           - the environment that the new instance will be in 
+;; Description: Creates a new instance with the constructor in the given env.
+
+(define new-op
+  (lambda (expr env)
+    (class-constructor (find (new-arg expr) env))))
 
 ;;;; *********************************************************************************************************
 ;;;; throw operator
@@ -866,8 +879,7 @@
                               class-closure
                               instance
                               (find (mvalue-func-call-name expr) env)
-                              throw)
-      ))))
+                              throw)))))
 
 ;; Function:    (dot-value expr env class-closure instance throw)
 ;; Parameters:  expr          - list representing the parse tree in the form ((dot LHS-dot RHS-dot) ...)
@@ -884,13 +896,6 @@
         (find-in-super (dot-rhs expr) env instance)
         (lookup-instance-fields (dot-rhs expr)
                                 (get-dot-LHS (dot-lhs expr) env class-closure instance throw)))))
-;; if dot-lhs = super then use
-;;also if LHS (dot LHS RHS) use find-in-super instead of lookup-instance-fields
-;;if LHS is not super, jsut use lookup-instance-fields
-
-(define new-op
-  (lambda (expr env)
-    (class-constructor (find (new-arg expr) env))))
 
 ;; Function:    (mvalue-operator? statement operator)
 ;; Parameters:  statement - the parsed statement to evaluate. First element should be
@@ -928,8 +933,6 @@
       ((mvalue-operator? expr '&&)  (lambda (op1 op2) (and op1 op2)))
       ((mvalue-operator? expr '||)  (lambda (op1 op2) (or op1 op2)))
 
-
-
       ;; Operator not recognized
       (else                        (error "Error: Executing invalid expression.\nExpression: " expr)))))
 
@@ -948,13 +951,16 @@
 ;;;; Mvalue
 ;;;; ********************************************************************************************************
 
-    ;; takes the lhs and calls mvalue on it
+;; Function:    (get-dot-LHS LHS-of-dot env class-closure instance throw)
+;; Parameters:  LHS-of-dot    - The LHS of the dot
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation 
+;; Description: Takes the lhs and calls mvalue on it
+
 (define get-dot-LHS
   (lambda (LHS-of-dot env class-closure instance throw)
-    ;(if (eq? LHS-of-dot 'super)
-    ;    (cons (find (super (get-class-closure instance)) env)
-    ;                       (list (object-instance-field-values instance)))
-    ;;(display "instance: ") (display instance) (newline) (display "//") (newline)
     (mvalue LHS-of-dot env class-closure instance throw)))
 
 ;; Function:    (mvalue expr env)
@@ -976,12 +982,10 @@
         #t)
       ((eq? expr 'false)
         #f)
-      ;((not (list? expr)) ; idk why this works
-      ;  (find expr env))
-      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env)))); if the expression is a variable, lookup the variable
-        (find expr env)) ;; TODO: change to call lookup function
+      ((and (not (list? expr)) (or (exists? expr env) (not (exists? 'this env))))
+        (find expr env))
       ((not (list? expr))
-        (dot-value (list 'dot 'this expr) env class-closure instance throw)) ;;TODO note this seems bad with undeclared errors
+        (dot-value (list 'dot 'this expr) env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'funcall)
         (handle-function-call expr env class-closure instance throw))
       ((eq? (mvalue-statement-op expr) 'dot)
@@ -991,7 +995,8 @@
       ((eq? (length expr) 1-operand) ; call the 1-operand operator on the operand
         ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw))) (1_op_switch expr)))
       ((eq? (length expr) 2-operand) ; call the 2-operand operator on the operands
-        ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw) (mvalue (operand2 expr) env class-closure instance throw)))
+        ((lambda (func) (func (mvalue (operand1 expr) env class-closure instance throw)
+                              (mvalue (operand2 expr) env class-closure instance throw)))
          (2_op_switch expr)))
       (else
         (error "Error: Executing invalid expression.\nExpression: " expr)))))
@@ -1006,8 +1011,10 @@
 ;; Description: Evaluates a list of expressions using the mvalue function, the given environment,
 ;;              and the given throw continuation. Returns a list of the values the expressions
 ;;              evaluate to.
+
 (define mvalue-list
   (lambda (exprs env class-closure instance throw)
     (if (null? exprs)
         '()
-        (cons (mvalue (car exprs) env class-closure instance throw) (mvalue-list (cdr exprs) env class-closure instance throw)))))
+        (cons (mvalue (car exprs) env class-closure instance throw)
+              (mvalue-list (cdr exprs) env class-closure instance throw)))))

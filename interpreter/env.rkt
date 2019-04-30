@@ -5,16 +5,14 @@
 ;;;; *********************************************************************************************************
 ;;;; Jared Cassarly (jwc160), Shota Nemoto (srn24), Sandy Jiang (sxj409)
 ;;;; EECS 345 Spring 2019
-;;;; Interpreter Part 3
+;;;; Interpreter Part 4
 ;;;; env handling functions
 ;;;; *********************************************************************************************************
 
 (define-syntax debug
   (lambda (syn)
     (define slist (syntax->list syn))
-    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) (newline) x)))
-  )
-)
+    (datum->syntax syn `(let ((x ,(cadr slist))) (begin (print x) (newline) (newline) x)))))
 
 ;; definition for a layer with no values in it
 (define null-layer '(() ()))
@@ -246,7 +244,7 @@
 (define find-box-acc
   (lambda (name env acc values-to-search)
     (cond
-      ((and (null? (names env)) (null-env? (next-layer env))) ; reached an empty env, so the variable does not exist
+      ((and (null? (names env)) (null-env? (next-layer env))); reached empty env, var does not exist
         undeclared-var)
       ((null? (names env))  ; variable was not in this layer, so check the next
         (find-box-acc name (next-layer env) (- (len (names (next-layer env))) 1) (values (next-layer env))))
