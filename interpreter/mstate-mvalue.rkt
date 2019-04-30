@@ -341,7 +341,7 @@
 ;;              break         - a break continuation
 ;;              throw         - a throw continuation
 ;;              continue      - a continue continuation
-;; Description: changes the value of the specifed variable in the parse tree to the new value
+;; Description: Assigns the value of the specifed variable in the parse tree to the new value
 (define assign-statement
   (lambda (ptree env class-closure instance return break throw continue)
     ;; extract the name of the variable name and pass it into the following function
@@ -355,7 +355,8 @@
                                 (assign-error name)))))
       (cond
         ((list? (var-name ptree))
-          (begin (assign (dot-rhs (var-name ptree)) (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))) env))
+          (begin (assign (dot-rhs (var-name ptree))
+                         (get-object-instance-fields (mvalue (dot-lhs (var-name ptree)) env class-closure instance throw))) env))
         ((and (not (exists? (var-name ptree) env)) (exists? 'this env))
           (begin (assign-statement (list (list (statement-op ptree) (list 'dot 'this (var-name ptree)) (var-value ptree)))
                                 env
