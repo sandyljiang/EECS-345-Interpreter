@@ -493,7 +493,13 @@
          (else                           (begin (set-box! box-found new-value) env))))
      (find-box name env))))
 
-
+;; Function:    (change-class-vars var-name var-value env class-name-to-declare)
+;; Parameters:  var-name              - The name of the variable to change
+;;              var-value             - The new value to change to
+;;              env                   - The environment to make a addition in
+;;              class-name-to-declare - The name of the class to change values in
+;; Description: Add a variable of the given name that defaults to the given value to the class
+;;              in the given environment.
 (define change-class-vars
   (lambda (var-name var-value env class-name-to-declare)
     (let* ((current-class (find class-name-to-declare env))
@@ -510,6 +516,13 @@
                           new-values)
                     env))))
 
+;; Function:    (change-class-methods func-name func-params func-body class-name-to-declare env)
+;; Parameters:  func-name             - The name of the method to add
+;;              func-params           - The parameters of the method
+;;              func-body             - The body of the method
+;;              class-name-to-declare - The name of the class to add a method to
+;;              env                   - The environment to add a method to the class closure in
+;; Description: Adds a new class method to the given class in the given environment.
 (define change-class-methods
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
