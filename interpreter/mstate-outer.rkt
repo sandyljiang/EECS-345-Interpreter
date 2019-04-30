@@ -11,6 +11,9 @@
 ;;;; mstate-out function declaratons and variable declarations
 ;;;; *********************************************************************************************************
 
+;;;; *********************************************************************************************************
+;;;; Class Definition Parse Tree Abstractions
+;;;; *********************************************************************************************************
 (define class-def-name
   (lambda (ptree)
     (cadar ptree)))
@@ -33,6 +36,9 @@
   (lambda (ptree)
     (cadar ptree)))
 
+;;;; *********************************************************************************************************
+;;;; Class Closure Abstractions
+;;;; *********************************************************************************************************
 (define method-names-def
   (lambda (env)
     (names env)))
@@ -70,17 +76,22 @@
   (lambda ()
     (push-layer (push-layer empty-env))))
 
+
+;;;; *********************************************************************************************************
+;;;; Functions for Parsing Class Definitions
+;;;; *********************************************************************************************************
+
 ;; Function:    (outer-operator_switch ptree)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
 ;; Description: determines the env function to use based on the statement-op in ptree
 (define outer-operator_switch
   (lambda (ptree)
     (cond
-      ((operator? ptree 'var declare-len)        declare-var-outer) ; ptree == ((var name) ...)
-      ((operator? ptree 'var declare-assign-len) declare-assign-outer)
-      ((operator? ptree 'function func-def-len)  declare-function-outer)
+      ((operator? ptree 'var declare-len)              declare-var-outer) ; ptree == ((var name) ...)
+      ((operator? ptree 'var declare-assign-len)       declare-assign-outer)
+      ((operator? ptree 'function func-def-len)        declare-function-outer)
       ((operator? ptree 'static-function func-def-len) declare-static-function-outer)
-      (else                                      (undefined-op-error ptree)))))
+      (else                                            (undefined-op-error ptree)))))
 
 ;; Function:    (mstate-class-body ptree env)
 ;; Parameters:  ptree - parse tree in the format ((statement-op args...) ...)
@@ -152,10 +163,10 @@
 (define declare-static-function-outer
   (lambda (ptree env class-name-to-declare)
     (change-class-static-methods (func-def-name ptree)
-                          (func-def-params ptree)
-                          (func-def-body ptree)
-                          class-name-to-declare
-                          env)))
+                                 (func-def-params ptree)
+                                 (func-def-body ptree)
+                                 class-name-to-declare
+                                 env)))
 
 ;; Function:    (declare-function-outer ptree env class-name-to-declare)
 ;; Parameters:  ptree                 - parse tree in the format
