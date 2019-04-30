@@ -799,84 +799,111 @@
 ;;;; Mvalue Helper functions
 ;;;; ********************************************************************************************************
 
+
+;; Function:    (bind-implicit-params instance super-object values-lis)
+;; Parameters:  instance      - the object closure to bind to this
+;;              super-object  - the class closure to bind to super with the instance fields of instance
+;;              values-lis    - the list of values to bind this and super to
+;; Description: binds the this and super values to the values-list
+(define bind-implicit-params
+  (lambda (instance super-object values-lis)
+    (cons instance (cons (cons super-object (list (object-instance-field-values instance))) values-lis))))
+
+;; Function:    (mstate-function-call expr env class-closure instance func-closure throw)
+;; Parameters:  expr          - list representing a function call
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              func-closure  - the closure of the function to call
+;;              throw         - a throw continuation to pass to the mvalue function evaluating the
+;;                              expressions
+;; Description: Evaluates the function call by calling mstate on it.
 (define mstate-function-call
-  (lambda (expr env class-closure instance function-closure throw)
-    (let* ((instance-methods (if (null? instance) instance (method-closures (get-class-closure instance))))
-           (instance-values (if (null? instance) instance (object-instance-field-values instance)))
-           (super-object (if (null? (super class-closure)) '() (find (super class-closure) env)))
+  (lambda (expr env class-closure instance func-closure throw)
+    (let* ((eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
+           (params (closure-params func-closure))
            (funcall (lambda (values-lis)
-                     (call/cc (lambda (return-cont)
-                       (mstate (closure-body function-closure)
-                               (add-multiple-vars (closure-params function-closure)
-                                                   values-lis
-                                                   (push-layer ((closure-env function-closure) instance-methods instance-values)))
-                               class-closure
-                               instance
-                               (lambda (e v) (return-cont v))
-                               break-error
-                               (lambda (e) (throw env))
-                               continue-error)))))
-           (eval-values (mvalue-list (mvalue-func-call-params expr) env class-closure instance throw))
-           (params (closure-params function-closure)))
-    (cond
-      ((and (not (null? params)) (eq? (car params) 'this))
-        (funcall (cons instance (cons (cons super-object (list (object-instance-field-values instance))) eval-values))))
-      (else
-        (funcall eval-values))))))
+                      (call/cc (lambda (return-cont)
+                                  (mstate (closure-body func-closure)
+                                          (add-multiple-vars params
+                                                             values-lis
+                                                             (push-layer ; only way to shorten line
+                                                               ((closure-env func-closure)
+                                                                 (get-object-instance-values instance))))
+                                          class-closure
+                                          instance
+                                          (lambda (e v) (return-cont v))
+                                          break-error
+                                          (lambda (e) (throw env))
+                                          continue-error))))))
+      (cond
+        ((and (not (null? params)) (eq? (car params) 'this)) ; if binding implicit params is necessary
+          (funcall (bind-implicit-params instance (get-super-closure class-closure env) eval-values)))
+        (else
+          (funcall eval-values))))))
 
+;; Function:    (get-RHS-func expr class-closure)
+;; Parameters:  expr          - list representing a function call with a dot
+;;              class-closure - the class-closure object that is currently in scope
+;; Description: Looksup the right hand side of the dot operator in the class closure.
+(define get-RHS-func
+  (lambda (expr class-closure)
+    (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env class-closure)))
 
+;; Function:    (handle-function-call-with-dot expr env class-closure instance throw)
+;; Parameters:  expr          - list representing a function call with a dot
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation to pass to the mvalue function evaluating the
+;;                              expressions
+;; Description: Evaluates the function call with a dot operator.
+(define handle-function-call-with-dot
+  (lambda (expr env class-closure instance throw)
+    (let* ((super-object (get-super-closure class-closure env))
+           (LHS-symbol   (dot-lhs (mvalue-func-call-name expr)))
+           (LHS          (get-dot-LHS LHS-symbol env class-closure instance throw))
+           (RHS          (get-RHS-func expr (get-class-closure LHS))))
+      (cond
+        ((and (eq? LHS-symbol 'super))
+          (mstate-function-call expr env super-object instance (get-RHS-func expr super-object) throw))
+        (else
+          (mstate-function-call expr env ((closure-class RHS) env) LHS RHS throw))))))
+
+;; Function:    (handle-function-call expr env class-closure instance throw)
+;; Parameters:  expr          - list representing a function call
+;;              env           - the environment to use to evaluate expressions
+;;              class-closure - the class-closure object that is currently in scope
+;;              instance      - the object closure that is currently being used
+;;              throw         - a throw continuation to pass to the mvalue function evaluating the
+;;                              expressions
+;; Description: Evaluates the function call.
 (define handle-function-call
   (lambda (expr env class-closure instance throw)
-    (cond
-      ((list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
-        (let* ((LHS-symbol (dot-lhs (mvalue-func-call-name expr)))
-               (LHS (get-dot-LHS LHS-symbol env class-closure instance throw))
-               (LHS-super-name (super (get-class-closure LHS)))
-               (RHS (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env (get-class-closure LHS)))
-               (super-object (if (null? (super class-closure)) '() (find (super class-closure) env))))
-              (cond
-                ;; if calling on super and the super has a super
-                ((and (eq? LHS-symbol 'super))
-                  (mstate-function-call expr
-                                        env
-                                        super-object
-                                        instance
-                                        ;(find-in-super (dot-rhs (mvalue-func-call-name expr)) env instance)
-                                        (lookup-function-closure (dot-rhs (mvalue-func-call-name expr)) empty-env super-object)
-                                        throw)
-                )
-                ;; if there is a super and calling on something else
-                (else
-                  (mstate-function-call expr
-                                        env
-                                        ((closure-class RHS) env)
-                                        LHS
-                                        RHS
-                                        throw)
-                )
-              )))
-      ((and (not (exists? (mvalue-func-call-name expr) env)) (exists? 'this env))
-        (handle-function-call (append (list (car expr) (list 'dot 'this (mvalue-func-call-name expr))) (mvalue-func-call-params expr))
-                              env
-                              class-closure
-                              instance
-                              throw)
-      )
-      ((not (null? instance))
-        (mstate-function-call expr
-                              env
-                              class-closure
-                              instance
-                              (lookup-function-closure (mvalue-func-call-name expr) env (get-class-closure instance))
-                              throw))
-      (else
-        (mstate-function-call expr
-                              env
-                              class-closure
-                              instance
-                              (find (mvalue-func-call-name expr) env)
-                              throw)
-      ))))
+    (let ((append-dot (append (list (mvalue-statement-op expr)
+                                    (list 'dot 'this (mvalue-func-call-name expr)))
+                              (mvalue-func-call-params expr))))
+      (cond
+        ((list? (mvalue-func-call-name expr)) ; If the function call is a dot operator
+          (handle-function-call-with-dot expr env class-closure instance throw))
+        ((and (not (exists? (mvalue-func-call-name expr) env)) (exists? 'this env))
+          (handle-function-call-with-dot append-dot env class-closure instance throw))
+        ((not (null? instance))
+          (mstate-function-call expr
+                                env
+                                class-closure
+                                instance
+                                (lookup-function-closure (mvalue-func-call-name expr)
+                                                         env
+                                                         (get-class-closure instance))
+                                throw))
+        (else ; instance does not exists - so local function
+          (mstate-function-call expr
+                                env
+                                class-closure
+                                instance
+                                (find (mvalue-func-call-name expr) env)
+                                throw))))))
 
 ;; Function:    (dot-value expr env class-closure instance throw)
 ;; Parameters:  expr          - list representing the parse tree in the form ((dot LHS-dot RHS-dot) ...)
@@ -886,7 +913,6 @@
 ;;              throw         - a throw continuation to pass to the mvalue function evaluating the
 ;;                              expressions
 ;; Description: Evaluates the dot expression using the given env.
-
 (define dot-value
   (lambda (expr env class-closure instance throw)
     (if (eq? 'super (dot-lhs expr))

@@ -111,6 +111,12 @@
   (lambda (ptree)
     (caddr (cddddr ptree))))
 
+(define get-super-closure
+  (lambda (class-closure env)
+    (if (null? (super class-closure))
+      '()
+      (find (super class-closure) env))))
+
 (define get-class-methods
   (lambda (class-closure)
     (list (list (method-names class-closure)
@@ -168,6 +174,12 @@
                 (method-closures (get-class-closure object-closure)))
           (list (instance-field-names (get-class-closure object-closure))
                 (object-instance-field-values object-closure)))))
+
+(define get-object-instance-values
+  (lambda (object-closure)
+    (if (null? object-closure)
+      '()
+      (object-instance-field-values object-closure))))
 
 ;; Function:    (initial-env)
 ;; Description: creates the initial env for the interpreter which has
@@ -372,7 +384,7 @@
     (add name
          (list param-list
                func-body
-               (lambda (method-closures values) ; the env is accessed via function to allow access to itself
+               (lambda (values) ; the env is accessed via function to allow access to itself
                  (add-function name param-list func-body class func-env func-env))
                (lambda (current-env)
                  (unbox class)))
@@ -383,9 +395,8 @@
     (add name
          (list param-list
                func-body
-               (lambda (method-closures values) ; the env is accessed via function to allow access to itself
-                 (append (list ;(list (method-names (unbox class)) method-closures)
-                               (list (instance-field-names (unbox class)) values))
+               (lambda (values) ; the env is accessed via function to allow access to itself
+                 (append (list (list (instance-field-names (unbox class)) values))
                          func-env))
                (lambda (current-env)
                  (unbox class)))
