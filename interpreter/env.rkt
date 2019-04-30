@@ -294,7 +294,7 @@
 ;;              not found or was undefined
 (define lookup-non-local-function-box
     (lambda (name class-closure)
-      ;; find the class closure, get its function and  find the requested function
+      ;; find the class closure, get its function and find the requested function
       (find-box name (get-class-functions class-closure))))
 
 ;; Function:    (lookup-non-local-function name env)
@@ -382,8 +382,7 @@
          (list param-list
                func-body
                (lambda (method-closures values) ; the env is accessed via function to allow access to itself
-                 (append (list ;(list (method-names (unbox class)) method-closures)
-                               (list (instance-field-names (unbox class)) values))
+                 (append (list (list (instance-field-names (unbox class)) values))
                          func-env))
                (lambda (current-env)
                  (unbox class)))
@@ -515,12 +514,23 @@
   (lambda (func-name func-params func-body class-name-to-declare env)
     (let* ((class-box (find-box class-name-to-declare env))
            (current-class (find class-name-to-declare env))
+<<<<<<< HEAD
            (new-methods (add-member-function func-name
                                              func-params
                                              func-body
                                              class-box
                                              (get-class-methods current-class)
                                              env))
+=======
+           (new-methods
+                        (add-member-function
+                        func-name
+                        func-params
+                        func-body
+                        class-box
+                        (get-class-methods current-class)
+                        env))
+>>>>>>> 9244c88f500aacc35383d08e925dbc5481047c2a
            (new-names (names new-methods))
            (new-values (values new-methods)))
       (change-value class-name-to-declare
@@ -556,10 +566,10 @@
                     env))))
 
 ;; Function:    (find-in-super name env instance)
-;; Parameters:  name       - the name of the the super in the new environment
+;; Parameters:  name       - the name of the super in the new environment
 ;;              env        - the environment to use to evaluate expressions
 ;;              instance   - the object closure that is currently being used
-;; Description:
+;; Description: Adjusts the lookups to handle the case when the left side of the dot is "super".
 
 (define find-in-super
   (lambda (name env instance)
