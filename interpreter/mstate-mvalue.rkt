@@ -906,15 +906,6 @@
         (lookup-instance-fields (dot-rhs expr)
                                 (get-dot-LHS (dot-lhs expr) env class-closure instance throw)))))
 
-;; Function:    (new-op expr env)
-;; Parameters:  expr          - the expression representing left of an assignment statement
-;;              env           - the environment that the new instance will be in 
-;; Description: Creates a new instance with the constructor in the given env.
-
-(define new-op
-  (lambda (expr env)
-    (class-constructor (find (new-arg expr) env))))
-
 ;; Function:    (mvalue-operator? statement operator)
 ;; Parameters:  statement - the parsed statement to evaluate. First element should be
 ;;                          the operator represented by an atom
